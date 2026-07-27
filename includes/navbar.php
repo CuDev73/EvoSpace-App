@@ -60,7 +60,7 @@
                             'permiso' => 'pagos'
                         ],
                         'Cantina' => [
-                            'url' => '/evospace/secciones/cantina.php',
+                            'url' => '/evospace/secciones/cantina/index.php',
                             'icon' => 'bi-cup-straw',
                             'permiso' => 'cantina'
                         ],

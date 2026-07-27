@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once '../../config/db.php';
+require_once 'funciones.php';
 if (!isset($_SESSION['id_usuario'])) {
     header('Location: /evospace/index.php');
     exit;
@@ -10,127 +11,143 @@ verificarPermiso('cantina');
 include '../../includes/header.php';
 include '../../includes/navbar.php';
 
-// Resumen diario (hoy)
-$hoy = date('Y-m-d');
-$stmt = $pdo->prepare("SELECT SUM(total) as total_hoy, 
-                       SUM(CASE WHEN metodo_pago = 'Efectivo' THEN total ELSE 0 END) as efectivo,
-                       SUM(CASE WHEN metodo_pago = 'Transferencia' THEN total ELSE 0 END) as transferencia,
-                       SUM(CASE WHEN metodo_pago = 'Fiado' THEN total ELSE 0 END) as fiado,
-                       COUNT(*) as cantidad
-                       FROM ventas WHERE DATE(fecha) = ?");
-$stmt->execute([$hoy]);
-$resumenHoy = $stmt->fetch();
+$fecha_inicio = $_GET['fecha_inicio'] ?? date('Y-m-01');
+$fecha_fin = $_GET['fecha_fin'] ?? date('Y-m-d');
 
-// Resumen semanal (últimos 7 días)
-$semana = date('Y-m-d', strtotime('-6 days'));
-$stmt = $pdo->prepare("SELECT SUM(total) as total_semana, 
-                       SUM(CASE WHEN metodo_pago = 'Efectivo' THEN total ELSE 0 END) as efectivo,
-                       SUM(CASE WHEN metodo_pago = 'Transferencia' THEN total ELSE 0 END) as transferencia,
-                       SUM(CASE WHEN metodo_pago = 'Fiado' THEN total ELSE 0 END) as fiado,
-                       COUNT(*) as cantidad
-                       FROM ventas WHERE fecha >= ?");
-$stmt->execute([$semana . ' 00:00:00']);
-$resumenSemana = $stmt->fetch();
-
-// Total general
-$totalGeneral = $pdo->query("SELECT SUM(total) as total FROM ventas")->fetch()['total'] ?? 0;
+$ganancias = obtenerGanancias($pdo, $fecha_inicio, $fecha_fin);
+$productos_ganancias = obtenerGananciasPorProducto($pdo, $fecha_inicio, $fecha_fin);
+$total_ventas = $pdo->query("SELECT COUNT(*) FROM ventas WHERE estado_pago = 'pagado' AND fecha BETWEEN '$fecha_inicio' AND '$fecha_fin'")->fetchColumn();
+$total_pendientes = $pdo->query("SELECT COUNT(*) FROM ventas WHERE estado_pago = 'pendiente' AND fecha BETWEEN '$fecha_inicio' AND '$fecha_fin'")->fetchColumn();
+$total_compras_fiado = $pdo->query("SELECT COALESCE(SUM(monto), 0) FROM compras_alumnos WHERE pagado = 0")->fetchColumn();
 ?>
 
 <div class="container mt-3">
-    <h4><i class="bi bi-cash-stack"></i> Resumen de Caja</h4>
-
-    <!-- Tarjetas de resumen -->
-    <div class="row g-3 mt-3">
-        <div class="col-md-4">
-            <div class="card shadow">
-                <div class="card-header bg-danger text-white">Hoy (<?= date('d/m/Y') ?>)</div>
-                <div class="card-body">
-                    <p><strong>Total:</strong> Gs <?= number_format($resumenHoy['total_hoy'] ?? 0, 0, ',', '.') ?></p>
-                    <p><strong>Efectivo:</strong> Gs <?= number_format($resumenHoy['efectivo'] ?? 0, 0, ',', '.') ?></p>
-                    <p><strong>Transferencia:</strong> Gs <?= number_format($resumenHoy['transferencia'] ?? 0, 0, ',', '.') ?></p>
-                    <p><strong>Fiado:</strong> Gs <?= number_format($resumenHoy['fiado'] ?? 0, 0, ',', '.') ?></p>
-                    <p><strong>Cantidad ventas:</strong> <?= $resumenHoy['cantidad'] ?? 0 ?></p>
-                </div>
-            </div>
+    <!-- Botones de Volver -->
+    <div class="row g-2 mb-3">
+        <div class="col-md-6">
+            <button onclick="history.back()" class="btn btn-secondary w-100">
+                <i class="bi bi-arrow-left"></i> Volver atrás
+            </button>
         </div>
-
-        <div class="col-md-4">
-            <div class="card shadow">
-                <div class="card-header bg-danger text-white">Última semana</div>
-                <div class="card-body">
-                    <p><strong>Total:</strong> Gs <?= number_format($resumenSemana['total_semana'] ?? 0, 0, ',', '.') ?></p>
-                    <p><strong>Efectivo:</strong> Gs <?= number_format($resumenSemana['efectivo'] ?? 0, 0, ',', '.') ?></p>
-                    <p><strong>Transferencia:</strong> Gs <?= number_format($resumenSemana['transferencia'] ?? 0, 0, ',', '.') ?></p>
-                    <p><strong>Fiado:</strong> Gs <?= number_format($resumenSemana['fiado'] ?? 0, 0, ',', '.') ?></p>
-                    <p><strong>Cantidad ventas:</strong> <?= $resumenSemana['cantidad'] ?? 0 ?></p>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-4">
-            <div class="card shadow">
-                <div class="card-header bg-danger text-white">Total General</div>
-                <div class="card-body">
-                    <p><strong>Total acumulado:</strong> Gs <?= number_format($totalGeneral, 0, ',', '.') ?></p>
-                    <p class="text-muted small">Desde el inicio del sistema</p>
-                </div>
-            </div>
+        <div class="col-md-6">
+            <a href="index.php" class="btn btn-secondary w-100">
+                <i class="bi bi-house"></i> Volver al panel de Cantina
+            </a>
         </div>
     </div>
 
-    <!-- Gráfico simple -->
-    <div class="card shadow mt-4">
-        <div class="card-header bg-danger text-white">Ventas por día (últimos 7 días)</div>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4><i class="bi bi-graph-up-arrow"></i> Resumen de Ganancias</h4>
+        <a href="index.php" class="btn btn-secondary btn-sm"><i class="bi bi-arrow-left"></i> Volver</a>
+    </div>
+
+    <!-- Filtros -->
+    <div class="card shadow mb-3">
         <div class="card-body">
-            <canvas id="ventasChart" height="100"></canvas>
+            <form method="GET" class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label small">Fecha inicio</label>
+                    <input type="date" name="fecha_inicio" class="form-control form-control-sm" value="<?= $fecha_inicio ?>">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small">Fecha fin</label>
+                    <input type="date" name="fecha_fin" class="form-control form-control-sm" value="<?= $fecha_fin ?>">
+                </div>
+                <div class="col-md-3">
+                    <button type="submit" class="btn btn-danger btn-sm w-100">Filtrar</button>
+                </div>
+                <div class="col-md-3">
+                    <a href="resumen.php" class="btn btn-secondary btn-sm w-100">Limpiar</a>
+                </div>
+            </form>
         </div>
     </div>
 
-    <!-- Botón Volver -->
-    <div class="d-flex gap-2 mt-4 pb-3">
-        <a href="/evospace/secciones/cantina.php" class="btn btn-secondary flex-fill">
-            <i class="bi bi-arrow-left"></i> Volver
-        </a>
+    <!-- Tarjetas KPIs -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card shadow h-100">
+                <div class="card-body text-center">
+                    <h6 class="text-muted">Total Ventas</h6>
+                    <h3 class="fw-bold"><?= number_format($ganancias->total_ventas ?? 0, 0, ',', '.') ?> Gs</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow h-100">
+                <div class="card-body text-center">
+                    <h6 class="text-muted">Costo de Productos</h6>
+                    <h3 class="fw-bold text-danger"><?= number_format($ganancias->total_costos ?? 0, 0, ',', '.') ?> Gs</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow h-100">
+                <div class="card-body text-center">
+                    <h6 class="text-muted">Ganancia Neta</h6>
+                    <h3 class="fw-bold text-success"><?= number_format($ganancias->ganancia_total ?? 0, 0, ',', '.') ?> Gs</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow h-100">
+                <div class="card-body text-center">
+                    <h6 class="text-muted">Ventas Pendientes</h6>
+                    <h3 class="fw-bold text-warning"><?= $total_pendientes ?></h3>
+                    <small>Fiado: <?= number_format($total_compras_fiado, 0, ',', '.') ?> Gs</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ganancias por producto -->
+    <div class="card shadow">
+        <div class="card-header bg-danger text-white">Ganancias por Producto</div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover table-sm mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Producto</th>
+                            <th class="text-center">Cantidad Vendida</th>
+                            <th class="text-end">Ingreso</th>
+                            <th class="text-end">Costo</th>
+                            <th class="text-end">Ganancia</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php if (empty($productos_ganancias)): ?>
+                            <tr><td colspan="5" class="text-center">No hay datos para el período seleccionado.</td></tr>
+                        <?php else: ?>
+                            <?php foreach ($productos_ganancias as $p): ?>
+                                <tr>
+                                    <td><?= htmlspecialchars($p->producto) ?></td>
+                                    <td class="text-center"><?= $p->total_vendido ?></td>
+                                    <td class="text-end"><?= number_format($p->ingreso, 0, ',', '.') ?> Gs</td>
+                                    <td class="text-end"><?= number_format($p->costo, 0, ',', '.') ?> Gs</td>
+                                    <td class="text-end fw-bold <?= $p->ganancia > 0 ? 'text-success' : 'text-danger' ?>"><?= number_format($p->ganancia, 0, ',', '.') ?> Gs</td>
+                                </tr>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Botones de Volver (abajo) -->
+    <div class="row g-2 mt-4">
+        <div class="col-md-6">
+            <button onclick="history.back()" class="btn btn-secondary w-100">
+                <i class="bi bi-arrow-left"></i> Volver atrás
+            </button>
+        </div>
+        <div class="col-md-6">
+            <a href="index.php" class="btn btn-secondary w-100">
+                <i class="bi bi-house"></i> Volver al panel de Cantina
+            </a>
+        </div>
     </div>
 </div>
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Obtener datos de los últimos 7 días
-    fetch('obtener_ventas_semana.php')
-        .then(res => res.json())
-        .then(data => {
-            const ctx = document.getElementById('ventasChart').getContext('2d');
-            new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: data.labels,
-                    datasets: [{
-                        label: 'Total vendido (Gs)',
-                        data: data.valores,
-                        backgroundColor: '#c81015',
-                        borderRadius: 5
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: { display: false }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: {
-                                callback: function(value) { return 'Gs ' + value.toLocaleString(); }
-                            }
-                        }
-                    }
-                }
-            });
-        })
-        .catch(err => console.error('Error cargando gráfico:', err));
-});
-</script>
 
 <?php include '../../includes/footer.php'; ?>

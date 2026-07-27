@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost
--- Generation Time: Jul 27, 2026 at 04:52 AM
+-- Generation Time: Jul 28, 2026 at 01:07 AM
 -- Server version: 10.4.28-MariaDB
 -- PHP Version: 8.2.4
 
@@ -168,6 +168,37 @@ INSERT INTO `asistencia` (`id_asistencia`, `id_alumno`, `id_curso`, `fecha`, `pr
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `compras_alumnos`
+--
+
+CREATE TABLE `compras_alumnos` (
+  `id_compra` int(11) NOT NULL,
+  `id_alumno` int(11) NOT NULL,
+  `fecha` date NOT NULL,
+  `producto` varchar(100) NOT NULL,
+  `monto` decimal(10,2) NOT NULL,
+  `pagado` tinyint(1) DEFAULT 0,
+  `fecha_creacion` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `compras_proveedores`
+--
+
+CREATE TABLE `compras_proveedores` (
+  `id_compra` int(11) NOT NULL,
+  `id_proveedor` int(11) NOT NULL,
+  `fecha` date NOT NULL,
+  `total` decimal(10,2) NOT NULL,
+  `observaciones` text DEFAULT NULL,
+  `fecha_creacion` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `configuracion`
 --
 
@@ -229,6 +260,21 @@ INSERT INTO `cursos` (`id_curso`, `nombre`, `tipo`, `orden`, `activo`) VALUES
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `detalle_compra_proveedor`
+--
+
+CREATE TABLE `detalle_compra_proveedor` (
+  `id_detalle` int(11) NOT NULL,
+  `id_compra` int(11) NOT NULL,
+  `id_producto` int(11) NOT NULL,
+  `cantidad` int(11) NOT NULL,
+  `precio_compra` decimal(10,2) NOT NULL,
+  `subtotal` decimal(10,2) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `detalle_ventas`
 --
 
@@ -248,7 +294,15 @@ CREATE TABLE `detalle_ventas` (
 INSERT INTO `detalle_ventas` (`id_detalle`, `id_venta`, `id_producto`, `cantidad`, `precio_unitario`, `subtotal`) VALUES
 (1, 1, 1, 1, 20000.00, 20000.00),
 (2, 1, 1, 1, 20000.00, 20000.00),
-(3, 1, 1, 1, 20000.00, 20000.00);
+(3, 1, 1, 1, 20000.00, 20000.00),
+(4, 2, 1, 1, 20000.00, 20000.00),
+(5, 3, 1, 1, 20000.00, 20000.00),
+(6, 4, 1, 1, 20000.00, 20000.00),
+(7, 5, 1, 1, 20000.00, 20000.00),
+(8, 5, 1, 1, 20000.00, 20000.00),
+(9, 5, 1, 1, 20000.00, 20000.00),
+(10, 6, 1, 1, 20000.00, 20000.00),
+(11, 6, 1, 1, 20000.00, 20000.00);
 
 -- --------------------------------------------------------
 
@@ -268,13 +322,6 @@ CREATE TABLE `eventos` (
   `fecha_creacion` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
---
--- Dumping data for table `eventos`
---
-
-INSERT INTO `eventos` (`id_evento`, `titulo`, `descripcion`, `fecha`, `hora`, `lugar`, `enlace_ubicacion`, `color`, `fecha_creacion`) VALUES
-(1, 'Festival para el dia de mañana', 'FUNCIONOOOOOOaa', '2026-07-27', '21:25:00', 'Teatro', 'https://maps.app.goo.gl/h3cDEHZ6ZeE27swW6', '#b3af32', '2026-07-26 22:25:23');
-
 -- --------------------------------------------------------
 
 --
@@ -285,33 +332,6 @@ CREATE TABLE `evento_curso` (
   `id_evento` int(11) NOT NULL,
   `id_curso` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
---
--- Dumping data for table `evento_curso`
---
-
-INSERT INTO `evento_curso` (`id_evento`, `id_curso`) VALUES
-(1, 1),
-(1, 2),
-(1, 3),
-(1, 4),
-(1, 5),
-(1, 6),
-(1, 7),
-(1, 8),
-(1, 9),
-(1, 10),
-(1, 11),
-(1, 12),
-(1, 13),
-(1, 14),
-(1, 15),
-(1, 16),
-(1, 17),
-(1, 18),
-(1, 19),
-(1, 20),
-(1, 21);
 
 -- --------------------------------------------------------
 
@@ -329,54 +349,6 @@ CREATE TABLE `notificaciones` (
   `leida` tinyint(1) DEFAULT 0,
   `fecha` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
---
--- Dumping data for table `notificaciones`
---
-
-INSERT INTO `notificaciones` (`id_notificacion`, `id_evento`, `id_usuario`, `titulo`, `mensaje`, `tipo`, `leida`, `fecha`) VALUES
-(1, 1, NULL, 'Nuevo evento: Festival para el dia de mañana', 'FUNCIONOOOOOO', 'evento', 0, '2026-07-26 22:25:35'),
-(2, 1, NULL, 'Nuevo evento: Festival para el dia de mañana', 'FUNCIONOOOOOO', 'evento', 0, '2026-07-26 22:25:35'),
-(3, 1, NULL, 'Nuevo evento: Festival para el dia de mañana', 'FUNCIONOOOOOO', 'evento', 0, '2026-07-26 22:25:35'),
-(4, 1, NULL, 'Nuevo evento: Festival para el dia de mañana', 'FUNCIONOOOOOO', 'evento', 0, '2026-07-26 22:25:35'),
-(5, 1, NULL, 'Nuevo evento: Festival para el dia de mañana', 'FUNCIONOOOOOO', 'evento', 0, '2026-07-26 22:25:35'),
-(6, 1, NULL, 'Nuevo evento: Festival para el dia de mañana', 'FUNCIONOOOOOO', 'evento', 0, '2026-07-26 22:25:35'),
-(7, 1, NULL, 'Nuevo evento: Festival para el dia de mañana', 'FUNCIONOOOOOO', 'evento', 0, '2026-07-26 22:25:35'),
-(8, 1, NULL, 'Nuevo evento: Festival para el dia de mañana', 'FUNCIONOOOOOO', 'evento', 0, '2026-07-26 22:25:35'),
-(9, 1, NULL, 'Nuevo evento: Festival para el dia de mañana', 'FUNCIONOOOOOO', 'evento', 0, '2026-07-26 22:25:35'),
-(10, 1, NULL, 'Nuevo evento: Festival para el dia de mañana', 'FUNCIONOOOOOO', 'evento', 0, '2026-07-26 22:25:35'),
-(11, 1, NULL, 'Nuevo evento: Festival para el dia de mañana', 'FUNCIONOOOOOO', 'evento', 0, '2026-07-26 22:25:35'),
-(12, 1, NULL, 'Nuevo evento: Festival para el dia de mañana', 'FUNCIONOOOOOO', 'evento', 0, '2026-07-26 22:25:35'),
-(13, 1, NULL, 'Nuevo evento: Festival para el dia de mañana', 'FUNCIONOOOOOO', 'evento', 0, '2026-07-26 22:25:35'),
-(14, 1, NULL, 'Nuevo evento: Festival para el dia de mañana', 'FUNCIONOOOOOO', 'evento', 0, '2026-07-26 22:25:35'),
-(15, 1, NULL, 'Nuevo evento: Festival para el dia de mañana', 'FUNCIONOOOOOO', 'evento', 0, '2026-07-26 22:25:35'),
-(16, 1, NULL, 'Nuevo evento: Festival para el dia de mañana', 'FUNCIONOOOOOO', 'evento', 0, '2026-07-26 22:25:35'),
-(17, 1, NULL, 'Nuevo evento: Festival para el dia de mañana', 'FUNCIONOOOOOO', 'evento', 0, '2026-07-26 22:25:35'),
-(18, 1, NULL, 'Nuevo evento: Festival para el dia de mañana', 'FUNCIONOOOOOO', 'evento', 0, '2026-07-26 22:25:35'),
-(19, 1, NULL, 'Nuevo evento: Festival para el dia de mañana', 'FUNCIONOOOOOO', 'evento', 0, '2026-07-26 22:25:35'),
-(20, 1, NULL, 'Nuevo evento: Festival para el dia de mañana', 'FUNCIONOOOOOO', 'evento', 0, '2026-07-26 22:25:35'),
-(21, 1, NULL, 'Nuevo evento: Festival para el dia de mañana', 'FUNCIONOOOOOO', 'evento', 0, '2026-07-26 22:25:35'),
-(22, 1, NULL, 'Nuevo evento: Festival para el dia de mañana', 'FUNCIONOOOOOOaa', 'evento', 0, '2026-07-26 22:31:15'),
-(23, 1, NULL, 'Nuevo evento: Festival para el dia de mañana', 'FUNCIONOOOOOOaa', 'evento', 0, '2026-07-26 22:31:15'),
-(24, 1, NULL, 'Nuevo evento: Festival para el dia de mañana', 'FUNCIONOOOOOOaa', 'evento', 0, '2026-07-26 22:31:15'),
-(25, 1, NULL, 'Nuevo evento: Festival para el dia de mañana', 'FUNCIONOOOOOOaa', 'evento', 0, '2026-07-26 22:31:15'),
-(26, 1, NULL, 'Nuevo evento: Festival para el dia de mañana', 'FUNCIONOOOOOOaa', 'evento', 0, '2026-07-26 22:31:15'),
-(27, 1, NULL, 'Nuevo evento: Festival para el dia de mañana', 'FUNCIONOOOOOOaa', 'evento', 0, '2026-07-26 22:31:15'),
-(28, 1, NULL, 'Nuevo evento: Festival para el dia de mañana', 'FUNCIONOOOOOOaa', 'evento', 0, '2026-07-26 22:31:15'),
-(29, 1, NULL, 'Nuevo evento: Festival para el dia de mañana', 'FUNCIONOOOOOOaa', 'evento', 0, '2026-07-26 22:31:15'),
-(30, 1, NULL, 'Nuevo evento: Festival para el dia de mañana', 'FUNCIONOOOOOOaa', 'evento', 0, '2026-07-26 22:31:15'),
-(31, 1, NULL, 'Nuevo evento: Festival para el dia de mañana', 'FUNCIONOOOOOOaa', 'evento', 0, '2026-07-26 22:31:15'),
-(32, 1, NULL, 'Nuevo evento: Festival para el dia de mañana', 'FUNCIONOOOOOOaa', 'evento', 0, '2026-07-26 22:31:15'),
-(33, 1, NULL, 'Nuevo evento: Festival para el dia de mañana', 'FUNCIONOOOOOOaa', 'evento', 0, '2026-07-26 22:31:15'),
-(34, 1, NULL, 'Nuevo evento: Festival para el dia de mañana', 'FUNCIONOOOOOOaa', 'evento', 0, '2026-07-26 22:31:15'),
-(35, 1, NULL, 'Nuevo evento: Festival para el dia de mañana', 'FUNCIONOOOOOOaa', 'evento', 0, '2026-07-26 22:31:15'),
-(36, 1, NULL, 'Nuevo evento: Festival para el dia de mañana', 'FUNCIONOOOOOOaa', 'evento', 0, '2026-07-26 22:31:15'),
-(37, 1, NULL, 'Nuevo evento: Festival para el dia de mañana', 'FUNCIONOOOOOOaa', 'evento', 0, '2026-07-26 22:31:15'),
-(38, 1, NULL, 'Nuevo evento: Festival para el dia de mañana', 'FUNCIONOOOOOOaa', 'evento', 0, '2026-07-26 22:31:15'),
-(39, 1, NULL, 'Nuevo evento: Festival para el dia de mañana', 'FUNCIONOOOOOOaa', 'evento', 0, '2026-07-26 22:31:15'),
-(40, 1, NULL, 'Nuevo evento: Festival para el dia de mañana', 'FUNCIONOOOOOOaa', 'evento', 0, '2026-07-26 22:31:15'),
-(41, 1, NULL, 'Nuevo evento: Festival para el dia de mañana', 'FUNCIONOOOOOOaa', 'evento', 0, '2026-07-26 22:31:15'),
-(42, 1, NULL, 'Nuevo evento: Festival para el dia de mañana', 'FUNCIONOOOOOOaa', 'evento', 0, '2026-07-26 22:31:15');
 
 -- --------------------------------------------------------
 
@@ -403,7 +375,37 @@ CREATE TABLE `pagos` (
 --
 
 INSERT INTO `pagos` (`id_pago`, `id_alumno`, `fecha`, `concepto`, `cantidad`, `monto`, `descuento`, `recargo`, `total`, `metodo_pago`, `fecha_creacion`) VALUES
-(1, 41, '2026-07-26', 'cuota', 1, 220000.00, 0.00, 15000.00, 235000.00, 'Efectivo', '2026-07-27 02:13:53');
+(1, 41, '2026-07-26', 'cuota', 1, 220000.00, 0.00, 15000.00, 235000.00, 'Efectivo', '2026-07-27 02:13:53'),
+(2, 41, '2026-07-27', 'cuota', 1, 220000.00, 0.00, 16000.00, 236000.00, 'Efectivo', '2026-07-27 23:01:50');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `pagos_alumnos_cantina`
+--
+
+CREATE TABLE `pagos_alumnos_cantina` (
+  `id_pago` int(11) NOT NULL,
+  `id_alumno` int(11) NOT NULL,
+  `fecha` date NOT NULL,
+  `monto` decimal(10,2) NOT NULL,
+  `fecha_creacion` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `pagos_proveedores`
+--
+
+CREATE TABLE `pagos_proveedores` (
+  `id_pago` int(11) NOT NULL,
+  `id_proveedor` int(11) NOT NULL,
+  `fecha` date NOT NULL,
+  `monto` decimal(10,2) NOT NULL,
+  `concepto` varchar(200) DEFAULT NULL,
+  `fecha_creacion` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -563,16 +565,19 @@ CREATE TABLE `productos` (
   `nombre` varchar(100) NOT NULL,
   `precio` decimal(10,2) NOT NULL,
   `activo` tinyint(1) DEFAULT 1,
-  `fecha_creacion` timestamp NOT NULL DEFAULT current_timestamp()
+  `fecha_creacion` timestamp NOT NULL DEFAULT current_timestamp(),
+  `precio_compra` decimal(10,2) DEFAULT 0.00,
+  `cantidad` int(11) NOT NULL DEFAULT 0,
+  `id_proveedor` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `productos`
 --
 
-INSERT INTO `productos` (`id_producto`, `nombre`, `precio`, `activo`, `fecha_creacion`) VALUES
-(1, 'Papas a la crema', 20000.00, 1, '2026-07-26 17:41:32'),
-(2, 'Papas fritas', 123.00, 1, '2026-07-26 17:45:49');
+INSERT INTO `productos` (`id_producto`, `nombre`, `precio`, `activo`, `fecha_creacion`, `precio_compra`, `cantidad`, `id_proveedor`) VALUES
+(1, 'Papas a la crema', 20000.00, 1, '2026-07-26 17:41:32', 15000.00, 4, NULL),
+(2, 'Papas fritas', 123.00, 1, '2026-07-26 17:45:49', 0.00, 0, NULL);
 
 -- --------------------------------------------------------
 
@@ -596,6 +601,31 @@ INSERT INTO `profesores` (`id_profesor`, `id_usuario`, `salario_base`, `fecha_co
 (1, 2, 2500000.00, '2026-07-26', 1),
 (2, 5, 2500000.00, '2026-07-26', 1),
 (3, 6, 2500000.00, '2026-07-26', 1);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `proveedores`
+--
+
+CREATE TABLE `proveedores` (
+  `id_proveedor` int(11) NOT NULL,
+  `nombre` varchar(150) NOT NULL,
+  `activo` tinyint(1) DEFAULT 1,
+  `nombre_contacto` varchar(150) DEFAULT NULL,
+  `telefono` varchar(20) DEFAULT NULL,
+  `whatsapp` varchar(20) DEFAULT NULL,
+  `email` varchar(100) DEFAULT NULL,
+  `direccion` text DEFAULT NULL,
+  `tipo_productos` varchar(255) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `proveedores`
+--
+
+INSERT INTO `proveedores` (`id_proveedor`, `nombre`, `activo`, `nombre_contacto`, `telefono`, `whatsapp`, `email`, `direccion`, `tipo_productos`) VALUES
+(1, 'Carlita', 1, 'aasdf', '0926666666', '961751338', 'maradsf@gmail.com', 'asdf', 'Bebidas');
 
 -- --------------------------------------------------------
 
@@ -684,6 +714,7 @@ CREATE TABLE `usuarios_permisos` (
 --
 
 INSERT INTO `usuarios_permisos` (`id_usuario`, `permiso`) VALUES
+(6, 'alumnos'),
 (6, 'cantina'),
 (6, 'configuracion'),
 (6, 'eventos'),
@@ -705,15 +736,23 @@ CREATE TABLE `ventas` (
   `metodo_pago` enum('Efectivo','Transferencia','Fiado') NOT NULL,
   `tipo_comprador` enum('alumno','profesor','otro') DEFAULT 'otro',
   `nombre_comprador` varchar(150) DEFAULT NULL,
-  `observaciones` text DEFAULT NULL
+  `id_alumno` int(11) DEFAULT NULL,
+  `id_usuario` int(11) DEFAULT NULL,
+  `observaciones` text DEFAULT NULL,
+  `estado_pago` enum('pagado','pendiente','parcial') DEFAULT 'pagado'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `ventas`
 --
 
-INSERT INTO `ventas` (`id_venta`, `fecha`, `total`, `metodo_pago`, `tipo_comprador`, `nombre_comprador`, `observaciones`) VALUES
-(1, '2026-07-26 14:45:04', 60000.00, 'Fiado', 'otro', NULL, '');
+INSERT INTO `ventas` (`id_venta`, `fecha`, `total`, `metodo_pago`, `tipo_comprador`, `nombre_comprador`, `id_alumno`, `id_usuario`, `observaciones`, `estado_pago`) VALUES
+(1, '2026-07-26 14:45:04', 60000.00, 'Fiado', 'otro', NULL, NULL, NULL, '', 'pagado'),
+(2, '2026-07-27 00:00:00', 20000.00, 'Efectivo', 'alumno', 'Mariela Nuñez Esteche', 1, NULL, '', 'pagado'),
+(3, '2026-07-27 00:00:00', 20000.00, 'Efectivo', 'alumno', 'Mariela Nuñez Esteche', 1, NULL, '', 'pagado'),
+(4, '2026-07-27 00:00:00', 20000.00, 'Efectivo', 'alumno', 'Mariela Nuñez Esteche', 1, NULL, '', 'pagado'),
+(5, '2026-07-28 00:00:00', 60000.00, 'Fiado', 'alumno', 'Joaquín Romero', 18, NULL, '', 'pagado'),
+(6, '2026-07-28 00:00:00', 40000.00, 'Fiado', 'alumno', 'Lucas Martín', 38, NULL, '', 'pendiente');
 
 --
 -- Indexes for dumped tables
@@ -743,6 +782,20 @@ ALTER TABLE `asistencia`
   ADD KEY `id_curso` (`id_curso`);
 
 --
+-- Indexes for table `compras_alumnos`
+--
+ALTER TABLE `compras_alumnos`
+  ADD PRIMARY KEY (`id_compra`),
+  ADD KEY `id_alumno` (`id_alumno`);
+
+--
+-- Indexes for table `compras_proveedores`
+--
+ALTER TABLE `compras_proveedores`
+  ADD PRIMARY KEY (`id_compra`),
+  ADD KEY `id_proveedor` (`id_proveedor`);
+
+--
 -- Indexes for table `configuracion`
 --
 ALTER TABLE `configuracion`
@@ -753,6 +806,14 @@ ALTER TABLE `configuracion`
 --
 ALTER TABLE `cursos`
   ADD PRIMARY KEY (`id_curso`);
+
+--
+-- Indexes for table `detalle_compra_proveedor`
+--
+ALTER TABLE `detalle_compra_proveedor`
+  ADD PRIMARY KEY (`id_detalle`),
+  ADD KEY `id_compra` (`id_compra`),
+  ADD KEY `id_producto` (`id_producto`);
 
 --
 -- Indexes for table `detalle_ventas`
@@ -791,6 +852,20 @@ ALTER TABLE `pagos`
   ADD KEY `id_alumno` (`id_alumno`);
 
 --
+-- Indexes for table `pagos_alumnos_cantina`
+--
+ALTER TABLE `pagos_alumnos_cantina`
+  ADD PRIMARY KEY (`id_pago`),
+  ADD KEY `id_alumno` (`id_alumno`);
+
+--
+-- Indexes for table `pagos_proveedores`
+--
+ALTER TABLE `pagos_proveedores`
+  ADD PRIMARY KEY (`id_pago`),
+  ADD KEY `id_proveedor` (`id_proveedor`);
+
+--
 -- Indexes for table `permisos`
 --
 ALTER TABLE `permisos`
@@ -808,7 +883,8 @@ ALTER TABLE `precios`
 -- Indexes for table `productos`
 --
 ALTER TABLE `productos`
-  ADD PRIMARY KEY (`id_producto`);
+  ADD PRIMARY KEY (`id_producto`),
+  ADD KEY `id_proveedor` (`id_proveedor`);
 
 --
 -- Indexes for table `profesores`
@@ -816,6 +892,12 @@ ALTER TABLE `productos`
 ALTER TABLE `profesores`
   ADD PRIMARY KEY (`id_profesor`),
   ADD UNIQUE KEY `id_usuario` (`id_usuario`);
+
+--
+-- Indexes for table `proveedores`
+--
+ALTER TABLE `proveedores`
+  ADD PRIMARY KEY (`id_proveedor`);
 
 --
 -- Indexes for table `roles`
@@ -876,16 +958,34 @@ ALTER TABLE `asistencia`
   MODIFY `id_asistencia` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
 
 --
+-- AUTO_INCREMENT for table `compras_alumnos`
+--
+ALTER TABLE `compras_alumnos`
+  MODIFY `id_compra` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `compras_proveedores`
+--
+ALTER TABLE `compras_proveedores`
+  MODIFY `id_compra` int(11) NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT for table `cursos`
 --
 ALTER TABLE `cursos`
   MODIFY `id_curso` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=22;
 
 --
+-- AUTO_INCREMENT for table `detalle_compra_proveedor`
+--
+ALTER TABLE `detalle_compra_proveedor`
+  MODIFY `id_detalle` int(11) NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT for table `detalle_ventas`
 --
 ALTER TABLE `detalle_ventas`
-  MODIFY `id_detalle` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id_detalle` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
 -- AUTO_INCREMENT for table `eventos`
@@ -903,13 +1003,25 @@ ALTER TABLE `notificaciones`
 -- AUTO_INCREMENT for table `pagos`
 --
 ALTER TABLE `pagos`
-  MODIFY `id_pago` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id_pago` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+
+--
+-- AUTO_INCREMENT for table `pagos_alumnos_cantina`
+--
+ALTER TABLE `pagos_alumnos_cantina`
+  MODIFY `id_pago` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `pagos_proveedores`
+--
+ALTER TABLE `pagos_proveedores`
+  MODIFY `id_pago` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `permisos`
 --
 ALTER TABLE `permisos`
-  MODIFY `id_permiso` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=34;
+  MODIFY `id_permiso` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=27;
 
 --
 -- AUTO_INCREMENT for table `precios`
@@ -930,6 +1042,12 @@ ALTER TABLE `profesores`
   MODIFY `id_profesor` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
+-- AUTO_INCREMENT for table `proveedores`
+--
+ALTER TABLE `proveedores`
+  MODIFY `id_proveedor` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
 -- AUTO_INCREMENT for table `roles`
 --
 ALTER TABLE `roles`
@@ -945,7 +1063,7 @@ ALTER TABLE `usuarios`
 -- AUTO_INCREMENT for table `ventas`
 --
 ALTER TABLE `ventas`
-  MODIFY `id_venta` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id_venta` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- Constraints for dumped tables
@@ -964,6 +1082,25 @@ ALTER TABLE `alumnos`
 ALTER TABLE `asistencia`
   ADD CONSTRAINT `asistencia_ibfk_1` FOREIGN KEY (`id_alumno`) REFERENCES `alumnos` (`id_alumno`) ON DELETE CASCADE,
   ADD CONSTRAINT `asistencia_ibfk_2` FOREIGN KEY (`id_curso`) REFERENCES `cursos` (`id_curso`);
+
+--
+-- Constraints for table `compras_alumnos`
+--
+ALTER TABLE `compras_alumnos`
+  ADD CONSTRAINT `compras_alumnos_ibfk_1` FOREIGN KEY (`id_alumno`) REFERENCES `alumnos` (`id_alumno`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `compras_proveedores`
+--
+ALTER TABLE `compras_proveedores`
+  ADD CONSTRAINT `compras_proveedores_ibfk_1` FOREIGN KEY (`id_proveedor`) REFERENCES `proveedores` (`id_proveedor`);
+
+--
+-- Constraints for table `detalle_compra_proveedor`
+--
+ALTER TABLE `detalle_compra_proveedor`
+  ADD CONSTRAINT `detalle_compra_proveedor_ibfk_1` FOREIGN KEY (`id_compra`) REFERENCES `compras_proveedores` (`id_compra`) ON DELETE CASCADE,
+  ADD CONSTRAINT `detalle_compra_proveedor_ibfk_2` FOREIGN KEY (`id_producto`) REFERENCES `productos` (`id_producto`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `detalle_ventas`
@@ -993,10 +1130,28 @@ ALTER TABLE `pagos`
   ADD CONSTRAINT `pagos_ibfk_1` FOREIGN KEY (`id_alumno`) REFERENCES `alumnos` (`id_alumno`) ON DELETE CASCADE;
 
 --
+-- Constraints for table `pagos_alumnos_cantina`
+--
+ALTER TABLE `pagos_alumnos_cantina`
+  ADD CONSTRAINT `pagos_alumnos_cantina_ibfk_1` FOREIGN KEY (`id_alumno`) REFERENCES `alumnos` (`id_alumno`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `pagos_proveedores`
+--
+ALTER TABLE `pagos_proveedores`
+  ADD CONSTRAINT `pagos_proveedores_ibfk_1` FOREIGN KEY (`id_proveedor`) REFERENCES `proveedores` (`id_proveedor`) ON DELETE CASCADE;
+
+--
 -- Constraints for table `precios`
 --
 ALTER TABLE `precios`
   ADD CONSTRAINT `precios_ibfk_1` FOREIGN KEY (`id_curso`) REFERENCES `cursos` (`id_curso`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `productos`
+--
+ALTER TABLE `productos`
+  ADD CONSTRAINT `productos_ibfk_1` FOREIGN KEY (`id_proveedor`) REFERENCES `proveedores` (`id_proveedor`) ON DELETE SET NULL;
 
 --
 -- Constraints for table `profesores`

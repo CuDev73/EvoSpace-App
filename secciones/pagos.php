@@ -107,7 +107,7 @@ $conceptoSeleccionado = $_GET['concepto'] ?? '';
 
     <!-- FILTROS -->
     <div class="card shadow mb-3">
-        <div class="card-header bg-danger text-white py-2">
+        <div class="card-header bg-evo text-white py-2">
             <i class="bi bi-funnel"></i> Filtrar por curso
         </div>
         <div class="card-body py-2">
@@ -153,7 +153,7 @@ $conceptoSeleccionado = $_GET['concepto'] ?? '';
     <!-- CARDS DE CONCEPTOS -->
     <?php if ($cursoSeleccionado > 0): ?>
         <div class="card shadow mb-4">
-            <div class="card-header bg-info text-white py-2">
+            <div class="card-header bg-evo text-white py-2">
                 <i class="bi bi-tags"></i> Conceptos de pago para este curso
             </div>
             <div class="card-body py-2">
@@ -166,10 +166,10 @@ $conceptoSeleccionado = $_GET['concepto'] ?? '';
                         $tienePrecio = $precio > 0;
                     ?>
                         <div class="col-6 col-md-4 col-lg-2">
-                            <div class="card text-center shadow-sm h-100 <?= ($conceptoSeleccionado === $concepto) ? 'border-danger border-3' : '' ?> <?= !$tienePrecio ? 'opacity-50' : '' ?>"
-                                style="cursor: pointer;" onclick="seleccionarConcepto('<?= $concepto ?>')">
+                            <div class="card concepto-card text-center shadow-sm h-100 <?= ($conceptoSeleccionado === $concepto) ? 'selected border-3' : '' ?> <?= !$tienePrecio ? 'disabled' : '' ?>"
+                                onclick="seleccionarConcepto('<?= $concepto ?>')">
                                 <div class="card-body p-2">
-                                    <i class="bi <?= $iconos[$concepto] ?> fs-2 text-<?= $tienePrecio ? 'danger' : 'secondary' ?>"></i>
+                                    <i class="bi <?= $iconos[$concepto] ?> concepto-icon text-<?= $tienePrecio ? 'text-evo' : 'secondary' ?>"></i>
                                     <h6 class="card-title mt-1 mb-0 small"><?= ucfirst($concepto) ?></h6>
                                     <?php if ($tienePrecio): ?>
                                         <span class="badge bg-success small">Gs <?= number_format($precio, 0, ',', '.') ?></span>
@@ -177,7 +177,7 @@ $conceptoSeleccionado = $_GET['concepto'] ?? '';
                                         <span class="badge bg-secondary small">Sin precio</span>
                                     <?php endif; ?>
                                     <?php if ($conceptoSeleccionado === $concepto): ?>
-                                        <span class="badge bg-danger d-block mt-1">Seleccionado</span>
+                                        <span class="badge bg-evo d-block mt-1">Seleccionado</span>
                                     <?php endif; ?>
                                 </div>
                             </div>
@@ -190,7 +190,7 @@ $conceptoSeleccionado = $_GET['concepto'] ?? '';
 
     <!-- TABLA DE ALUMNOS -->
     <div class="card shadow">
-        <div class="card-header bg-danger text-white py-2">
+        <div class="card-header bg-evo text-white py-2">
             <i class="bi bi-people-fill"></i> Alumnos
             <?php if ($tipoSeleccionado): ?>
                 <span class="badge bg-light text-dark ms-2"><?= $tipoSeleccionado ?></span>
@@ -217,7 +217,7 @@ $conceptoSeleccionado = $_GET['concepto'] ?? '';
                                 <th>Nombre</th>
                                 <th>Tipo</th>
                                 <th>Curso</th>
-                                <th>Becado</th>
+                                <th>Dto.</th>
                                 <th>Acciones</th>
                             </tr>
                         </thead>
@@ -280,7 +280,7 @@ $conceptoSeleccionado = $_GET['concepto'] ?? '';
 <div class="modal fade" id="modalPago" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <div class="modal-header bg-success text-white">
+            <div class="modal-header bg-evo text-white">
                 <h5 class="modal-title"><i class="bi bi-plus-circle-fill"></i> Nuevo Pago</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
@@ -464,7 +464,7 @@ function actualizarPrecio() {
             montoFinal = Math.round(precio / 1000) * 1000;
         }
         document.getElementById('pago_beca_info').innerHTML = esBecado
-            ? '<i class="bi bi-info-circle-fill text-warning"></i> Beca aplicada (paga el ' + porcentajeBeca + '% de la cuota)'
+            ? '<i class="bi bi-info-circle-fill text-warning"></i> Descuento aplicado (paga el ' + porcentajeBeca + '% de la cuota)'
             : '';
     } else {
         montoFinal = precio;

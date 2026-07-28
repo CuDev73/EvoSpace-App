@@ -57,6 +57,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['
     }
 }
 
+$mostrarVolver = true;
+$volverUrl = 'index.php';
 include '../../../includes/header.php';
 include '../../../includes/navbar.php';
 
@@ -65,10 +67,7 @@ $productos = $pdo->query("SELECT * FROM productos WHERE activo = 1 AND cantidad 
 
 <div class="container mt-3">
 
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h4><i class="bi bi-cart-plus"></i> Nueva Venta</h4>
-        <a href="index.php" class="btn btn-secondary btn-sm"><i class="bi bi-arrow-left"></i> Volver al historial</a>
-    </div>
+    <h4 class="mb-3"><i class="bi bi-cart-plus"></i> Nueva Venta</h4>
 
     <?php if ($error): ?>
         <div class="alert alert-danger"><?= htmlspecialchars($error) ?></div>
@@ -150,24 +149,13 @@ $productos = $pdo->query("SELECT * FROM productos WHERE activo = 1 AND cantidad 
         </div>
 
         <div class="mt-3">
-            <button type="submit" class="btn btn-danger"><i class="bi bi-check-circle"></i> Registrar Venta</button>
-            <a href="index.php" class="btn btn-secondary">Cancelar</a>
+            <button type="submit" class="btn btn-danger w-100"><i class="bi bi-check-circle"></i> Registrar Venta</button>
+            <div class="text-center mt-2">
+                <a href="index.php" class="text-muted small">Cancelar</a>
+            </div>
         </div>
     </form>
 
-    <!-- Botones de Volver (abajo) -->
-    <div class="row g-2 mt-4">
-        <div class="col-md-6">
-            <button onclick="history.back()" class="btn btn-secondary w-100">
-                <i class="bi bi-arrow-left"></i> Volver atrás
-            </button>
-        </div>
-        <div class="col-md-6">
-            <a href="../index.php" class="btn btn-secondary w-100">
-                <i class="bi bi-house"></i> Volver al panel de Cantina
-            </a>
-        </div>
-    </div>
 </div>
 
 <script>

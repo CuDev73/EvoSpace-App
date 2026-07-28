@@ -58,7 +58,7 @@ $sumaOtros = array_sum(array_column($otros, 'total'));
 <div class="modal-body">
     <p><strong>Curso:</strong> <?= htmlspecialchars($alumno['curso_tipo'] . ' - ' . $alumno['curso_nombre']) ?></p>
     <?php if ($alumno['becado']): ?>
-        <p><span class="badge bg-warning text-dark">Becado (45.45% descuento en cuotas)</span></p>
+        <p><span class="badge bg-warning text-dark">Descuento aplicado</span></p>
     <?php endif; ?>
 
     <?php if (empty($pagos)): ?>

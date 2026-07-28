@@ -133,7 +133,7 @@ $tipoColores = [
 
     <!-- FILTROS -->
     <div class="card shadow mb-3">
-        <div class="card-header bg-danger text-white py-2 d-flex justify-content-between align-items-center">
+        <div class="card-header bg-evo text-white py-2 d-flex justify-content-between align-items-center">
             <span><i class="bi bi-funnel"></i> Filtrar eventos por curso</span>
             <button class="btn btn-sm btn-light fw-bold text-danger" data-bs-toggle="modal" data-bs-target="#modalNuevoEvento">
                 <i class="bi bi-plus-circle-fill text-danger"></i> Nuevo Evento
@@ -172,7 +172,7 @@ $tipoColores = [
 
     <!-- TABLA DE EVENTOS -->
     <div class="card shadow">
-        <div class="card-header bg-danger text-white py-2">
+        <div class="card-header bg-evo text-white py-2">
             <i class="bi bi-calendar-event-fill"></i> Panel de Eventos
             <?php if ($cursoSeleccionado > 0): ?>
                 <span class="badge bg-light text-dark ms-2">
@@ -270,7 +270,7 @@ $tipoColores = [
 <div class="modal fade" id="modalNuevoEvento" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <div class="modal-header bg-danger text-white">
+            <div class="modal-header bg-evo text-white">
                 <h5 class="modal-title"><i class="bi bi-plus-circle-fill"></i> Registrar Nuevo Evento</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
@@ -352,7 +352,7 @@ $tipoColores = [
 <div class="modal fade" id="modalEditarEvento" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <div class="modal-header bg-warning text-dark">
+            <div class="modal-header bg-evo text-white">
                 <h5 class="modal-title"><i class="bi bi-pencil-fill"></i> Editar Evento</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>

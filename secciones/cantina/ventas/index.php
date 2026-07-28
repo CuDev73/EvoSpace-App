@@ -25,25 +25,13 @@ if (isset($_GET['estado_pago']) && $_GET['estado_pago']) {
 $ventas = obtenerVentas($pdo, $filtros);
 $total_ventas = array_sum(array_column($ventas, 'total'));
 
+$mostrarVolver = true;
+$volverUrl = '../index.php';
 include '../../../includes/header.php';
 include '../../../includes/navbar.php';
 ?>
 
 <div class="container mt-3">
-    <!-- Botones de Volver -->
-    <div class="row g-2 mb-3">
-        <div class="col-md-6">
-            <button onclick="history.back()" class="btn btn-secondary w-100">
-                <i class="bi bi-arrow-left"></i> Volver atrás
-            </button>
-        </div>
-        <div class="col-md-6">
-            <a href="../index.php" class="btn btn-secondary w-100">
-                <i class="bi bi-house"></i> Volver al panel de Cantina
-            </a>
-        </div>
-    </div>
-
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h4><i class="bi bi-clock-history"></i> Historial de Ventas</h4>
         <a href="nueva.php" class="btn btn-danger btn-sm"><i class="bi bi-plus-circle"></i> Nueva Venta</a>
@@ -138,20 +126,6 @@ include '../../../includes/navbar.php';
                     </tbody>
                 </table>
             </div>
-        </div>
-    </div>
-
-    <!-- Botones de Volver (abajo) -->
-    <div class="row g-2 mt-4">
-        <div class="col-md-6">
-            <button onclick="history.back()" class="btn btn-secondary w-100">
-                <i class="bi bi-arrow-left"></i> Volver atrás
-            </button>
-        </div>
-        <div class="col-md-6">
-            <a href="../index.php" class="btn btn-secondary w-100">
-                <i class="bi bi-house"></i> Volver al panel de Cantina
-            </a>
         </div>
     </div>
 </div>

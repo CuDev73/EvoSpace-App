@@ -65,37 +65,47 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <title>EvoSpace - Login</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css">
-    <link rel="icon" type="image/x-icon" href="evo.ico">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@100..900&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/x-icon" href="/evospace/img/evolucionarte-removebg-preview.ico">
+    <link rel="stylesheet" href="/evospace/assets/css/estilos.css">
+    <style>body{padding-top:0!important}</style>
 </head>
-<body class="bg-light">
-    <div class="container vh-100">
-        <div class="row h-100 justify-content-center align-items-center">
-            <div class="col-md-5">
+<body>
+    <div class="login-page">
+        <div class="login-card">
+            <div class="login-header">
+                <img src="/evospace/img/evolucionarte-removebg-preview.ico" alt="Logo" class="login-logo">
+                <h2 class="login-title">EvoSpace</h2>
+                <p class="login-subtitle">Sistema de Gestión</p>
+            </div>
+            <div class="login-body">
                 <?php if ($error): ?>
-                    <div class="alert alert-danger"><?= $error ?></div>
+                    <div class="alert alert-danger d-flex align-items-center gap-2 mb-4">
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                        <span>Usuario o contraseña incorrectos.</span>
+                    </div>
                 <?php endif; ?>
-                <div class="card shadow">
-                    <div class="card-body p-4">
-                        <div class="text-center mb-4">
-                            <img src="img/evolucionarte-removebg-preview.ico" alt="Logo" width="100" class="mb-3">
-                            <h3>Iniciar Sesión</h3>
-                        </div>
-                        <form method="POST">
-                            <div class="mb-3">
-                                <label class="form-label">Usuario, Email o Cédula</label>
-                                <input type="text" name="eleccion" class="form-control" required autofocus>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Contraseña</label>
-                                <input type="password" name="contrasena" class="form-control" required>
-                            </div>
-                            <button type="submit" class="btn btn-danger w-100">Iniciar Sesión</button>
-                        </form>
-                        <div class="text-center mt-3">
-                            <small class="text-muted">EvoSpace - Sistema de Gestión</small>
+                <form method="POST">
+                    <div class="mb-3">
+                        <label class="form-label">Usuario, Email o Cédula</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light"><i class="bi bi-person-fill text-muted"></i></span>
+                            <input type="text" name="eleccion" class="form-control" placeholder="Ingresá tu usuario" required autofocus>
                         </div>
                     </div>
-                </div>
+                    <div class="mb-4">
+                        <label class="form-label">Contraseña</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light"><i class="bi bi-lock-fill text-muted"></i></span>
+                            <input type="password" name="contrasena" class="form-control" placeholder="Ingresá tu contraseña" required>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-evo w-100">
+                        <i class="bi bi-box-arrow-in-right"></i> Iniciar Sesión
+                    </button>
+                </form>
             </div>
         </div>
     </div>

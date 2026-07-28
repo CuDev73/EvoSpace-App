@@ -51,6 +51,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $mensaje = '<i class="bi bi-exclamation-triangle-fill text-danger"></i> Usuario, email y cédula son obligatorios.';
             $tipoMensaje = 'danger';
         } else {
+            // Verificar duplicados
+            $stmt = $pdo->prepare("SELECT id_usuario FROM usuarios WHERE (usuario = ? OR cedula = ?) AND id_usuario != ?");
+            $stmt->execute([$usuario, $cedula, $id_usuario]);
+            $dup = $stmt->fetch();
+            if ($dup) {
+                $dupStmt = $pdo->prepare("SELECT usuario, cedula FROM usuarios WHERE id_usuario = ?");
+                $dupStmt->execute([$dup['id_usuario']]);
+                $dupData = $dupStmt->fetch();
+                $partes = [];
+                if ($dupData['usuario'] === $usuario) $partes[] = "el usuario '<strong>$usuario</strong>'";
+                if ($dupData['cedula'] === $cedula) $partes[] = "la cédula '<strong>$cedula</strong>'";
+                $mensaje = '<i class="bi bi-exclamation-triangle-fill text-danger"></i> Ya existe un usuario con ' . implode(' y ', $partes) . '.';
+                $tipoMensaje = 'danger';
+            } else {
             try {
                 if ($id_usuario > 0) {
                     // EDITAR
@@ -66,6 +80,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
                     // Actualizar permisos
                     $permisosSeleccionados = isset($_POST['permisos']) ? array_map('trim', $_POST['permisos']) : [];
+                    // Si es profesor y no eligió permisos, asignar por defecto
+                    if (empty($permisosSeleccionados)) {
+                        $id_rol_usuario = $id_rol; // el rol seleccionado en el form
+                        if (isset($permisosPorDefecto[$id_rol_usuario])) {
+                            $permisosSeleccionados = $permisosPorDefecto[$id_rol_usuario];
+                        }
+                    }
                     $stmt = $pdo->prepare("DELETE FROM usuarios_permisos WHERE id_usuario = ?");
                     $stmt->execute([$id_usuario]);
                     if (!empty($permisosSeleccionados)) {
@@ -89,6 +110,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $id_usuario = $pdo->lastInsertId();
                         // Guardar permisos
                         $permisosSeleccionados = isset($_POST['permisos']) ? array_map('trim', $_POST['permisos']) : [];
+                        // Si es profesor y no eligió permisos, asignar por defecto
+                        if (empty($permisosSeleccionados)) {
+                            $id_rol_usuario = $id_rol;
+                            if (isset($permisosPorDefecto[$id_rol_usuario])) {
+                                $permisosSeleccionados = $permisosPorDefecto[$id_rol_usuario];
+                            }
+                        }
                         if (!empty($permisosSeleccionados)) {
                             $stmt = $pdo->prepare("INSERT INTO usuarios_permisos (id_usuario, permiso) VALUES (?, ?)");
                             foreach ($permisosSeleccionados as $permiso) {
@@ -105,6 +133,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
     }
+}
 
     // CAMBIAR ESTADO
     if ($accion === 'toggle_activo' && isset($_POST['id_usuario'])) {
@@ -187,23 +216,22 @@ $todosPermisos = $pdo->query("SELECT nombre, descripcion FROM permisos ORDER BY 
 
 // Array de etiquetas amigables para permisos
 $etiquetasPermisos = [
-    'ver_alumnos' => 'Ver Alumnos',
-    'editar_alumnos' => 'Editar Alumnos',
-    'ver_pagos' => 'Ver Pagos',
-    'editar_pagos' => 'Editar Pagos',
-    'ver_eventos' => 'Ver Eventos',
-    'editar_eventos' => 'Editar Eventos',
-    'ver_asistencia' => 'Ver Asistencia',
-    'editar_asistencia' => 'Editar Asistencia',
-    'ver_profesores' => 'Ver Profesores',
-    'editar_profesores' => 'Editar Profesores',
-    'ver_configuracion' => 'Ver Configuración',
-    'editar_configuracion' => 'Editar Configuración',
+    'alumnos' => 'Alumnos',
+    'pagos' => 'Pagos',
+    'profesores' => 'Profesores',
+    'eventos' => 'Eventos',
+    'asistencia' => 'Asistencia',
+    'cantina' => 'Cantina',
+    'configuracion' => 'Configuración',
+    'usuarios' => 'Usuarios',
     'gestionar_usuarios' => 'Gestionar Usuarios',
-    'ver_padres' => 'Ver Padres',
-    'editar_padres' => 'Editar Padres',
-    'ver_cantina' => 'Ver Cantina',
-    // Si hay más permisos, agregarlos aquí
+];
+
+// Permisos por defecto según rol
+$permisosPorDefecto = [
+    2 => ['asistencia', 'alumnos', 'pagos', 'eventos'], // profesor
+    3 => ['pagos'], // padre
+    4 => ['asistencia', 'alumnos', 'pagos', 'cantina'], // auxiliar
 ];
 
 // Obtener alumnos para el modal de hijos
@@ -218,7 +246,7 @@ $alumnos_todos = $pdo->query("
 
 <div class="container mt-3 pb-4">
     <!-- Título -->
-    <div class="bg-danger text-white p-3 rounded mb-3 d-flex justify-content-between align-items-center">
+    <div class="page-header">
         <div>
             <h4 class="h4 fw-bold mb-0"><i class="bi bi-people-fill me-2"></i>Gestión de Usuarios</h4>
             <small>Administra los usuarios del sistema y asigna hijos a padres</small>
@@ -254,8 +282,12 @@ $alumnos_todos = $pdo->query("
                 <option value="0" <?= $filtro_estado === 0 ? 'selected' : '' ?>>Inactivos</option>
             </select>
         </div>
-        <div class="col-md-6 text-end">
+        <div class="col-md-3 text-end">
             <a href="?rol=&estado=-1" class="btn btn-outline-secondary btn-sm">Limpiar filtros</a>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label small">Buscar</label>
+            <input type="text" id="buscadorUsuario" class="form-control form-control-sm" placeholder="Nombre, email, cédula...">
         </div>
     </div>
 
@@ -263,8 +295,8 @@ $alumnos_todos = $pdo->query("
     <div class="card shadow">
         <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-hover table-sm mb-0">
-                    <thead class="table-dark text-center">
+                <table class="table table-hover table-sm mb-0" id="tablaUsuarios">
+                    <thead class="text-center" style="background: var(--evo-bg-alt);">
                         <tr>
                             <th>ID</th>
                             <th>Usuario</th>
@@ -350,7 +382,7 @@ $alumnos_todos = $pdo->query("
 <div class="modal fade" id="modalUsuario" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <div class="modal-header bg-danger text-white">
+            <div class="modal-header bg-evo text-white">
                 <h5 class="modal-title" id="modalTituloUsuario"><i class="bi bi-person-fill me-2"></i>Nuevo Usuario</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
@@ -420,7 +452,7 @@ $alumnos_todos = $pdo->query("
 <div class="modal fade" id="modalHijos" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <div class="modal-header bg-success text-white">
+            <div class="modal-header bg-evo text-white">
                 <h5 class="modal-title"><i class="bi bi-people-fill me-2"></i>Asignar hijos a <span id="nombrePadre"></span></h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
@@ -479,9 +511,30 @@ $alumnos_todos = $pdo->query("
         document.getElementById('password').required = true;
         document.getElementById('id_rol').value = '<?= $roles[0]['id_rol'] ?? 3 ?>';
         document.getElementById('activo').checked = true;
-        // Desmarcar permisos
-        document.querySelectorAll('.permiso-checkbox').forEach(cb => cb.checked = false);
+        preseleccionarPermisos();
     }
+
+    function preseleccionarPermisos() {
+        const rol = document.getElementById('id_rol').value;
+        const defaults = {
+            2: ['asistencia', 'alumnos', 'pagos', 'eventos'],
+            3: ['pagos'],
+            4: ['asistencia', 'alumnos', 'pagos', 'cantina']
+        };
+        document.querySelectorAll('.permiso-checkbox').forEach(cb => {
+            cb.checked = defaults[rol]?.includes(cb.value) || false;
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const rolSelect = document.getElementById('id_rol');
+        if (rolSelect) {
+            rolSelect.addEventListener('change', function() {
+                const algunaSeleccionada = Array.from(document.querySelectorAll('.permiso-checkbox')).some(cb => cb.checked);
+                if (!algunaSeleccionada) preseleccionarPermisos();
+            });
+        }
+    });
 
     function editarUsuario(usuario) {
         document.getElementById('modalTituloUsuario').innerHTML = '<i class="bi bi-pencil-fill me-2"></i>Editar Usuario';
@@ -527,6 +580,20 @@ $alumnos_todos = $pdo->query("
                 document.querySelectorAll('.fila-alumno').forEach(fila => {
                     const nombre = fila.cells[1].textContent.toLowerCase();
                     fila.style.display = nombre.includes(filtro) ? '' : 'none';
+                });
+            });
+        }
+    });
+
+    // Buscador en tabla de usuarios
+    document.addEventListener('DOMContentLoaded', function() {
+        const input = document.getElementById('buscadorUsuario');
+        if (input) {
+            input.addEventListener('keyup', function() {
+                const term = this.value.toLowerCase().trim();
+                document.querySelectorAll('#tablaUsuarios tbody tr').forEach(row => {
+                    const texto = row.textContent.toLowerCase();
+                    row.style.display = texto.includes(term) ? '' : 'none';
                 });
             });
         }

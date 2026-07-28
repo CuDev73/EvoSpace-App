@@ -7,8 +7,6 @@ if (!isset($_SESSION['id_usuario'])) {
     exit;
 }
 
-include '../../includes/header.php';
-include '../../includes/navbar.php';
 require_once '../../config/db.php';
 verificarPermiso('asistencia');
 
@@ -19,6 +17,9 @@ if ($id_curso == 0) {
     header('Location: /evospace/roles/profesor.php');
     exit;
 }
+
+include '../../includes/header.php';
+include '../../includes/navbar.php';
 
 // Obtener datos del curso
 $stmt = $pdo->prepare("SELECT nombre, tipo FROM cursos WHERE id_curso = ?");

@@ -192,7 +192,7 @@ $monto_abono = $abono_edit ? $abono_edit['monto_abono'] : '';
 
     <!-- Tabla de Profesores (con abonos del mes y pendiente) -->
     <div class="card shadow mb-4">
-        <div class="card-header bg-danger text-white py-2">
+        <div class="card-header bg-evo text-white py-2">
             <i class="bi bi-people-fill"></i> Profesores Registrados
             <span class="badge bg-light text-dark ms-2"><?= count($profesores) ?></span>
         </div>
@@ -269,28 +269,24 @@ $monto_abono = $abono_edit ? $abono_edit['monto_abono'] : '';
     </div>
 
     <!-- ========================================================== -->
-    <!-- SECCIÓN ABONOS                                             -->
+    <!-- SECCIÓN ABONOS (Pagos a Profesores)                       -->
     <!-- ========================================================== -->
-    <div class="row g-2 mb-4 align-items-center">
-        <div class="col-md-4">
-            <h5 class="mb-0 text-secondary"><i class="bi bi-cash-stack"></i> Gestión de Abonos</h5>
-        </div>
-        <div class="col-md-4">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+        <h5 class="mb-0 text-secondary"><i class="bi bi-cash-stack me-1"></i> Pagos a Profesores</h5>
+        <div class="d-flex gap-2">
             <form method="GET" class="d-flex">
-                <select name="filtro_profesor" class="form-select form-select-sm me-2" onchange="this.form.submit()">
-                    <option value="0">Todos los profesores</option>
+                <select name="filtro_profesor" class="form-select form-select-sm me-1" onchange="this.form.submit()">
+                    <option value="0">Todos</option>
                     <?php foreach ($listaProfesores as $p): ?>
                         <option value="<?= $p['id_usuario'] ?>" <?= ($filtroProfesor == $p['id_usuario']) ? 'selected' : '' ?>>
                             <?= htmlspecialchars($p['nombre_completo']) ?>
                         </option>
                     <?php endforeach; ?>
                 </select>
-                <a href="profesores.php" class="btn btn-secondary btn-sm">Limpiar</a>
+                <a href="profesores.php" class="btn btn-secondary btn-sm"><i class="bi bi-x-lg"></i></a>
             </form>
-        </div>
-        <div class="col-md-4 text-end">
-            <button class="btn btn-success btn-sm w-100 w-md-auto" type="button" data-bs-toggle="collapse" data-bs-target="#collapseAbono" aria-expanded="<?= ($idEditarAbono > 0) ? 'true' : 'false' ?>" aria-controls="collapseAbono">
-                <i class="bi bi-plus-circle-fill"></i> <?= $idEditarAbono > 0 ? "Editar Abono" : "Nuevo Abono" ?>
+            <button class="btn btn-success btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#collapseAbono">
+                <i class="bi bi-plus-circle-fill"></i> Nuevo Pago
             </button>
         </div>
     </div>
@@ -298,9 +294,8 @@ $monto_abono = $abono_edit ? $abono_edit['monto_abono'] : '';
     <!-- Formulario de Abonos -->
     <div class="collapse <?= ($idEditarAbono > 0) ? 'show' : '' ?> mb-4" id="collapseAbono">
         <div class="card shadow">
-            <div class="card-header <?= $idEditarAbono > 0 ? 'bg-warning text-dark' : 'bg-success text-white' ?> py-2">
-                <i class="bi <?= $idEditarAbono > 0 ? 'bi-pencil-square' : 'bi-plus-circle-fill' ?>"></i>
-                <?= $idEditarAbono > 0 ? "Actualizar Abono ID: $idEditarAbono" : "Registrar Nuevo Abono" ?>
+            <div class="card-header bg-success text-white py-2">
+            <i class="bi bi-plus-circle-fill me-1"></i> Registrar Pago a Profesor
             </div>
             <div class="card-body">
                 <form method="POST" action="profesores.php">
@@ -340,7 +335,7 @@ $monto_abono = $abono_edit ? $abono_edit['monto_abono'] : '';
 
     <!-- Tabla de Abonos -->
     <div class="card shadow mb-4">
-        <div class="card-header bg-danger text-white py-2">
+        <div class="card-header bg-evo text-white py-2">
             <i class="bi bi-receipt"></i> Registro de Abonos
             <span class="badge bg-light text-dark ms-2"><?= count($abonos) ?></span>
             <?php if ($filtroProfesor > 0): ?>
@@ -406,7 +401,7 @@ $monto_abono = $abono_edit ? $abono_edit['monto_abono'] : '';
 <div class="modal fade" id="modalSalario" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
+            <div class="modal-header bg-evo text-white">
                 <h5 class="modal-title"><i class="bi bi-cash"></i> Editar Salario</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>

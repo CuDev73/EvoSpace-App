@@ -12,20 +12,22 @@ verificarPermiso('configuracion');
 ?>
 
 <div class="container mt-3">
-    <div class="bg-danger text-white p-4 rounded mb-4">
-        <h3 class="h3 fw-bold">EvoSpace</h3>
-        <p class="mb-0">Panel de Configuración</p>
+    <div class="page-header">
+        <div>
+            <h3 class="fw-bold mb-0"><i class="bi bi-gear-fill me-2"></i> Panel de Configuración</h3>
+            <small>Administra la configuración del sistema</small>
+        </div>
     </div>
 
     <div class="row g-4">
         <!-- Tarjeta: Configurar Pagos -->
         <div class="col-md-4">
-            <div class="card shadow h-100 text-center">
+            <div class="card shadow-hover h-100 text-center">
                 <div class="card-body d-flex flex-column align-items-center justify-content-center">
                     <i class="bi bi-coin fs-1 text-danger"></i>
                     <h5 class="card-title mt-3">Pagos</h5>
                     <p class="card-text text-muted small">Editar precios por curso y conceptos</p>
-                    <a href="configurar_pagos.php" class="btn btn-danger mt-2">
+                    <a href="configurar_pagos.php" class="btn btn-evo mt-2">
                         <i class="bi bi-arrow-right-circle"></i> Configurar
                     </a>
                 </div>
@@ -34,7 +36,7 @@ verificarPermiso('configuracion');
 
         <!-- Tarjeta: Configurar Eventos (futuro) -->
         <div class="col-md-4">
-            <div class="card shadow h-100 text-center">
+            <div class="card shadow-hover h-100 text-center">
                 <div class="card-body d-flex flex-column align-items-center justify-content-center">
                     <i class="bi bi-calendar-event fs-1 text-secondary"></i>
                     <h5 class="card-title mt-3">Eventos</h5>
@@ -48,7 +50,7 @@ verificarPermiso('configuracion');
 
         <!-- Tarjeta: Configurar Cursos (futuro) -->
         <div class="col-md-4">
-            <div class="card shadow h-100 text-center">
+            <div class="card shadow-hover h-100 text-center">
                 <div class="card-body d-flex flex-column align-items-center justify-content-center">
                     <i class="bi bi-book fs-1 text-secondary"></i>
                     <h5 class="card-title mt-3">Cursos</h5>
@@ -62,7 +64,7 @@ verificarPermiso('configuracion');
 
         <!-- Tarjeta: Configurar Usuarios (futuro) -->
         <div class="col-md-4">
-            <div class="card shadow h-100 text-center">
+            <div class="card shadow-hover h-100 text-center">
                 <div class="card-body d-flex flex-column align-items-center justify-content-center">
                     <i class="bi bi-people fs-1 text-secondary"></i>
                     <h5 class="card-title mt-3">Usuarios</h5>
@@ -76,7 +78,7 @@ verificarPermiso('configuracion');
 
         <!-- Tarjeta: Configurar General (futuro) -->
         <div class="col-md-4">
-            <div class="card shadow h-100 text-center">
+            <div class="card shadow-hover h-100 text-center">
                 <div class="card-body d-flex flex-column align-items-center justify-content-center">
                     <i class="bi bi-gear fs-1 text-secondary"></i>
                     <h5 class="card-title mt-3">General</h5>

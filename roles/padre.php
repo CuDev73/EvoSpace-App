@@ -84,7 +84,7 @@ function calcularDeuda($pdo, $id_alumno, $mes, $anio, $porcentajeBeca, $recargoP
     $stmt = $pdo->prepare("SELECT becado FROM alumnos WHERE id_alumno = ?");
     $stmt->execute([$id_alumno]);
     $becado = $stmt->fetchColumn();
-    $cuota = $becado ? $cuotaBase * ($porcentajeBeca / 100) : $cuotaBase;
+    $cuota = $becado ? round($cuotaBase * ($porcentajeBeca / 100) / 1000) * 1000 : $cuotaBase;
 
     // 3. Sumar pagos de cuota en el mes filtrado
     $stmt = $pdo->prepare("
@@ -121,16 +121,17 @@ function calcularDeuda($pdo, $id_alumno, $mes, $anio, $porcentajeBeca, $recargoP
 <div class="container mt-3 pt-4">
 
     <!-- Saludo -->
-    <div class="card shadow mb-4">
-        <div class="card-body">
-            <h4><i class="bi bi-person-circle"></i> Bienvenido, <?= htmlspecialchars($padre['usuario']) ?></h4>
-            <p class="mb-0">Email: <?= htmlspecialchars($padre['email']) ?></p>
+    <div class="dashboard-greeting mb-4">
+        <div>
+            <h4 class="fw-bold mb-0"><i class="bi bi-person-circle me-2"></i> Bienvenido, <?= htmlspecialchars($padre['usuario']) ?></h4>
+            <small>Email: <?= htmlspecialchars($padre['email']) ?></small>
         </div>
+        <span class="badge bg-light text-dark fs-6"><?= count($hijos) ?> hijo<?= count($hijos) !== 1 ? 's' : '' ?></span>
     </div>
 
     <!-- Eventos próximos (ahora sin duplicados) -->
     <div class="card shadow mb-4">
-        <div class="card-header bg-danger text-white">
+        <div class="card-header bg-evo text-white">
             <i class="bi bi-calendar-event"></i> Próximos eventos para tus hijos
         </div>
         <div class="card-body">
@@ -165,7 +166,7 @@ function calcularDeuda($pdo, $id_alumno, $mes, $anio, $porcentajeBeca, $recargoP
 
     <!-- Notificaciones (ya se arregló en NotificacionModel) -->
     <div class="card shadow mb-4">
-        <div class="card-header bg-warning text-dark">
+        <div class="card-header bg-evo text-white">
             <i class="bi bi-bell-fill"></i> Notificaciones
             <?php if (count($notificaciones) > 0): ?>
                 <span class="badge bg-danger rounded-pill ms-2"><?= count($notificaciones) ?></span>
@@ -196,36 +197,40 @@ function calcularDeuda($pdo, $id_alumno, $mes, $anio, $porcentajeBeca, $recargoP
     </div>
 
     <!-- Filtro de mes/año -->
-    <form method="GET" class="row g-2 mb-3 align-items-end">
-        <div class="col-md-3">
-            <label class="form-label small">Mes</label>
-            <select name="mes" class="form-select form-select-sm">
-                <?php for ($m=1; $m<=12; $m++): ?>
-                    <option value="<?= $m ?>" <?= $m == $mesFiltro ? 'selected' : '' ?>>
-                        <?= date('F', mktime(0,0,0,$m,1)) ?>
-                    </option>
-                <?php endfor; ?>
-            </select>
+    <div class="card shadow-sm mb-3">
+        <div class="card-body py-2">
+            <form method="GET" class="row g-2 align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label small mb-1">Mes</label>
+                    <select name="mes" class="form-select form-select-sm">
+                        <?php for ($m=1; $m<=12; $m++): ?>
+                            <option value="<?= $m ?>" <?= $m == $mesFiltro ? 'selected' : '' ?>>
+                                <?= date('F', mktime(0,0,0,$m,1)) ?>
+                            </option>
+                        <?php endfor; ?>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small mb-1">Año</label>
+                    <select name="anio" class="form-select form-select-sm">
+                        <?php for ($a=date('Y')-2; $a<=date('Y')+1; $a++): ?>
+                            <option value="<?= $a ?>" <?= $a == $anioFiltro ? 'selected' : '' ?>><?= $a ?></option>
+                        <?php endfor; ?>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <button type="submit" class="btn btn-evo btn-sm w-100">Filtrar</button>
+                </div>
+                <div class="col-md-3 text-end">
+                    <a href="?mes=<?= date('m') ?>&anio=<?= date('Y') ?>" class="btn btn-outline-secondary btn-sm w-100 w-md-auto">Mes actual</a>
+                </div>
+            </form>
         </div>
-        <div class="col-md-3">
-            <label class="form-label small">Año</label>
-            <select name="anio" class="form-select form-select-sm">
-                <?php for ($a=date('Y')-2; $a<=date('Y')+1; $a++): ?>
-                    <option value="<?= $a ?>" <?= $a == $anioFiltro ? 'selected' : '' ?>><?= $a ?></option>
-                <?php endfor; ?>
-            </select>
-        </div>
-        <div class="col-md-3">
-            <button type="submit" class="btn btn-danger btn-sm w-100">Filtrar</button>
-        </div>
-        <div class="col-md-3 text-end">
-            <a href="?mes=<?= date('m') ?>&anio=<?= date('Y') ?>" class="btn btn-outline-secondary btn-sm">Mes actual</a>
-        </div>
-    </form>
+    </div>
 
     <!-- Lista de hijos con deuda -->
     <div class="card shadow">
-        <div class="card-header bg-danger text-white">
+        <div class="card-header bg-evo text-white">
             <i class="bi bi-people-fill"></i> Mis hijos - Resumen de deudas
             <span class="badge bg-light text-dark ms-2">Mes: <?= date('F', mktime(0,0,0,$mesFiltro,1)) . ' ' . $anioFiltro ?></span>
         </div>
@@ -263,14 +268,15 @@ function calcularDeuda($pdo, $id_alumno, $mes, $anio, $porcentajeBeca, $recargoP
                         }
                     ?>
                         <div class="col-md-6 col-lg-4 mb-4">
-                            <div class="card h-100 shadow-sm">
-                                <div class="card-header bg-info text-white">
-                                    <i class="bi bi-person-fill"></i> <?= htmlspecialchars($hijo['nombre'] . ' ' . $hijo['apellido']) ?>
+                            <div class="card h-100 shadow-hover">
+                                <div class="card-header bg-evo text-white d-flex justify-content-between align-items-center">
+                                    <span><i class="bi bi-person-fill me-1"></i> <?= htmlspecialchars($hijo['nombre'] . ' ' . $hijo['apellido']) ?></span>
+                                    <span class="badge bg-light text-dark"><?= htmlspecialchars($hijo['curso_tipo']) ?></span>
                                 </div>
                                 <div class="card-body">
                                     <p><strong>Curso:</strong> <?= htmlspecialchars($hijo['curso_tipo'] . ' - ' . $hijo['curso_nombre']) ?></p>
                                     <p><strong>Año ingreso:</strong> <?= $hijo['anio_ingreso'] ?></p>
-                                    <p><strong>Becado:</strong> <?= $hijo['becado'] ? 'Sí' : 'No' ?></p>
+                                    <p><strong>Descuento:</strong> <?= $hijo['becado'] ? 'Sí' : 'No' ?></p>
                                     <p><strong>Total pagado histórico:</strong> <?= number_format($total_historico, 0, ',', '.') ?> Gs</p>
 
                                     <hr>
@@ -300,13 +306,12 @@ function calcularDeuda($pdo, $id_alumno, $mes, $anio, $porcentajeBeca, $recargoP
                 </div>
 
                 <!-- Resumen total de deuda -->
-                <div class="alert alert-secondary mt-3">
-                    <strong>Total de deuda del mes para todos tus hijos:</strong>
-                    <?= number_format($deudaTotal, 0, ',', '.') ?> Gs
+                <div class="bg-light rounded p-3 border d-flex justify-content-between align-items-center flex-wrap gap-2 mt-3">
+                    <strong class="fs-5">Total deuda del mes: <?= number_format($deudaTotal, 0, ',', '.') ?> Gs</strong>
                     <?php if ($deudaTotal > 0): ?>
-                        <span class="badge bg-danger ms-2">¡Atención!</span>
+                        <span class="badge bg-danger fs-6 px-3 py-2"><i class="bi bi-exclamation-triangle-fill me-1"></i>¡Atención!</span>
                     <?php else: ?>
-                        <span class="badge bg-success ms-2">¡Todo al día!</span>
+                        <span class="badge bg-success fs-6 px-3 py-2"><i class="bi bi-check-circle-fill me-1"></i>¡Todo al día!</span>
                     <?php endif; ?>
                 </div>
 

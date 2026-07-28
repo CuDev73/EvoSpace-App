@@ -62,6 +62,9 @@ foreach ($resultados as $row) {
 }
 
 $mensaje = '';
+if (isset($_GET['guardado'])) {
+    $mensaje = '<div class="alert alert-success"><i class="bi bi-check-circle-fill"></i> Asistencia mensual guardada correctamente.</div>';
+}
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['guardar'])) {
     $id_curso_post = (int)$_POST['id_curso'];
     $mes_post = (int)$_POST['mes'];
@@ -83,8 +86,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['guardar'])) {
             }
         }
         $pdo->commit();
-        $mensaje = '<div class="alert alert-success"><i class="bi bi-check-circle-fill"></i> Asistencia mensual guardada correctamente.</div>';
-        header('Location: mensual.php?id_curso=' . $id_curso_post . '&mes=' . $mes_post . '&anio=' . $anio_post);
+        header('Location: mensual.php?id_curso=' . $id_curso_post . '&mes=' . $mes_post . '&anio=' . $anio_post . '&guardado=1');
         exit;
     } catch (Exception $e) {
         $pdo->rollBack();
@@ -99,16 +101,6 @@ for ($m=1; $m<=12; $m++) {
 }
 $anios = range(date('Y')-2, date('Y')+1);
 ?>
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Asistencia Mensual</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css">
-</head>
-<body>
     <?php include '../../includes/header.php'; ?>
     <?php include '../../includes/navbar.php'; ?>
 
@@ -223,5 +215,3 @@ $anios = range(date('Y')-2, date('Y')+1);
     </script>
 
     <?php include '../../includes/footer.php'; ?>
-</body>
-</html>

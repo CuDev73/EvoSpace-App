@@ -86,10 +86,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $sql = "UPDATE configuracion SET valor = ? WHERE clave = 'porcentaje_beca'";
             $stmt = $pdo->prepare($sql);
             if ($stmt->execute([$nuevo_porcentaje])) {
-                $mensaje = '<div class="alert alert-success"><i class="bi bi-check-circle-fill"></i> Porcentaje de beca actualizado correctamente.</div>';
+                $mensaje = '<div class="alert alert-success"><i class="bi bi-check-circle-fill"></i> Descuento actualizado correctamente.</div>';
                 $porcentaje_beca = $nuevo_porcentaje;
             } else {
-                $mensaje = '<div class="alert alert-danger"><i class="bi bi-exclamation-triangle-fill"></i> Error al actualizar el porcentaje de beca.</div>';
+                $mensaje = '<div class="alert alert-danger"><i class="bi bi-exclamation-triangle-fill"></i> Error al actualizar el descuento.</div>';
             }
         } else {
             $mensaje = '<div class="alert alert-danger"><i class="bi bi-exclamation-triangle-fill"></i> El porcentaje debe estar entre 0 y 100.</div>';
@@ -133,33 +133,31 @@ $iconos = [
 <div class="container mt-3 pb-4">
     <?= $mensaje ?>
 
-    <!-- SECCIÓN: Porcentaje de beca global -->
-    <div class="card shadow mb-4">
-        <div class="card-header bg-warning text-dark py-2">
-            <i class="bi bi-percent"></i> Porcentaje que paga el alumno becado
+    <!-- SECCIÓN: Porcentaje de descuento global -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-evo text-white py-2">
+            <i class="bi bi-percent"></i> Descuento global para cuota
         </div>
-        <div class="card-body py-3">
-            <form method="POST">
+        <div class="card-body py-2">
+            <form method="POST" class="row g-2 align-items-end">
                 <input type="hidden" name="accion" value="actualizar_beca">
-
-                <div class="row g-2 align-items-end">
-                    <div class="col-md-6">
-                        <label class="form-label small mb-0">Porcentaje a pagar (%)</label>
-                        <div class="input-group input-group-sm">
-                            <input type="number" step="0.01" name="porcentaje_beca"
-                                class="form-control" value="<?= $porcentaje_beca ?>"
-                                min="0" max="100" required>
-                            <button type="submit" class="btn btn-warning">
-                                <i class="bi bi-save"></i> Actualizar
-                            </button>
-                        </div>
+                <div class="col-md-4">
+                    <label class="form-label small mb-0">Porcentaje a pagar (%)</label>
+                    <div class="input-group input-group-sm">
+                        <input type="number" step="0.01" name="porcentaje_beca"
+                            class="form-control" value="<?= $porcentaje_beca ?>"
+                            min="0" max="100" required>
+                        <button type="submit" class="btn btn-warning btn-sm">
+                            <i class="bi bi-save"></i> Actualizar
+                        </button>
                     </div>
-                    <div class="col-md-6">
-                        <small class="text-muted">
-                            <i class="bi bi-info-circle me-1"></i>
-                            Valor actual: <strong><?= $porcentaje_beca ?>%</strong>. Usa punto (.) para decimales.
-                        </small>
-                    </div>
+                </div>
+                <div class="col-md-8">
+                    <small class="text-muted">
+                        <i class="bi bi-info-circle me-1"></i>
+                        Actual: <strong><?= $porcentaje_beca ?>%</strong> del precio base.
+                        Ej: cuota Gs 250.000 → con descuento Gs <?= number_format(round(250000 * $porcentaje_beca / 100 / 1000) * 1000, 0, ',', '.') ?>
+                    </small>
                 </div>
             </form>
         </div>
@@ -182,14 +180,14 @@ $iconos = [
             <?php endif; ?>
 
             <div class="card shadow mb-4">
-                <div class="card-header bg-danger text-white py-2">
+                <div class="card-header bg-evo text-white py-2">
                     <i class="bi bi-tag"></i> <?= $tipo ?>
                     <span class="badge bg-light text-dark ms-2"><?= count($cursosTipo) ?> cursos</span>
                 </div>
                 <div class="card-body py-2">
                     <?php foreach ($cursosTipo as $id_curso => $curso): ?>
-                        <div class="row mb-2 p-2 border rounded align-items-center">
-                            <div class="col-md-2 fw-bold small"><?= htmlspecialchars($curso['nombre']) ?></div>
+                        <div class="row mb-1 py-1 align-items-center">
+                            <div class="col-md-2 fw-semibold small"><?= htmlspecialchars($curso['nombre']) ?></div>
                             <div class="col-md-10">
                                 <div class="row g-1">
                                     <?php foreach ($conceptos_orden as $concepto):
@@ -203,18 +201,18 @@ $iconos = [
                                             <label class="form-label small mb-0">
                                                 <i class="bi <?= $iconos[$concepto] ?> me-1"></i><?= ucfirst($concepto) ?>
                                             </label>
-                                            <div class="input-group input-group-sm">
-                                                <span class="input-group-text">Gs</span>
-                                                <input type="number" step="0.01"
-                                                    name="precio[<?= $precioData['id_precio'] ?>]"
-                                                    class="form-control form-control-sm"
-                                                    value="<?= $precio ?>">
-                                            </div>
-                                            <?php if ($concepto === 'cuota'): ?>
-                                                <small class="text-muted" style="font-size: 0.65rem;">
-                                                    Con beca (<?= $porcentaje_beca ?>%): Gs <?= number_format($precioConBecaRedondeado, 0, ',', '.') ?>
-                                                </small>
-                                            <?php endif; ?>
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text">Gs</span>
+                                <input type="number" step="0.01"
+                                    name="precio[<?= $precioData['id_precio'] ?>]"
+                                    class="form-control form-control-sm"
+                                    value="<?= $precio ?>">
+                                <?php if ($concepto === 'cuota'): ?>
+                                    <span class="input-group-text bg-warning-subtle text-dark small" title="Con descuento (<?= $porcentaje_beca ?>%)">
+                                        <small>Dto: Gs <?= number_format($precioConBecaRedondeado, 0, ',', '.') ?></small>
+                                    </span>
+                                <?php endif; ?>
+                            </div>
                                         </div>
                                     <?php endforeach; ?>
                                 </div>
@@ -240,7 +238,7 @@ $iconos = [
 <div class="modal fade" id="modalConfirmar" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
-            <div class="modal-header bg-warning text-dark">
+            <div class="modal-header bg-evo text-white">
                 <h5 class="modal-title"><i class="bi bi-exclamation-triangle-fill"></i> Confirmar cambios</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>

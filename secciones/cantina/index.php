@@ -12,15 +12,6 @@ verificarPermiso('cantina');
 ?>
 
 <div class="container mt-3">
-    <div class="bg-danger text-white p-3 rounded mb-4 d-flex justify-content-between align-items-center">
-        <div>
-            <h4 class="h4 fw-bold mb-0"><i class="bi bi-cup-straw me-2"></i>Módulo Cantina</h4>
-            <small>Gestión de ventas, productos, compras y proveedores</small>
-        </div>
-        <a href="resumen.php" class="btn btn-light btn-sm">
-            <i class="bi bi-graph-up-arrow"></i> Ver resumen
-        </a>
-    </div>
 
     <div class="row g-4">
         <!-- 1. Nueva Venta -->

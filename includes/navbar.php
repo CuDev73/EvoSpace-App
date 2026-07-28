@@ -1,32 +1,41 @@
-<nav class="navbar navbar-dark bg-danger fixed-top">
+<nav class="navbar navbar-dark bg-evo fixed-top">
     <div class="container-fluid position-relative">
-        <!-- Botón hamburguesa -->
+        <?php if (isset($mostrarVolver) && $mostrarVolver === true): ?>
+        <a href="<?= isset($volverUrl) ? $volverUrl : '/evospace/secciones/cantina/index.php' ?>" class="btn btn-sm text-white px-1">
+            <i class="bi bi-arrow-left fs-5"></i>
+        </a>
+        <?php else: ?>
         <button class="navbar-toggler border-0" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar">
             <span class="navbar-toggler-icon"></span>
         </button>
+        <?php endif; ?>
 
         <!-- Título centrado -->
         <a class="navbar-brand fw-bold position-absolute start-50 translate-middle-x" href="/evospace/roles/admin.php">
-            Evolucionarte
+            EvoSpace
         </a>
 
         <!-- Usuario a la derecha -->
         <span class="navbar-text text-white d-none d-md-inline ms-auto">
             <i class="bi bi-person-circle"></i> 
-            <?= htmlspecialchars($_SESSION['nombre_completo'] ?? $_SESSION['usuario'] ?? 'Admin') ?>
+            <?= htmlspecialchars($_SESSION['nombre_completo'] ?? $_SESSION['usuario'] ?? 'EvoSpace') ?>
         </span>
 
         <!-- Offcanvas (menú lateral) -->
-        <div class="offcanvas offcanvas-start bg-light" tabindex="-1" id="offcanvasNavbar">
-            <div class="offcanvas-header bg-danger text-white d-flex align-items-center" style="min-height: 56px; padding: 0.5rem 1rem;">
-                <h5 class="offcanvas-title mb-0 fs-6">Secciones</h5>
-                <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="offcanvas"></button>
+        <div class="offcanvas offcanvas-start" tabindex="-1" id="offcanvasNavbar">
+            <div class="offcanvas-header d-flex align-items-center">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-person-circle fs-4"></i>
+                    <div>
+                        <div class="fw-bold small"><?= htmlspecialchars($_SESSION['nombre_completo'] ?? $_SESSION['usuario'] ?? 'EvoSpace') ?></div>
+                        <div class="small opacity-75"><?= htmlspecialchars($_SESSION['rol'] ?? '') ?></div>
+                    </div>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
             </div>
             <div class="offcanvas-body">
                 <ul class="navbar-nav flex-grow-1">
                     <?php
-                    $currentPage = basename($_SERVER['PHP_SELF']);
-                    
                     // Determinar URL de inicio según el rol
                     $inicioUrl = '/evospace/roles/admin.php';
                     if (isset($_SESSION['rol'])) {
@@ -45,7 +54,7 @@
                             'permiso' => null
                         ],
                         'Registro Asistencia' => [
-                            'url' => '/evospace/roles/profesor.php',
+                            'url' => '/evospace/secciones/asistencia/index.php',
                             'icon' => 'bi-calendar-check-fill',
                             'permiso' => 'asistencia'
                         ],
@@ -102,8 +111,10 @@
                         }
                         
                         if (!$mostrar) continue;
-                        
-                        $esActivo = (basename($datos['url']) == $currentPage) ? 'active' : '';
+
+                        $currentPath = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+                        $navPath = parse_url($datos['url'], PHP_URL_PATH);
+                        $esActivo = ($currentPath === $navPath) ? 'active' : '';
                     ?>
                         <li class="nav-item">
                             <a class="nav-link <?= $esActivo ?>" href="<?= $datos['url'] ?>">
@@ -113,7 +124,7 @@
                     <?php endforeach; ?>
                 </ul>
                 <hr>
-                <a href="/evospace/logout.php" class="btn btn-outline-danger w-100">
+                <a href="/evospace/logout.php" class="btn btn-evo w-100">
                     <i class="bi bi-box-arrow-right"></i> Cerrar sesión
                 </a>
             </div>
@@ -121,75 +132,3 @@
     </div>
 </nav>
 
-<style>
-    /* Fondo y tipografía */
-    .navbar {
-        font-family: 'Montserrat', sans-serif;
-        min-height: 56px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-    }
-    /* Título centrado */
-    .navbar-brand {
-        font-size: 1.25rem;
-        letter-spacing: 0.5px;
-        color: #fff !important;
-        text-decoration: none;
-    }
-    .navbar-brand:hover {
-        color: #fff !important;
-    }
-    /* Botón hamburguesa más grande */
-    .navbar-toggler {
-        padding: 0.4rem 0.6rem;
-        font-size: 1.3rem;
-        border: none;
-        outline: none;
-    }
-    .navbar-toggler:focus {
-        box-shadow: none;
-    }
-    /* Usuario a la derecha */
-    .navbar-text {
-        font-size: 0.9rem;
-        opacity: 0.9;
-    }
-    /* Offcanvas: cabecera roja sin borde grueso */
-    .offcanvas-header{
-        border-bottom:10px solid #dc3545;
-        border-top:11px solid #dc3545;
-    }
-    /* Enlaces del menú */
-    .offcanvas-body .nav-link {
-        font-weight: 500;
-        color: #333;
-        padding: 12px 16px;
-        border-radius: 8px;
-        transition: background 0.2s, color 0.2s;
-    }
-    .offcanvas-body .nav-link:hover {
-        background: #f8f9fa;
-        color: #c81015;
-    }
-    .offcanvas-body .nav-link.active {
-        background: #c81015;
-        color: #fff !important;
-    }
-    .offcanvas-body .nav-link i {
-        width: 28px;
-        text-align: center;
-        font-size: 1.2rem;
-    }
-    /* Ancho del offcanvas */
-    .offcanvas {
-        max-width: 300px;
-    }
-    /* En móviles, ocultar el usuario */
-    @media (max-width: 768px) {
-        .navbar-text {
-            display: none !important;
-        }
-        .navbar-brand {
-            font-size: 1.1rem;
-        }
-    }
-</style>

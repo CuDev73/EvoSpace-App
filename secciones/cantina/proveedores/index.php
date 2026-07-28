@@ -88,6 +88,8 @@ if (isset($_GET['eliminar_pago_proveedor'])) {
     }
 }
 
+$mostrarVolver = true;
+$volverUrl = '../index.php';
 include '../../../includes/header.php';
 include '../../../includes/navbar.php';
 
@@ -100,20 +102,6 @@ if (isset($_GET['exito'])) {
 ?>
 
 <div class="container mt-3">
-    <!-- Botones de Volver (arriba) -->
-    <div class="row g-2 mb-3">
-        <div class="col-md-6">
-            <button onclick="history.back()" class="btn btn-secondary w-100">
-                <i class="bi bi-arrow-left"></i> Volver atrás
-            </button>
-        </div>
-        <div class="col-md-6">
-            <a href="../index.php" class="btn btn-secondary w-100">
-                <i class="bi bi-house"></i> Volver al panel de Cantina
-            </a>
-        </div>
-    </div>
-
     <?php if ($mensaje): ?>
         <div class="alert alert-success alert-dismissible fade show" role="alert">
             <?= htmlspecialchars($mensaje) ?>
@@ -272,13 +260,6 @@ if (isset($_GET['exito'])) {
                 </table>
             </div>
         </div>
-    </div>
-
-    <!-- Botón Volver (abajo) -->
-    <div class="mt-4">
-        <a href="../index.php" class="btn btn-secondary w-100">
-            <i class="bi bi-arrow-left"></i> Volver al panel de Cantina
-        </a>
     </div>
 </div>
 

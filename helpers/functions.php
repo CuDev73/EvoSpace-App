@@ -81,7 +81,7 @@ function obtenerDeudaAlumno($pdo, $id_alumno, $mes, $anio) {
     $becado = $stmt->fetchColumn();
     if ($becado) {
         $porcentajeBeca = (float) $pdo->query("SELECT valor FROM configuracion WHERE clave = 'porcentaje_beca'")->fetchColumn();
-        $cuota = $cuota * ($porcentajeBeca / 100);
+        $cuota = round($cuota * ($porcentajeBeca / 100) / 1000) * 1000;
     }
 
     // 3. Sumar los pagos de CUOTA en ese mes para ese alumno

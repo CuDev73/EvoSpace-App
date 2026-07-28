@@ -15,7 +15,7 @@ require_once '../config/db.php';
 $hoy = date('Y-m-d');
 $mesActual = date('m');
 $anioActual = date('Y');
-$nombreUsuario = $_SESSION['nombre_completo'] ?? $_SESSION['usuario'] ?? 'Administrador';
+$nombreUsuario = $_SESSION['nombre_completo'] ?? $_SESSION['usuario'] ?? 'EvoSpace';
 $fechaFormateada = date('l, d \d\e F \d\e Y');
 
 // ============================================================
@@ -171,21 +171,15 @@ $porcentajeCumplimiento = $totalAlumnos > 0 ? round(($totalAlumnosConCuota / $to
     <!-- ========================================================== -->
     <!-- 1. ENCABEZADO -->
     <!-- ========================================================== -->
-    <div class="bg-danger text-white p-3 rounded mb-4 d-flex justify-content-between align-items-center">
+    <div class="dashboard-greeting">
         <div>
             <h4 class="fw-bold mb-0"><i class="bi bi-person-circle me-2"></i>Buenos días, <?= htmlspecialchars($nombreUsuario) ?></h4>
             <small><?= $fechaFormateada ?></small>
         </div>
-        <div class="text-end">
-            <span class="badge bg-light text-dark me-2">
-                <i class="bi bi-bell-fill text-danger"></i> <?= $notificacionesNoLeidas ?>
-            </span>
+        <div class="d-flex align-items-center gap-2">
             <span class="badge bg-light text-dark">
-                <i class="bi bi-person-fill text-danger"></i> <?= htmlspecialchars($nombreUsuario) ?>
+                <i class="bi bi-bell-fill text-danger me-1"></i><?= $notificacionesNoLeidas ?>
             </span>
-            <a href="/evospace/logout.php" class="btn btn-sm btn-outline-light ms-2">
-                <i class="bi bi-box-arrow-right"></i>
-            </a>
         </div>
     </div>
 
@@ -194,57 +188,57 @@ $porcentajeCumplimiento = $totalAlumnos > 0 ? round(($totalAlumnosConCuota / $to
     <!-- ========================================================== -->
     <div class="row g-3 mb-4">
         <div class="col-md-2 col-6">
-            <div class="card shadow h-100 border-0">
+            <div class="card stat-card h-100 border-0 shadow-hover">
                 <div class="card-body text-center">
-                    <i class="bi bi-people-fill fs-1 text-danger"></i>
-                    <h2 class="fw-bold mt-2 mb-0"><?= $totalAlumnos ?></h2>
-                    <p class="text-muted small">Alumnos activos</p>
+                    <div class="stat-icon bg-danger bg-opacity-10"><i class="bi bi-people-fill text-danger"></i></div>
+                    <div class="stat-number"><?= $totalAlumnos ?></div>
+                    <div class="stat-label">Alumnos activos</div>
                 </div>
             </div>
         </div>
         <div class="col-md-2 col-6">
-            <div class="card shadow h-100 border-0 bg-success text-white">
+            <div class="card stat-card h-100 border-0 shadow-hover" style="background: linear-gradient(135deg, #198754, #146c43); color: #fff;">
                 <div class="card-body text-center">
-                    <i class="bi bi-cash-coin fs-1"></i>
-                    <h2 class="fw-bold mt-2 mb-0"><?= number_format($recaudadoMes, 0, ',', '.') ?> Gs</h2>
-                    <p class="small opacity-75">Recaudado este mes</p>
-                    <small class="opacity-50">Hoy: <?= number_format($recaudadoHoy, 0, ',', '.') ?> Gs</small>
+                    <div class="stat-icon" style="background: rgba(255,255,255,0.15); color: #fff;"><i class="bi bi-cash-coin"></i></div>
+                    <div class="stat-number"><?= number_format($recaudadoMes, 0, ',', '.') ?></div>
+                    <div class="stat-label">Recaudado este mes</div>
+                    <small style="opacity: 0.7;">Hoy: <?= number_format($recaudadoHoy, 0, ',', '.') ?> Gs</small>
                 </div>
             </div>
         </div>
         <div class="col-md-2 col-6">
-            <div class="card shadow h-100 border-0 bg-danger text-white">
+            <div class="card stat-card h-100 border-0 shadow-hover" style="background: linear-gradient(135deg, #dc3545, #b02a37); color: #fff;">
                 <div class="card-body text-center">
-                    <i class="bi bi-exclamation-triangle fs-1"></i>
-                    <h2 class="fw-bold mt-2 mb-0"><?= $totalPendientes ?></h2>
-                    <p class="small opacity-75">Pagos pendientes</p>
+                    <div class="stat-icon" style="background: rgba(255,255,255,0.15); color: #fff;"><i class="bi bi-exclamation-triangle"></i></div>
+                    <div class="stat-number"><?= $totalPendientes ?></div>
+                    <div class="stat-label">Deuda cantina</div>
                 </div>
             </div>
         </div>
         <div class="col-md-2 col-6">
-            <div class="card shadow h-100 border-0">
+            <div class="card stat-card h-100 border-0 shadow-hover">
                 <div class="card-body text-center">
-                    <i class="bi bi-calendar-event-fill fs-1 text-info"></i>
-                    <h2 class="fw-bold mt-2 mb-0"><?= $totalEventosProximos ?></h2>
-                    <p class="text-muted small">Eventos próximos</p>
+                    <div class="stat-icon bg-info bg-opacity-10"><i class="bi bi-calendar-event-fill text-info"></i></div>
+                    <div class="stat-number"><?= $totalEventosProximos ?></div>
+                    <div class="stat-label">Eventos próximos</div>
                 </div>
             </div>
         </div>
         <div class="col-md-2 col-6">
-            <div class="card shadow h-100 border-0 bg-primary text-white">
+            <div class="card stat-card h-100 border-0 shadow-hover" style="background: linear-gradient(135deg, #0d6efd, #0a58ca); color: #fff;">
                 <div class="card-body text-center">
-                    <i class="bi bi-person-badge-fill fs-1"></i>
-                    <h2 class="fw-bold mt-2 mb-0"><?= $totalProfesores ?></h2>
-                    <p class="small opacity-75">Profesores</p>
+                    <div class="stat-icon" style="background: rgba(255,255,255,0.15); color: #fff;"><i class="bi bi-person-badge-fill"></i></div>
+                    <div class="stat-number"><?= $totalProfesores ?></div>
+                    <div class="stat-label">Profesores</div>
                 </div>
             </div>
         </div>
         <div class="col-md-2 col-6">
-            <div class="card shadow h-100 border-0 bg-warning text-dark">
+            <div class="card stat-card h-100 border-0 shadow-hover" style="background: linear-gradient(135deg, #ffc107, #e0a800); color: #212529;">
                 <div class="card-body text-center">
-                    <i class="bi bi-cup-straw fs-1"></i>
-                    <h2 class="fw-bold mt-2 mb-0"><?= number_format($ventasCantinaHoy, 0, ',', '.') ?> Gs</h2>
-                    <p class="small opacity-75">Cantina hoy</p>
+                    <div class="stat-icon" style="background: rgba(0,0,0,0.08); color: #212529;"><i class="bi bi-cup-straw"></i></div>
+                    <div class="stat-number"><?= number_format($ventasCantinaHoy, 0, ',', '.') ?></div>
+                    <div class="stat-label">Cantina hoy</div>
                 </div>
             </div>
         </div>
@@ -254,33 +248,33 @@ $porcentajeCumplimiento = $totalAlumnos > 0 ? round(($totalAlumnosConCuota / $to
     <!-- 3. ACCIONES RÁPIDAS -->
     <!-- ========================================================== -->
     <div class="row g-2 mb-4">
-        <div class="col-md-2 col-6">
-            <a href="/evospace/secciones/pagos.php" class="btn btn-success w-100 py-2">
+        <div class="col-6 col-md-4 col-lg-2">
+            <a href="/evospace/secciones/pagos.php" class="btn btn-success w-100 shadow-sm">
                 <i class="bi bi-plus-circle"></i> Registrar pago
             </a>
         </div>
-        <div class="col-md-2 col-6">
-            <a href="/evospace/secciones/alumnos.php" class="btn btn-primary w-100 py-2">
+        <div class="col-6 col-md-4 col-lg-2">
+            <a href="/evospace/secciones/alumnos.php" class="btn btn-primary w-100 shadow-sm">
                 <i class="bi bi-plus-circle"></i> Nuevo alumno
             </a>
         </div>
-        <div class="col-md-2 col-6">
-            <a href="/evospace/secciones/cantina/ventas/nueva.php" class="btn btn-warning w-100 py-2 text-dark">
+        <div class="col-6 col-md-4 col-lg-2">
+            <a href="/evospace/secciones/cantina/ventas/nueva.php" class="btn btn-warning w-100 shadow-sm text-dark">
                 <i class="bi bi-plus-circle"></i> Venta cantina
             </a>
         </div>
-        <div class="col-md-2 col-6">
-            <a href="/evospace/secciones/asistencia/registrar.php" class="btn btn-danger w-100 py-2">
+        <div class="col-6 col-md-4 col-lg-2">
+            <a href="/evospace/roles/profesor.php" class="btn btn-danger w-100 shadow-sm">
                 <i class="bi bi-plus-circle"></i> Asistencia
             </a>
         </div>
-        <div class="col-md-2 col-6">
-            <a href="/evospace/secciones/eventos/eventos.php" class="btn btn-info w-100 py-2 text-white">
+        <div class="col-6 col-md-4 col-lg-2">
+            <a href="/evospace/secciones/eventos/eventos.php" class="btn btn-info w-100 shadow-sm text-white">
                 <i class="bi bi-plus-circle"></i> Crear evento
             </a>
         </div>
-        <div class="col-md-2 col-6">
-            <a href="/evospace/secciones/profesores.php" class="btn btn-secondary w-100 py-2 text-white">
+        <div class="col-6 col-md-4 col-lg-2">
+            <a href="/evospace/secciones/profesores.php" class="btn btn-secondary w-100 shadow-sm text-white">
                 <i class="bi bi-plus-circle"></i> Agregar profesor
             </a>
         </div>
@@ -292,7 +286,7 @@ $porcentajeCumplimiento = $totalAlumnos > 0 ? round(($totalAlumnosConCuota / $to
     <div class="row g-3 mb-4">
         <div class="col-md-6">
             <div class="card shadow h-100">
-                <div class="card-header bg-danger text-white">
+                <div class="card-header bg-evo text-white">
                     <i class="bi bi-graph-up-arrow me-1"></i> Recaudación mensual
                 </div>
                 <div class="card-body">
@@ -331,7 +325,7 @@ $porcentajeCumplimiento = $totalAlumnos > 0 ? round(($totalAlumnosConCuota / $to
         <div class="col-md-6">
             <!-- Próximos eventos -->
             <div class="card shadow mb-3">
-                <div class="card-header bg-danger text-white">
+                <div class="card-header bg-evo text-white">
                     <i class="bi bi-calendar-event me-1"></i> Próximos eventos
                 </div>
                 <div class="card-body p-2">
@@ -384,25 +378,29 @@ $porcentajeCumplimiento = $totalAlumnos > 0 ? round(($totalAlumnosConCuota / $to
     </div>
 
     <!-- ========================================================== -->
-    <!-- 5. PENDIENTES IMPORTANTES (caja roja) -->
+    <!-- 5. PENDIENTES IMPORTANTES -->
     <!-- ========================================================== -->
     <div class="card border-danger mb-4">
-        <div class="card-header bg-danger text-white">
+        <div class="card-header bg-evo text-white">
             <i class="bi bi-exclamation-triangle-fill me-1"></i> Atención
         </div>
         <div class="card-body">
-            <div class="row">
-                <div class="col-md-3">
-                    <span class="badge bg-danger me-1"><?= $deudores ?></span> Alumnos con deuda
+            <div class="row g-3 text-center">
+                <div class="col-6 col-md-3">
+                    <div class="fs-3 fw-bold text-danger"><?= $deudores ?></div>
+                    <div class="small text-muted">Alumnos con deuda</div>
                 </div>
-                <div class="col-md-3">
-                    <span class="badge bg-danger me-1"><?= $profesoresPendientes ?></span> Profesores pendientes de pago
+                <div class="col-6 col-md-3">
+                    <div class="fs-3 fw-bold text-danger"><?= $profesoresPendientes ?></div>
+                    <div class="small text-muted">Profesores pendientes</div>
                 </div>
-                <div class="col-md-3">
-                    <span class="badge bg-danger me-1"><?= $eventosSinConfirmar ?></span> Eventos sin confirmar
+                <div class="col-6 col-md-3">
+                    <div class="fs-3 fw-bold text-danger"><?= $eventosSinConfirmar ?></div>
+                    <div class="small text-muted">Eventos sin confirmar</div>
                 </div>
-                <div class="col-md-3">
-                    <span class="badge bg-danger me-1"><?= $facturasPendientes ?></span> Facturas pendientes
+                <div class="col-6 col-md-3">
+                    <div class="fs-3 fw-bold text-danger"><?= $facturasPendientes ?></div>
+                    <div class="small text-muted">Facturas pendientes</div>
                 </div>
             </div>
         </div>
@@ -414,7 +412,7 @@ $porcentajeCumplimiento = $totalAlumnos > 0 ? round(($totalAlumnosConCuota / $to
     <div class="row g-3 mb-4">
         <div class="col-md-6">
             <div class="card shadow">
-                <div class="card-header bg-danger text-white">
+                <div class="card-header bg-evo text-white">
                     <i class="bi bi-clock-history"></i> Últimos pagos
                 </div>
                 <div class="card-body p-0">
@@ -444,7 +442,7 @@ $porcentajeCumplimiento = $totalAlumnos > 0 ? round(($totalAlumnosConCuota / $to
         </div>
         <div class="col-md-6">
             <div class="card shadow">
-                <div class="card-header bg-danger text-white">
+                <div class="card-header bg-evo text-white">
                     <i class="bi bi-exclamation-triangle"></i> Mayores deudores
                 </div>
                 <div class="card-body p-0">
@@ -476,7 +474,7 @@ $porcentajeCumplimiento = $totalAlumnos > 0 ? round(($totalAlumnosConCuota / $to
     <!-- 7. CUMPLIMIENTO DE PAGOS -->
     <!-- ========================================================== -->
     <div class="card shadow mb-4">
-        <div class="card-header bg-danger text-white">
+        <div class="card-header bg-evo text-white">
             <i class="bi bi-check-circle"></i> Cumplimiento de pagos
         </div>
         <div class="card-body">

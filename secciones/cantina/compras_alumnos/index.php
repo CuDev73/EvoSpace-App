@@ -11,56 +11,26 @@ verificarPermiso('cantina');
 $mensaje = '';
 $error = '';
 
-// --- PROCESAR FORMULARIOS ---
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion_compra'])) {
-    $id = $_POST['id'] ?? '';
-    $fecha = $_POST['fecha'] ?? date('Y-m-d');
-    $id_alumno = (int) $_POST['id_alumno'];
-    $producto = trim($_POST['producto']);
-    $monto = (float) $_POST['monto'];
-    $pagado = isset($_POST['pagado']) ? 1 : 0;
-
-    if ($id_alumno <= 0 || empty($producto) || $monto <= 0) {
-        $error = "Todos los campos son obligatorios y el monto debe ser mayor a 0.";
-    } else {
-        try {
-            if ($id == '') {
-                insertarCompraAlumno($pdo, $fecha, $id_alumno, $producto, $monto, $pagado);
-                $mensaje = "Compra registrada correctamente.";
-            } else {
-                actualizarCompraAlumno($pdo, $id, $fecha, $id_alumno, $producto, $monto, $pagado);
-                $mensaje = "Compra actualizada correctamente.";
-            }
-            header("Location: index.php?rama=" . ($_GET['rama'] ?? '') . "&exito=1");
-            exit;
-        } catch (PDOException $e) {
-            $error = "Error al guardar: " . $e->getMessage();
-        }
-    }
-}
-
-if (isset($_GET['eliminar'])) {
-    try {
-        eliminarCompraAlumno($pdo, (int) $_GET['eliminar']);
-        $mensaje = "Compra eliminada correctamente.";
-        header("Location: index.php?rama=" . ($_GET['rama'] ?? '') . "&exito=1");
-        exit;
-    } catch (PDOException $e) {
-        $error = "Error al eliminar: " . $e->getMessage();
-    }
-}
-
+// --- PROCESAR PAGO ---
 if (isset($_POST['accion_pago'])) {
     $id_alumno = (int) $_POST['id_alumno_pago'];
     $monto = (float) $_POST['monto_pago'];
     $fecha = $_POST['fecha_pago'] ?? date('Y-m-d');
+    $id_venta = isset($_POST['id_venta_pago']) ? (int)$_POST['id_venta_pago'] : 0;
     if ($id_alumno > 0 && $monto > 0) {
         try {
+            $pdo->beginTransaction();
             insertarPagoAlumnoCantina($pdo, $fecha, $id_alumno, $monto);
+            if ($id_venta > 0) {
+                $stmt = $pdo->prepare("UPDATE ventas SET estado_pago = 'pagado' WHERE id_venta = ?");
+                $stmt->execute([$id_venta]);
+            }
+            $pdo->commit();
             $mensaje = "Pago registrado correctamente.";
-            header("Location: index.php?rama=" . ($_GET['rama'] ?? '') . "&exito=1");
+            header("Location: index.php?exito=1");
             exit;
-        } catch (PDOException $e) {
+        } catch (Exception $e) {
+            $pdo->rollBack();
             $error = "Error al registrar pago: " . $e->getMessage();
         }
     } else {
@@ -68,12 +38,12 @@ if (isset($_POST['accion_pago'])) {
     }
 }
 
+$mostrarVolver = true;
+$volverUrl = '../index.php';
 include '../../../includes/header.php';
 include '../../../includes/navbar.php';
 
 $ramaFiltro = isset($_GET['rama']) ? $_GET['rama'] : null;
-$compras = obtenerComprasAlumnos($pdo, $ramaFiltro);
-$deudaTotal = obtenerDeudaTotalCantina($pdo);
 
 $alumnos = $pdo->query("
     SELECT a.id_alumno, a.nombre, a.apellido, c.tipo AS rama, c.nombre AS curso
@@ -82,10 +52,6 @@ $alumnos = $pdo->query("
     WHERE a.activo = 1
     ORDER BY a.apellido, a.nombre
 ")->fetchAll(PDO::FETCH_OBJ);
-
-$productos = $pdo->query("SELECT * FROM productos WHERE activo = 1 ORDER BY nombre")->fetchAll(PDO::FETCH_OBJ);
-
-$editCompra = isset($_GET['editar']) ? obtenerCompraAlumno($pdo, (int) $_GET['editar']) : null;
 
 if (isset($_GET['exito'])) {
     $mensaje = $mensaje ?: "Operación realizada correctamente.";
@@ -129,131 +95,20 @@ if (isset($_GET['exito'])) {
         </div>
     </div>
 
-    <!-- Deuda total -->
-    <div class="alert <?= $deudaTotal > 0 ? 'alert-danger' : 'alert-success' ?>">
-        <strong>Deuda total de alumnos en cantina:</strong> <?= number_format($deudaTotal, 0, ',', '.') ?> Gs
-    </div>
-
-    <!-- Formulario de compra -->
+    <!-- Registrar pago -->
     <div class="card shadow mb-4">
-        <div class="card-header bg-danger text-white">
-            <i class="bi bi-plus-circle"></i> <?= $editCompra ? 'Editar compra' : 'Nueva compra' ?>
-        </div>
-        <div class="card-body">
-            <form method="POST">
-                <input type="hidden" name="accion_compra" value="1">
-                <input type="hidden" name="id" value="<?= $editCompra ? $editCompra->id_compra : '' ?>">
-                <div class="row g-3">
-                    <div class="col-md-3">
-                        <label class="form-label">Fecha *</label>
-                        <input type="date" name="fecha" class="form-control" value="<?= $editCompra ? $editCompra->fecha : date('Y-m-d') ?>" required>
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label">Alumno *</label>
-                        <select name="id_alumno" class="form-select" required>
-                            <option value="">Seleccionar...</option>
-                            <?php foreach ($alumnos as $a): ?>
-                                <option value="<?= $a->id_alumno ?>" <?= $editCompra && $editCompra->id_alumno == $a->id_alumno ? 'selected' : '' ?>>
-                                    <?= htmlspecialchars($a->apellido . ', ' . $a->nombre . ' (' . $a->rama . ' - ' . $a->curso . ')') ?>
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label">Producto *</label>
-                        <select name="producto" class="form-select" required>
-                            <option value="">Seleccionar...</option>
-                            <?php foreach ($productos as $p): ?>
-                                <option value="<?= htmlspecialchars($p->nombre) ?>" <?= $editCompra && $editCompra->producto == $p->nombre ? 'selected' : '' ?>>
-                                    <?= htmlspecialchars($p->nombre) ?> (Gs <?= number_format($p->precio, 0, ',', '.') ?>)
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
-                    <div class="col-md-2">
-                        <label class="form-label">Monto (Gs) *</label>
-                        <input type="number" step="0.01" name="monto" class="form-control" value="<?= $editCompra ? $editCompra->monto : '' ?>" required>
-                    </div>
-                    <div class="col-md-12">
-                        <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" name="pagado" value="1" <?= $editCompra && $editCompra->pagado ? 'checked' : '' ?>>
-                            <label class="form-check-label">Pagado</label>
-                        </div>
-                    </div>
-                    <div class="col-md-12">
-                        <button type="submit" class="btn btn-danger"><?= $editCompra ? 'Actualizar' : 'Guardar' ?></button>
-                        <?php if ($editCompra): ?>
-                            <a href="index.php<?= $ramaFiltro ? '?rama=' . urlencode($ramaFiltro) : '' ?>" class="btn btn-secondary">Cancelar</a>
-                        <?php endif; ?>
-                    </div>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Tabla de compras -->
-    <div class="card shadow">
-        <div class="card-header bg-danger text-white">
-            <i class="bi bi-list"></i> Registro de compras
-            <span class="badge bg-light text-dark ms-2"><?= count($compras) ?></span>
-        </div>
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-hover table-sm mb-0">
-                    <thead class="table-light">
-                        <tr>
-                            <th>ID</th>
-                            <th>Fecha</th>
-                            <th>Alumno</th>
-                            <th>Rama</th>
-                            <th>Producto</th>
-                            <th class="text-end">Monto</th>
-                            <th>Pagado</th>
-                            <th>Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php if (empty($compras)): ?>
-                            <tr><td colspan="8" class="text-center">No hay compras registradas.</td></tr>
-                        <?php else: ?>
-                            <?php foreach ($compras as $c): ?>
-                                <tr>
-                                    <td><?= $c->id_compra ?></td>
-                                    <td><?= date('d/m/Y', strtotime($c->fecha)) ?></td>
-                                    <td><?= htmlspecialchars($c->apellido . ', ' . $c->nombre) ?></td>
-                                    <td><?= htmlspecialchars($c->rama) ?></td>
-                                    <td><?= htmlspecialchars($c->producto) ?></td>
-                                    <td class="text-end"><?= number_format($c->monto, 0, ',', '.') ?></td>
-                                    <td><?= $c->pagado ? '<span class="badge bg-success">Sí</span>' : '<span class="badge bg-danger">No</span>' ?></td>
-                                    <td>
-                                        <a href="index.php?editar=<?= $c->id_compra ?><?= $ramaFiltro ? '&rama=' . urlencode($ramaFiltro) : '' ?>" class="btn btn-primary btn-sm"><i class="bi bi-pencil"></i></a>
-                                        <a href="index.php?eliminar=<?= $c->id_compra ?><?= $ramaFiltro ? '&rama=' . urlencode($ramaFiltro) : '' ?>" class="btn btn-danger btn-sm" onclick="return confirm('¿Eliminar esta compra?')"><i class="bi bi-trash"></i></a>
-                                    </td>
-                                </tr>
-                            <?php endforeach; ?>
-                        <?php endif; ?>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <!-- Sección de pagos y deuda -->
-    <div class="card shadow mt-4">
-        <div class="card-header bg-info text-white">
-            <i class="bi bi-cash"></i> Pagos y deudas por alumno
+        <div class="card-header bg-success text-white">
+            <i class="bi bi-cash"></i> Registrar pago
         </div>
         <div class="card-body">
             <form method="POST" class="row g-3 mb-3">
                 <input type="hidden" name="accion_pago" value="1">
-                <div class="col-md-3">
+                <input type="hidden" name="id_alumno_pago" id="id_alumno_pago">
+                <input type="hidden" name="id_venta_pago" id="id_venta_pago" value="0">
+                <div class="col-md-4 position-relative">
                     <label class="form-label">Alumno</label>
-                    <select name="id_alumno_pago" class="form-select" required>
-                        <option value="">Seleccionar...</option>
-                        <?php foreach ($alumnos as $a): ?>
-                            <option value="<?= $a->id_alumno ?>"><?= htmlspecialchars($a->apellido . ', ' . $a->nombre . ' (' . $a->rama . ')') ?></option>
-                        <?php endforeach; ?>
-                    </select>
+                    <input type="text" id="buscarAlumnoPago" class="form-control" placeholder="Escribe para buscar..." autocomplete="off" required>
+                    <div id="resultadosAlumnosPago" class="list-group mt-1 position-absolute w-100" style="display:none; z-index:1000; max-height:200px; overflow-y:auto;"></div>
                 </div>
                 <div class="col-md-3">
                     <label class="form-label">Fecha</label>
@@ -261,93 +116,128 @@ if (isset($_GET['exito'])) {
                 </div>
                 <div class="col-md-3">
                     <label class="form-label">Monto (Gs)</label>
-                    <input type="number" step="0.01" name="monto_pago" class="form-control" required>
+                    <input type="number" step="0.01" name="monto_pago" id="monto_pago" class="form-control" required>
                 </div>
-                <div class="col-md-3 d-flex align-items-end">
+                <div class="col-md-2 d-flex align-items-end">
                     <button type="submit" class="btn btn-success w-100">Registrar pago</button>
                 </div>
             </form>
-            <hr>
-            <div class="row">
-                <div class="col-md-6">
-                    <h6>Deuda por alumno</h6>
-                    <ul class="list-group">
-                        <?php
-                        $alumnosDeuda = $pdo->query("
-                            SELECT a.id_alumno, a.nombre, a.apellido, c.tipo AS rama,
-                                   COALESCE((SELECT SUM(monto) FROM compras_alumnos WHERE id_alumno = a.id_alumno AND pagado = 0), 0) AS deuda
-                            FROM alumnos a
-                            JOIN cursos c ON a.id_curso = c.id_curso
-                            WHERE a.activo = 1
-                            HAVING deuda > 0
-                            ORDER BY deuda DESC
-                        ")->fetchAll(PDO::FETCH_OBJ);
-                        ?>
-                        <?php if (empty($alumnosDeuda)): ?>
-                            <li class="list-group-item">Sin deudas registradas.</li>
-                        <?php else: ?>
-                            <?php foreach ($alumnosDeuda as $ad): ?>
-                                <li class="list-group-item d-flex justify-content-between align-items-center">
-                                    <?= htmlspecialchars($ad->apellido . ', ' . $ad->nombre . ' (' . $ad->rama . ')') ?>
-                                    <span class="badge bg-danger"><?= number_format($ad->deuda, 0, ',', '.') ?> Gs</span>
-                                </li>
-                            <?php endforeach; ?>
-                        <?php endif; ?>
-                    </ul>
-                </div>
-                <div class="col-md-6">
-                    <h6>Historial de pagos por alumno</h6>
-                    <form method="GET" class="mb-2">
-                        <div class="input-group">
-                            <select name="ver_pagos" class="form-select">
-                                <option value="">Seleccionar alumno...</option>
-                                <?php foreach ($alumnos as $a): ?>
-                                    <option value="<?= $a->id_alumno ?>" <?= (isset($_GET['ver_pagos']) && $_GET['ver_pagos'] == $a->id_alumno) ? 'selected' : '' ?>>
-                                        <?= htmlspecialchars($a->apellido . ', ' . $a->nombre) ?>
-                                    </option>
-                                <?php endforeach; ?>
-                            </select>
-                            <button type="submit" class="btn btn-secondary">Ver</button>
-                        </div>
-                    </form>
-                    <?php if (isset($_GET['ver_pagos']) && $_GET['ver_pagos'] > 0): ?>
-                        <?php
-                        $idAlumnoPagos = (int) $_GET['ver_pagos'];
-                        $pagos = obtenerPagosAlumnoCantina($pdo, $idAlumnoPagos);
-                        ?>
-                        <ul class="list-group">
-                            <?php if (empty($pagos)): ?>
-                                <li class="list-group-item">Sin pagos registrados para este alumno.</li>
-                            <?php else: ?>
-                                <?php foreach ($pagos as $p): ?>
-                                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                                        <?= date('d/m/Y', strtotime($p->fecha)) ?>
-                                        <span class="badge bg-success"><?= number_format($p->monto, 0, ',', '.') ?> Gs</span>
-                                    </li>
-                                <?php endforeach; ?>
-                            <?php endif; ?>
-                        </ul>
-                    <?php endif; ?>
-                </div>
-            </div>
         </div>
     </div>
 
-<div class="container mt-3">
-    <!-- Botones de Volver -->
-    <div class="row g-2 mb-6">
-        <div class="col-md-6">
-            <button onclick="history.back()" class="btn btn-secondary w-100">
-                <i class="bi bi-arrow-left"></i> Volver atrás
-            </button>
+    <!-- Fiado en cantina (ventas pendientes) -->
+    <div class="card shadow mb-4">
+        <div class="card-header bg-warning text-dark">
+            <i class="bi bi-cart"></i> Fiado en cantina
         </div>
-        <div class="col-md-6">
-            <a href="../index.php" class="btn btn-secondary w-100">
-                <i class="bi bi-house"></i> Volver al panel de Cantina
-            </a>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover table-sm mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>#</th>
+                            <th>Fecha</th>
+                            <th>Comprador</th>
+                            <th class="text-end">Total</th>
+                            <th>Método</th>
+                            <th>Pagar</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php
+                        $ventasFiado = $pdo->query("
+                            SELECT v.*
+                            FROM ventas v
+                            WHERE v.estado_pago IN ('pendiente','parcial')
+                            ORDER BY v.fecha DESC
+                        ")->fetchAll(PDO::FETCH_OBJ);
+                        ?>
+                        <?php if (empty($ventasFiado)): ?>
+                            <tr><td colspan="6" class="text-center text-muted">No hay fiados pendientes.</td></tr>
+                        <?php else: ?>
+                            <?php $totalFiado = 0; ?>
+                            <?php foreach ($ventasFiado as $vf): ?>
+                                <?php $totalFiado += $vf->total; ?>
+                                <tr>
+                                    <td><?= $vf->id_venta ?></td>
+                                    <td><?= date('d/m/Y', strtotime($vf->fecha)) ?></td>
+                                    <td><?= htmlspecialchars($vf->nombre_comprador ?? 'Anónimo') ?></td>
+                                    <td class="text-end text-danger fw-bold"><?= number_format($vf->total, 0, ',', '.') ?> Gs</td>
+                                    <td><?= $vf->metodo_pago ?></td>
+                                    <td>
+                                        <button class="btn btn-success btn-sm" onclick="cargarPagoVenta(<?= $vf->id_venta ?>, <?= $vf->id_alumno ?? 0 ?>, '<?= htmlspecialchars($vf->nombre_comprador ?? '', ENT_QUOTES) ?>', <?= $vf->total ?>)">
+                                            <i class="bi bi-cash"></i> Pagar
+                                        </button>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </tbody>
+                    <?php if (!empty($ventasFiado)): ?>
+                    <tfoot class="table-dark">
+                        <tr>
+                            <th colspan="3" class="text-end">Total</th>
+                            <th class="text-end"><?= number_format($totalFiado, 0, ',', '.') ?> Gs</th>
+                            <th colspan="2"></th>
+                        </tr>
+                    </tfoot>
+                    <?php endif; ?>
+                </table>
+            </div>
         </div>
     </div>
 
 </div>
 
 <?php include '../../../includes/footer.php'; ?>
+
+<script>
+const alumnos = <?= json_encode(array_map(function($a) {
+    return ['id' => $a->id_alumno, 'nombre' => $a->apellido . ', ' . $a->nombre . ' (' . $a->rama . ')', 'apellido' => $a->apellido, 'rama' => $a->rama];
+}, $alumnos)) ?>;
+
+function setupAutocomplete(inputId, resultsId, onSelect) {
+    const input = document.getElementById(inputId);
+    const results = document.getElementById(resultsId);
+    input.addEventListener('input', function() {
+        const term = this.value.toLowerCase().trim();
+        if (term.length < 1) { results.style.display = 'none'; return; }
+        const filtrados = alumnos.filter(a =>
+            a.nombre.toLowerCase().includes(term) || a.apellido.toLowerCase().includes(term) || a.rama.toLowerCase().includes(term)
+        ).slice(0, 15);
+        results.innerHTML = '';
+        if (filtrados.length === 0) {
+            results.innerHTML = '<div class="list-group-item text-muted small">Sin resultados</div>';
+        } else {
+            filtrados.forEach(a => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'list-group-item list-group-item-action py-1 small';
+                btn.textContent = a.nombre;
+                btn.addEventListener('click', function() {
+                    input.value = a.nombre;
+                    onSelect(a);
+                    results.style.display = 'none';
+                });
+                results.appendChild(btn);
+            });
+        }
+        results.style.display = 'block';
+    });
+    input.addEventListener('blur', () => setTimeout(() => results.style.display = 'none', 200));
+    input.addEventListener('focus', () => { if (input.value.length >= 1) results.style.display = 'block'; });
+}
+
+setupAutocomplete('buscarAlumnoPago', 'resultadosAlumnosPago', function(a) {
+    document.getElementById('id_alumno_pago').value = a.id;
+});
+
+function cargarPagoVenta(idVenta, idAlumno, nombre, total) {
+    document.getElementById('buscarAlumnoPago').value = nombre;
+    document.getElementById('id_alumno_pago').value = idAlumno;
+    document.getElementById('id_venta_pago').value = idVenta;
+    document.getElementById('monto_pago').value = total;
+    document.getElementById('monto_pago').focus();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+</script>

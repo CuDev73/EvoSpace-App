@@ -47,6 +47,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['
     }
 }
 
+$mostrarVolver = true;
+$volverUrl = 'index.php';
 include '../../../includes/header.php';
 include '../../../includes/navbar.php';
 
@@ -57,8 +59,6 @@ $productos = $pdo->query("SELECT * FROM productos WHERE activo = 1 ORDER BY nomb
 <div class="container mt-3">
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h4><i class="bi bi-cart-plus"></i> Nueva Compra a Proveedor</h4>
-        <a href="index.php" class="btn btn-secondary btn-sm"><i class="bi bi-arrow-left"></i> Volver</a>
-    </div>
 
     <?php if ($error): ?>
         <div class="alert alert-danger"><?= htmlspecialchars($error) ?></div>
@@ -129,18 +129,6 @@ $productos = $pdo->query("SELECT * FROM productos WHERE activo = 1 ORDER BY nomb
         </div>
     </form>
 
-    <div class="row g-2 mt-4">
-        <div class="col-md-6">
-            <button onclick="history.back()" class="btn btn-secondary w-100">
-                <i class="bi bi-arrow-left"></i> Volver atrás
-            </button>
-        </div>
-        <div class="col-md-6">
-            <a href="../index.php" class="btn btn-secondary w-100">
-                <i class="bi bi-house"></i> Volver al panel de Cantina
-            </a>
-        </div>
-    </div>
 </div>
 
 <script>

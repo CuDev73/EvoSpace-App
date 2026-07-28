@@ -1,0 +1,707 @@
+/* ============================================================
+   EvoSpace - Design System
+   Academia Evolucionarte
+   ============================================================ */
+
+/* ------------------------------------------------------------
+   Variables / Paleta de colores
+   ------------------------------------------------------------ */
+:root {
+  --evo-primary:       #c81015;
+  --evo-primary-dark:  #a30d11;
+  --evo-primary-light: #e85a5e;
+  --evo-secondary:     #6c757d;
+  --evo-accent:        #d4a017;
+  --evo-bg:            #f5f0e8;
+  --evo-bg-alt:        #ebe5d9;
+  --evo-surface:       #ffffff;
+  --evo-text:          #2c2c2c;
+  --evo-text-muted:    #6c757d;
+  --evo-border:        #dee2e6;
+  --evo-success:       #198754;
+  --evo-warning:       #ffc107;
+  --evo-info:          #0dcaf0;
+  --evo-danger:        #dc3545;
+
+  --evo-radius:        0.75rem;
+  --evo-radius-sm:     0.5rem;
+  --evo-shadow:        0 2px 12px rgba(0,0,0,0.08);
+  --evo-shadow-lg:     0 8px 30px rgba(0,0,0,0.12);
+  --evo-transition:    0.25s ease;
+}
+
+/* ------------------------------------------------------------
+   Base / Tipografía
+   ------------------------------------------------------------ */
+* { font-family: "Montserrat", sans-serif; }
+
+body {
+  background-color: var(--evo-bg);
+  padding-top: 70px;
+  padding-bottom: 30px;
+  color: var(--evo-text);
+  line-height: 1.6;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+/* ------------------------------------------------------------
+   Botones globales
+   ------------------------------------------------------------ */
+.btn {
+  padding: 0.5rem 1.25rem;
+  font-size: 0.875rem;
+  border-radius: var(--evo-radius-sm);
+  height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  white-space: nowrap;
+  transition: all var(--evo-transition);
+  font-weight: 500;
+}
+.btn:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--evo-shadow);
+}
+.btn:active {
+  transform: translateY(0);
+}
+.btn-sm {
+  height: 34px;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.8rem;
+}
+.btn-lg {
+  height: 50px;
+  padding: 0.75rem 2rem;
+  font-size: 1rem;
+}
+.btn-evo {
+  background-color: var(--evo-primary);
+  color: #fff;
+  border: none;
+  border-radius: var(--evo-radius);
+  font-size: 1.1rem;
+  transition: all var(--evo-transition);
+}
+.btn-evo:hover {
+  background-color: var(--evo-primary-dark);
+  color: #fff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(200,16,21,0.3);
+}
+
+/* ------------------------------------------------------------
+   Tarjetas (Cards)
+   ------------------------------------------------------------ */
+.card {
+  border: none;
+  border-radius: var(--evo-radius);
+  box-shadow: var(--evo-shadow);
+  transition: all var(--evo-transition);
+  overflow: hidden;
+}
+.card:hover {
+  box-shadow: var(--evo-shadow-lg);
+}
+.card-header {
+  font-weight: 600;
+  padding: 0.75rem 1.25rem;
+  border-bottom: none;
+}
+.card-body {
+  padding: 1.25rem;
+}
+.card-footer {
+  background: var(--evo-bg);
+  border-top: 1px solid var(--evo-border);
+}
+.card.shadow-hover:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--evo-shadow-lg);
+}
+.card-header.bg-evo {
+  background: linear-gradient(135deg, var(--evo-primary), var(--evo-primary-dark));
+  color: #fff;
+}
+
+/* ------------------------------------------------------------
+   Tablas
+   ------------------------------------------------------------ */
+.table {
+  margin-bottom: 0;
+}
+.table {
+  margin-bottom: 0;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+.table thead {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+.table thead th {
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+  color: var(--evo-text-muted);
+  border-bottom: none;
+  padding: 0.75rem 0.6rem;
+  vertical-align: middle;
+}
+.table thead tr {
+  background: var(--evo-bg-alt);
+}
+.table thead tr:first-child th:first-child {
+  border-top-left-radius: var(--evo-radius-sm);
+}
+.table thead tr:first-child th:last-child {
+  border-top-right-radius: var(--evo-radius-sm);
+}
+.table tbody tr {
+  transition: background var(--evo-transition);
+  border-bottom: 1px solid var(--evo-border);
+}
+.table tbody tr:last-child {
+  border-bottom: none;
+}
+.table tbody tr:hover {
+  background-color: rgba(200, 16, 21, 0.04);
+}
+.table td {
+  padding: 0.7rem 0.6rem;
+  vertical-align: middle;
+  font-size: 0.875rem;
+  border-bottom: 1px solid var(--evo-border);
+}
+.table-striped > tbody > tr:nth-of-type(odd) {
+  background-color: rgba(0,0,0,0.02);
+}
+.table-responsive {
+  border-radius: var(--evo-radius);
+  overflow-x: auto;
+}
+/* Tabla dentro de card-body sin padding */
+.card-body.p-0 .table-responsive {
+  border-radius: 0 0 var(--evo-radius) var(--evo-radius);
+}
+
+/* ------------------------------------------------------------
+   Encabezados de sección (page headers)
+   ------------------------------------------------------------ */
+.page-header {
+  background: linear-gradient(135deg, var(--evo-primary), var(--evo-primary-dark));
+  color: #fff;
+  padding: 1rem 1.5rem;
+  border-radius: var(--evo-radius);
+  margin-bottom: 1.25rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+.page-header h4 {
+  margin: 0;
+  font-weight: 700;
+  font-size: 1.15rem;
+}
+.page-header small {
+  opacity: 0.85;
+  font-size: 0.8rem;
+}
+
+/* ------------------------------------------------------------
+   Formularios
+   ------------------------------------------------------------ */
+.form-label {
+  font-weight: 600;
+  font-size: 0.8rem;
+  margin-bottom: 0.3rem;
+  color: var(--evo-text-muted);
+}
+.form-control, .form-select {
+  border-radius: var(--evo-radius-sm);
+  border: 1.5px solid var(--evo-border);
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  transition: border-color var(--evo-transition), box-shadow var(--evo-transition);
+}
+.form-control:focus, .form-select:focus {
+  border-color: var(--evo-primary);
+  box-shadow: 0 0 0 3px rgba(200, 16, 21, 0.15);
+}
+.form-control-sm, .form-select-sm {
+  padding: 0.35rem 0.6rem;
+  font-size: 0.8rem;
+}
+.form-check-input:checked {
+  background-color: var(--evo-primary);
+  border-color: var(--evo-primary);
+}
+
+/* ------------------------------------------------------------
+   Modales
+   ------------------------------------------------------------ */
+.modal-content {
+  border: none;
+  border-radius: var(--evo-radius);
+  box-shadow: var(--evo-shadow-lg);
+}
+.modal-header {
+  border-radius: var(--evo-radius) var(--evo-radius) 0 0;
+  padding: 1rem 1.25rem;
+  border-bottom: none;
+}
+.modal-header.bg-evo {
+  background: linear-gradient(135deg, var(--evo-primary), var(--evo-primary-dark));
+  color: #fff;
+}
+.modal-body {
+  padding: 1.5rem;
+}
+.modal-footer {
+  border-top: 1px solid var(--evo-border);
+  padding: 1rem 1.25rem;
+}
+.modal.fade .modal-dialog {
+  transform: scale(0.95);
+  transition: transform 0.2s ease;
+}
+.modal.show .modal-dialog {
+  transform: scale(1);
+}
+
+/* ------------------------------------------------------------
+   Navbar
+   ------------------------------------------------------------ */
+.navbar {
+  min-height: 60px;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.15);
+  background: linear-gradient(135deg, var(--evo-primary), var(--evo-primary-dark)) !important;
+}
+.navbar-brand {
+  font-size: 1.2rem;
+  letter-spacing: 0.5px;
+}
+.navbar-toggler {
+  border: none;
+  padding: 0.4rem 0.6rem;
+}
+.navbar-toggler:focus {
+  box-shadow: none;
+}
+
+/* Offcanvas */
+.offcanvas {
+  max-width: 300px;
+  border-right: none;
+}
+.offcanvas-header {
+  background: linear-gradient(135deg, var(--evo-primary), var(--evo-primary-dark)) !important;
+  min-height: 60px;
+  padding: 0.75rem 1rem;
+}
+.offcanvas-body {
+  padding: 0.75rem;
+}
+.offcanvas-body .nav-link {
+  font-weight: 500;
+  color: var(--evo-text);
+  padding: 0.7rem 1rem;
+  border-radius: var(--evo-radius-sm);
+  transition: all var(--evo-transition);
+  font-size: 0.9rem;
+}
+.offcanvas-body .nav-link:hover {
+  background: rgba(200, 16, 21, 0.08);
+  color: var(--evo-primary);
+}
+.offcanvas-body .nav-link.active {
+  background: var(--evo-primary);
+  color: #fff !important;
+}
+.offcanvas-body .nav-link i {
+  width: 28px;
+  text-align: center;
+  font-size: 1.15rem;
+}
+
+/* ------------------------------------------------------------
+   Dashboard - Tarjetas de indicadores
+   ------------------------------------------------------------ */
+.stat-card {
+  border-radius: var(--evo-radius);
+  transition: all var(--evo-transition);
+  overflow: hidden;
+  position: relative;
+}
+.stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--evo-shadow-lg);
+}
+.stat-card .stat-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 0.5rem;
+  font-size: 1.4rem;
+}
+.stat-card .stat-number {
+  font-size: 1.6rem;
+  font-weight: 800;
+  line-height: 1.2;
+}
+.stat-card .stat-label {
+  font-size: 0.78rem;
+  opacity: 0.75;
+  font-weight: 500;
+}
+
+/* Barra superior del dashboard (saludo) */
+.dashboard-greeting {
+  background: linear-gradient(135deg, var(--evo-primary), #8b0000);
+  color: #fff;
+  padding: 1.25rem 1.5rem;
+  border-radius: var(--evo-radius);
+  margin-bottom: 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+/* ------------------------------------------------------------
+   Concepto cards (pagos)
+   ------------------------------------------------------------ */
+.concepto-card {
+  cursor: pointer;
+  transition: all var(--evo-transition);
+  border: 2px solid transparent;
+}
+.concepto-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--evo-shadow-lg);
+}
+.concepto-card.selected {
+  border-color: var(--evo-primary);
+  background-color: rgba(200, 16, 21, 0.04);
+}
+.concepto-card .concepto-icon {
+  font-size: 2rem;
+}
+.concepto-card.disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* ------------------------------------------------------------
+   Alertas
+   ------------------------------------------------------------ */
+.alert {
+  border: none;
+  border-radius: var(--evo-radius-sm);
+  font-size: 0.875rem;
+}
+.alert-dismissible .btn-close {
+  padding: 1rem;
+}
+
+/* ------------------------------------------------------------
+   Badges
+   ------------------------------------------------------------ */
+.badge {
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  padding: 0.35em 0.65em;
+}
+.badge-evo {
+  background: var(--evo-primary);
+  color: #fff;
+}
+
+/* ------------------------------------------------------------
+   Progress bars
+   ------------------------------------------------------------ */
+.progress {
+  border-radius: 50px;
+  background-color: var(--evo-bg-alt);
+}
+.progress-bar {
+  border-radius: 50px;
+}
+
+/* ------------------------------------------------------------
+   Login Page
+   ------------------------------------------------------------ */
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #f5f0e8 0%, #ebe5d9 100%);
+  padding: 1rem;
+}
+.login-card {
+  width: 100%;
+  max-width: 420px;
+  border-radius: var(--evo-radius);
+  box-shadow: var(--evo-shadow-lg);
+  overflow: hidden;
+  background: #fff;
+  animation: loginFadeIn 0.5s ease;
+}
+.login-card .login-header {
+  background: linear-gradient(135deg, var(--evo-primary), var(--evo-primary-dark));
+  color: #fff;
+  padding: 2rem 2rem 1.5rem;
+  text-align: center;
+}
+.login-card .login-body {
+  padding: 2rem;
+}
+.login-card .login-logo {
+  width: 90px;
+  height: auto;
+  margin-bottom: 0.75rem;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+}
+.login-card .login-title {
+  font-weight: 700;
+  font-size: 1.3rem;
+  margin-bottom: 0.25rem;
+}
+.login-card .login-subtitle {
+  opacity: 0.8;
+  font-size: 0.85rem;
+}
+
+@keyframes loginFadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ------------------------------------------------------------
+   Animaciones generales
+   ------------------------------------------------------------ */
+.fade-in {
+  animation: fadeIn 0.4s ease;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.slide-in {
+  animation: slideIn 0.3s ease;
+}
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(-10px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* Spinner para modales */
+.spinner-overlay {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+}
+
+/* ------------------------------------------------------------
+   Responsive
+   ------------------------------------------------------------ */
+
+/* Tablets y pantallas medianas */
+@media (max-width: 991.98px) {
+  .stat-card .stat-number {
+    font-size: 1.3rem;
+  }
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .dashboard-greeting {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .dashboard-greeting .text-end {
+    text-align: left !important;
+    width: 100%;
+  }
+}
+
+/* Móviles */
+@media (max-width: 767.98px) {
+  body {
+    padding-top: 60px;
+    padding-bottom: 20px;
+  }
+  .container {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+  .stat-card .stat-number {
+    font-size: 1.15rem;
+  }
+  .stat-card .stat-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 1.1rem;
+  }
+  .table td, .table th {
+    padding: 0.5rem 0.4rem;
+    font-size: 0.78rem;
+  }
+  .btn {
+    height: 38px;
+    font-size: 0.8rem;
+    padding: 0.4rem 0.8rem;
+  }
+  .btn-sm {
+    height: 30px;
+    font-size: 0.72rem;
+    padding: 0.2rem 0.5rem;
+  }
+  .card-body {
+    padding: 0.85rem;
+  }
+  .modal-body {
+    padding: 1rem;
+  }
+  .offcanvas {
+    max-width: 280px;
+  }
+  .offcanvas-body .nav-link {
+    font-size: 0.85rem;
+    padding: 0.6rem 0.75rem;
+  }
+  .login-card .login-header {
+    padding: 1.5rem 1.5rem 1rem;
+  }
+  .login-card .login-body {
+    padding: 1.5rem;
+  }
+  .login-card .login-logo {
+    width: 70px;
+  }
+  .concepto-card .concepto-icon {
+    font-size: 1.5rem;
+  }
+  .d-flex.gap-2 {
+    flex-direction: column;
+  }
+  .d-flex.gap-2 .btn {
+    width: 100%;
+  }
+  /* Tabla horizontal scroll en móvil */
+  .table-responsive {
+    font-size: 0.75rem;
+  }
+  .table td:nth-child(n+5), .table th:nth-child(n+5) {
+    /* Ocultar columnas menos relevantes en móvil si es necesario */
+  }
+  .navbar-brand {
+    font-size: 1rem;
+  }
+  .page-header h4 {
+    font-size: 1rem;
+  }
+  .page-header small {
+    font-size: 0.72rem;
+  }
+  h4 {
+    font-size: 1.1rem;
+  }
+  h5 {
+    font-size: 1rem;
+  }
+}
+
+/* Móviles pequeños */
+@media (max-width: 575.98px) {
+  .container {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+  .stat-card .stat-number {
+    font-size: 1rem;
+  }
+  .stat-card .stat-icon {
+    width: 34px;
+    height: 34px;
+    font-size: 0.95rem;
+  }
+  .table td, .table th {
+    padding: 0.4rem 0.3rem;
+    font-size: 0.72rem;
+  }
+}
+
+/* ------------------------------------------------------------
+   Scroll suave del offcanvas
+   ------------------------------------------------------------ */
+.offcanvas-body {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0,0,0,0.1) transparent;
+}
+.offcanvas-body::-webkit-scrollbar {
+  width: 4px;
+}
+.offcanvas-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+.offcanvas-body::-webkit-scrollbar-thumb {
+  background: rgba(0,0,0,0.15);
+  border-radius: 10px;
+}
+
+/* ------------------------------------------------------------
+   Clases utilitarias adicionales
+   ------------------------------------------------------------ */
+.text-evo { color: var(--evo-primary); }
+.bg-evo { background: linear-gradient(135deg, var(--evo-primary), var(--evo-primary-dark)); }
+.bg-evo-gradient { background: linear-gradient(135deg, var(--evo-primary), var(--evo-primary-dark)); }
+.border-evo { border-color: var(--evo-primary); }
+
+.cursor-pointer { cursor: pointer; }
+.min-w-0 { min-width: 0; }
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Gap helpers */
+.gap-1 { gap: 0.25rem; }
+.gap-2 { gap: 0.5rem; }
+.gap-3 { gap: 1rem; }
+
+/* Para el botón volver */
+.volver-container {
+  margin-bottom: 1rem;
+}
+
+/* Badge tipo de curso */
+.badge-tipo {
+  font-size: 0.68rem;
+  padding: 0.2rem 0.5rem;
+}
+
+/* Estilo para inputs de tipo fecha en móvil */
+@media (max-width: 767.98px) {
+  input[type="date"], input[type="time"] {
+    min-height: 42px;
+  }
+}

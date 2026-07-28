@@ -45,6 +45,8 @@ if (isset($_GET['eliminar'])) {
     }
 }
 
+$mostrarVolver = true;
+$volverUrl = '../index.php';
 include '../../../includes/header.php';
 include '../../../includes/navbar.php';
 
@@ -62,20 +64,6 @@ if (isset($_GET['exito']) || isset($_GET['eliminado'])) {
 ?>
 
 <div class="container mt-3">
-    <!-- Botones de Volver -->
-    <div class="row g-2 mb-3">
-        <div class="col-md-6">
-            <button onclick="history.back()" class="btn btn-secondary w-100">
-                <i class="bi bi-arrow-left"></i> Volver atrás
-            </button>
-        </div>
-        <div class="col-md-6">
-            <a href="../index.php" class="btn btn-secondary w-100">
-                <i class="bi bi-house"></i> Volver al panel de Cantina
-            </a>
-        </div>
-    </div>
-
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h4><i class="bi bi-box-seam"></i> Productos</h4>
         <button class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#modalProducto" onclick="limpiarFormulario()"><i class="bi bi-plus-circle"></i> Nuevo Producto</button>

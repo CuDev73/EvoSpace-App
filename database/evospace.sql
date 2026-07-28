@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost
--- Generation Time: Jul 28, 2026 at 01:07 AM
+-- Generation Time: Jul 28, 2026 at 11:45 PM
 -- Server version: 10.4.28-MariaDB
 -- PHP Version: 8.2.4
 
@@ -42,7 +42,9 @@ INSERT INTO `abonos` (`id_abono`, `fecha_abono`, `profesor`, `monto_abono`) VALU
 (1, '2026-07-28', 'Maria Benitez', 145465.00),
 (2, '2026-07-27', 'jhoan.ramirez', 2500000.00),
 (3, '2026-07-27', 'Maria Benitez', 2354535.00),
-(4, '2026-07-27', 'profesor', 2500000.00);
+(4, '2026-07-27', 'profesor', 2500000.00),
+(5, '2026-07-28', 'Maria Benitez', 2354535.00),
+(6, '2026-07-28', 'Maria Benitez', 145465.00);
 
 -- --------------------------------------------------------
 
@@ -74,7 +76,7 @@ INSERT INTO `alumnos` (`id_alumno`, `nombre`, `apellido`, `id_curso`, `anio_ingr
 (2, 'Natan', 'Levy', 1, '2023', 0.00, '123456', '098765', NULL, 1, 1, '2026-07-23 01:58:31'),
 (3, 'Clara', 'Vallejos', 9, '2024', 0.00, '654321', '099888', NULL, 0, 1, '2026-07-23 01:58:31'),
 (4, 'Jessica', 'Giménez', 18, '2021', 800.00, '111222', '456789', NULL, 1, 1, '2026-07-23 01:58:31'),
-(5, 'Carlos', 'Ruiz', 2, '2023', 0.00, '987654', '555123', 4, 0, 1, '2026-07-23 01:58:31'),
+(5, 'Carlos', 'Ruiz', 2, '2023', 0.00, '987654', '555123', NULL, 0, 1, '2026-07-23 01:58:31'),
 (6, 'Sofía', 'Martínez', 14, '2024', 0.00, '456123', '555456', NULL, 0, 1, '2026-07-23 01:58:31'),
 (7, 'Sofía', 'González', 1, '2023', 0.00, '1000001', '0981111111', NULL, 0, 1, '2026-07-26 22:35:43'),
 (8, 'Mateo', 'Rodríguez', 2, '2022', 0.00, '1000002', '0982222222', NULL, 1, 1, '2026-07-26 22:35:43'),
@@ -301,8 +303,8 @@ INSERT INTO `detalle_ventas` (`id_detalle`, `id_venta`, `id_producto`, `cantidad
 (7, 5, 1, 1, 20000.00, 20000.00),
 (8, 5, 1, 1, 20000.00, 20000.00),
 (9, 5, 1, 1, 20000.00, 20000.00),
-(10, 6, 1, 1, 20000.00, 20000.00),
-(11, 6, 1, 1, 20000.00, 20000.00);
+(12, 7, 1, 6, 20000.00, 120000.00),
+(13, 8, 3, 3, 3000.00, 9000.00);
 
 -- --------------------------------------------------------
 
@@ -376,7 +378,9 @@ CREATE TABLE `pagos` (
 
 INSERT INTO `pagos` (`id_pago`, `id_alumno`, `fecha`, `concepto`, `cantidad`, `monto`, `descuento`, `recargo`, `total`, `metodo_pago`, `fecha_creacion`) VALUES
 (1, 41, '2026-07-26', 'cuota', 1, 220000.00, 0.00, 15000.00, 235000.00, 'Efectivo', '2026-07-27 02:13:53'),
-(2, 41, '2026-07-27', 'cuota', 1, 220000.00, 0.00, 16000.00, 236000.00, 'Efectivo', '2026-07-27 23:01:50');
+(2, 41, '2026-07-27', 'cuota', 1, 220000.00, 0.00, 16000.00, 236000.00, 'Efectivo', '2026-07-27 23:01:50'),
+(3, 17, '2026-07-28', 'cuota', 1, 91000.00, 0.00, 17000.00, 108000.00, 'Efectivo', '2026-07-28 19:57:07'),
+(4, 57, '2026-07-28', 'cuota', 1, 114000.00, 0.00, 17000.00, 131000.00, 'Efectivo', '2026-07-28 19:58:07');
 
 -- --------------------------------------------------------
 
@@ -391,6 +395,16 @@ CREATE TABLE `pagos_alumnos_cantina` (
   `monto` decimal(10,2) NOT NULL,
   `fecha_creacion` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `pagos_alumnos_cantina`
+--
+
+INSERT INTO `pagos_alumnos_cantina` (`id_pago`, `id_alumno`, `fecha`, `monto`, `fecha_creacion`) VALUES
+(1, 1, '2026-07-28', 120000.00, '2026-07-28 21:36:18'),
+(2, 1, '2026-07-28', 120000.00, '2026-07-28 21:36:36'),
+(3, 1, '2026-07-28', 120000.00, '2026-07-28 21:38:31'),
+(4, 17, '2026-07-28', 9000.00, '2026-07-28 21:38:38');
 
 -- --------------------------------------------------------
 
@@ -576,8 +590,9 @@ CREATE TABLE `productos` (
 --
 
 INSERT INTO `productos` (`id_producto`, `nombre`, `precio`, `activo`, `fecha_creacion`, `precio_compra`, `cantidad`, `id_proveedor`) VALUES
-(1, 'Papas a la crema', 20000.00, 1, '2026-07-26 17:41:32', 15000.00, 4, NULL),
-(2, 'Papas fritas', 123.00, 1, '2026-07-26 17:45:49', 0.00, 0, NULL);
+(1, 'Papas a la crema', 20000.00, 1, '2026-07-26 17:41:32', 15000.00, 0, 1),
+(2, 'Papas fritas', 123.00, 1, '2026-07-26 17:45:49', 0.00, 0, NULL),
+(3, 'Papas a la crema', 3000.00, 1, '2026-07-28 21:29:57', 1300.00, 27, 1);
 
 -- --------------------------------------------------------
 
@@ -600,7 +615,7 @@ CREATE TABLE `profesores` (
 INSERT INTO `profesores` (`id_profesor`, `id_usuario`, `salario_base`, `fecha_contratacion`, `activo`) VALUES
 (1, 2, 2500000.00, '2026-07-26', 1),
 (2, 5, 2500000.00, '2026-07-26', 1),
-(3, 6, 2500000.00, '2026-07-26', 1);
+(3, 6, 5000000.00, '2026-07-26', 1);
 
 -- --------------------------------------------------------
 
@@ -694,7 +709,6 @@ INSERT INTO `usuarios` (`id_usuario`, `usuario`, `email`, `cedula`, `password_ha
 (1, 'admin', 'admin@evospace.com', '1234567', '$2y$10$LBSyD2UFwBLJA/G1i4CRh.pVZJ/q/n2zhkSGNilT5OxM6IK3ccyBC', 1, 'Administrador', NULL, 1, '2026-07-23 01:58:31'),
 (2, 'profesor', 'profe@evospace.com', '2345678', '$2y$10$19GT94aaJLh/UxAhesrC9OwP5oY57xYuzes4FJeHSsUtyhyv7Rp3q', 2, 'Profesor Ejemplo', NULL, 1, '2026-07-23 01:58:31'),
 (3, 'padre', 'villoan73@gmail.com', '3456789', '$2y$10$MEtWjyh39YEj62xf0fCsrebtyVdBmdwBzz8gwh.1/4WmjMj0C6zIi', 3, 'Padre Ejemplo', NULL, 1, '2026-07-23 01:58:31'),
-(4, 'auxiliar', 'auxiliar@evospace.com', '5678901', '$2y$10$LBSyD2UFwBLJA/G1i4CRh.pVZJ/q/n2zhkSGNilT5OxM6IK3ccyBC', 4, 'Auxiliar Ejemplo', NULL, 1, '2026-07-23 01:58:31'),
 (5, 'jhoan.ramirez', '', '7007909', '$2y$10$.dgzoYtUKLxS4q/szOodEeubeh0dboBo9KeaMgDS90JDxazsmAXv2', 2, 'Jhoan Ramirez', NULL, 1, '2026-07-26 17:05:36'),
 (6, 'Maria Benitez', 'maradsf@gmail.com', '123', '$2y$10$36bXBybs.APGTb5L0v9vMuC7JYpvMCwDWpKIui39ff5.sW5bxW.QK', 2, NULL, NULL, 1, '2026-07-26 20:59:55');
 
@@ -714,7 +728,16 @@ CREATE TABLE `usuarios_permisos` (
 --
 
 INSERT INTO `usuarios_permisos` (`id_usuario`, `permiso`) VALUES
+(2, 'alumnos'),
+(2, 'asistencia'),
+(2, 'eventos'),
+(2, 'pagos'),
+(5, 'alumnos'),
+(5, 'asistencia'),
+(5, 'eventos'),
+(5, 'pagos'),
 (6, 'alumnos'),
+(6, 'asistencia'),
 (6, 'cantina'),
 (6, 'configuracion'),
 (6, 'eventos'),
@@ -752,7 +775,8 @@ INSERT INTO `ventas` (`id_venta`, `fecha`, `total`, `metodo_pago`, `tipo_comprad
 (3, '2026-07-27 00:00:00', 20000.00, 'Efectivo', 'alumno', 'Mariela Nuñez Esteche', 1, NULL, '', 'pagado'),
 (4, '2026-07-27 00:00:00', 20000.00, 'Efectivo', 'alumno', 'Mariela Nuñez Esteche', 1, NULL, '', 'pagado'),
 (5, '2026-07-28 00:00:00', 60000.00, 'Fiado', 'alumno', 'Joaquín Romero', 18, NULL, '', 'pagado'),
-(6, '2026-07-28 00:00:00', 40000.00, 'Fiado', 'alumno', 'Lucas Martín', 38, NULL, '', 'pendiente');
+(7, '2026-07-28 00:00:00', 120000.00, 'Fiado', 'alumno', 'Mariela Nuñez Esteche', 1, NULL, '', 'pagado'),
+(8, '2026-07-28 00:00:00', 9000.00, 'Fiado', 'alumno', 'Emma Álvarez', 17, NULL, '', 'pagado');
 
 --
 -- Indexes for dumped tables
@@ -943,7 +967,7 @@ ALTER TABLE `ventas`
 -- AUTO_INCREMENT for table `abonos`
 --
 ALTER TABLE `abonos`
-  MODIFY `id_abono` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id_abono` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT for table `alumnos`
@@ -985,7 +1009,7 @@ ALTER TABLE `detalle_compra_proveedor`
 -- AUTO_INCREMENT for table `detalle_ventas`
 --
 ALTER TABLE `detalle_ventas`
-  MODIFY `id_detalle` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
+  MODIFY `id_detalle` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
 
 --
 -- AUTO_INCREMENT for table `eventos`
@@ -1003,13 +1027,13 @@ ALTER TABLE `notificaciones`
 -- AUTO_INCREMENT for table `pagos`
 --
 ALTER TABLE `pagos`
-  MODIFY `id_pago` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id_pago` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `pagos_alumnos_cantina`
 --
 ALTER TABLE `pagos_alumnos_cantina`
-  MODIFY `id_pago` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id_pago` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `pagos_proveedores`
@@ -1033,7 +1057,7 @@ ALTER TABLE `precios`
 -- AUTO_INCREMENT for table `productos`
 --
 ALTER TABLE `productos`
-  MODIFY `id_producto` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id_producto` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `profesores`
@@ -1057,13 +1081,13 @@ ALTER TABLE `roles`
 -- AUTO_INCREMENT for table `usuarios`
 --
 ALTER TABLE `usuarios`
-  MODIFY `id_usuario` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id_usuario` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT for table `ventas`
 --
 ALTER TABLE `ventas`
-  MODIFY `id_venta` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id_venta` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- Constraints for dumped tables

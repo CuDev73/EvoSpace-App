@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost
--- Generation Time: Jul 28, 2026 at 11:45 PM
+-- Generation Time: Jul 30, 2026 at 03:57 AM
 -- Server version: 10.4.28-MariaDB
 -- PHP Version: 8.2.4
 
@@ -31,20 +31,26 @@ CREATE TABLE `abonos` (
   `id_abono` int(11) NOT NULL,
   `fecha_abono` date NOT NULL,
   `profesor` varchar(100) NOT NULL,
-  `monto_abono` decimal(10,2) NOT NULL
+  `monto_abono` decimal(10,2) NOT NULL,
+  `descripcion` text DEFAULT NULL,
+  `imagen` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `abonos`
 --
 
-INSERT INTO `abonos` (`id_abono`, `fecha_abono`, `profesor`, `monto_abono`) VALUES
-(1, '2026-07-28', 'Maria Benitez', 145465.00),
-(2, '2026-07-27', 'jhoan.ramirez', 2500000.00),
-(3, '2026-07-27', 'Maria Benitez', 2354535.00),
-(4, '2026-07-27', 'profesor', 2500000.00),
-(5, '2026-07-28', 'Maria Benitez', 2354535.00),
-(6, '2026-07-28', 'Maria Benitez', 145465.00);
+INSERT INTO `abonos` (`id_abono`, `fecha_abono`, `profesor`, `monto_abono`, `descripcion`, `imagen`) VALUES
+(2, '2026-07-27', 'jhoan.ramirez', 2500000.00, NULL, NULL),
+(3, '2026-07-27', 'Maria Benitez', 2354535.00, NULL, NULL),
+(4, '2026-07-27', 'profesor', 2500000.00, NULL, NULL),
+(5, '2026-07-28', 'Maria Benitez', 2354535.00, NULL, NULL),
+(6, '2026-07-28', 'Maria Benitez', 145465.00, NULL, NULL),
+(7, '2026-07-29', 'jhoan.ramirez', 2500000.00, NULL, NULL),
+(8, '2026-07-29', 'profesor', 2500000.00, NULL, NULL),
+(9, '2026-07-29', 'jhoan.ramirez', 5000000.00, NULL, NULL),
+(10, '2026-07-29', 'Maria Benitez', 145465.00, NULL, NULL),
+(11, '2026-07-30', 'jhoan.ramirez', 5000000.00, '', NULL);
 
 -- --------------------------------------------------------
 
@@ -117,7 +123,7 @@ INSERT INTO `alumnos` (`id_alumno`, `nombre`, `apellido`, `id_curso`, `anio_ingr
 (43, 'Lara', 'García', 7, '2023', 0.00, '1000037', '0941111111', NULL, 0, 1, '2026-07-26 22:35:43'),
 (44, 'Santos', 'Sosa', 8, '2022', 0.00, '1000038', '0942222222', NULL, 0, 1, '2026-07-26 22:35:43'),
 (45, 'Zoe', 'Martínez', 9, '2024', 0.00, '1000039', '0943333333', NULL, 1, 1, '2026-07-26 22:35:43'),
-(46, 'Bruno', 'Fernández', 10, '2021', 0.00, '1000040', '0944444444', NULL, 0, 1, '2026-07-26 22:35:43'),
+(46, 'Bruno', 'Fernández', 11, '2021', 0.00, '1000040', '0944444444', NULL, 0, 1, '2026-07-26 22:35:43'),
 (47, 'Alan', 'Benítez', 15, '2020', 850.50, '1000041', '0945555555', NULL, 0, 1, '2026-07-26 22:35:43'),
 (48, 'Candela', 'Mansilla', 16, '2021', 1200.00, '1000042', '0946666666', NULL, 1, 1, '2026-07-26 22:35:43'),
 (49, 'Nicolás', 'Alcaraz', 17, '2022', 950.75, '1000043', '0947777777', NULL, 0, 1, '2026-07-26 22:35:43'),
@@ -136,8 +142,8 @@ INSERT INTO `alumnos` (`id_alumno`, `nombre`, `apellido`, `id_curso`, `anio_ingr
 (62, 'Elena', 'Martín', 16, '2020', 1550.00, '1000056', '0922222222', NULL, 0, 1, '2026-07-26 22:35:43'),
 (63, 'Julián', 'Vega', 17, '2023', 1000.00, '1000057', '0923333333', NULL, 1, 1, '2026-07-26 22:35:43'),
 (64, 'Malena', 'Soria', 18, '2021', 1250.25, '1000058', '0924444444', NULL, 0, 1, '2026-07-26 22:35:43'),
-(65, 'Facundo', 'Pinto', 19, '2022', 880.50, '1000059', '0925555555', NULL, 0, 1, '2026-07-26 22:35:43'),
-(66, 'Brenda', 'Córdoba', 20, '2020', 1400.00, '1000060', '0926666666', NULL, 1, 1, '2026-07-26 22:35:43');
+(65, 'Facundo', 'Pinto', 20, '2022', 880.50, '1000059', '0925555555', NULL, 0, 1, '2026-07-26 22:35:43'),
+(66, 'Brenda', 'Córdoba', 21, '2020', 21.00, '1000060', '0926666666', 3, 1, 1, '2026-07-26 22:35:43');
 
 -- --------------------------------------------------------
 
@@ -160,12 +166,22 @@ CREATE TABLE `asistencia` (
 --
 
 INSERT INTO `asistencia` (`id_asistencia`, `id_alumno`, `id_curso`, `fecha`, `presente`, `observaciones`, `fecha_creacion`) VALUES
-(5, 2, 1, '2026-07-26', 0, '', '2026-07-26 21:46:46'),
-(11, 2, 1, '2026-07-27', 0, '', '2026-07-27 00:23:42'),
-(12, 7, 1, '2026-07-27', 0, '', '2026-07-27 00:23:42'),
-(13, 13, 1, '2026-07-27', 0, '', '2026-07-27 00:23:42'),
-(14, 19, 1, '2026-07-27', 0, '', '2026-07-27 00:23:42'),
-(15, 25, 1, '2026-07-27', 0, '', '2026-07-27 00:23:42');
+(52, 13, 1, '2026-07-03', 1, NULL, '2026-07-29 23:16:23'),
+(53, 13, 1, '2026-07-06', 1, NULL, '2026-07-29 23:16:23'),
+(54, 13, 1, '2026-07-31', 1, NULL, '2026-07-29 23:16:23'),
+(55, 19, 1, '2026-07-03', 1, NULL, '2026-07-29 23:16:23'),
+(56, 19, 1, '2026-07-06', 1, NULL, '2026-07-29 23:16:23'),
+(57, 7, 1, '2026-07-03', 1, NULL, '2026-07-29 23:16:23'),
+(58, 7, 1, '2026-07-06', 1, NULL, '2026-07-29 23:16:23'),
+(59, 2, 1, '2026-07-03', 1, NULL, '2026-07-29 23:16:23'),
+(60, 2, 1, '2026-07-06', 1, NULL, '2026-07-29 23:16:23'),
+(61, 25, 1, '2026-07-03', 1, NULL, '2026-07-29 23:16:23'),
+(62, 25, 1, '2026-07-06', 1, NULL, '2026-07-29 23:16:23'),
+(63, 2, 1, '2026-07-30', 1, '', '2026-07-30 01:43:06'),
+(64, 7, 1, '2026-07-30', 0, '', '2026-07-30 01:43:06'),
+(65, 13, 1, '2026-07-30', 1, '', '2026-07-30 01:43:06'),
+(66, 19, 1, '2026-07-30', 1, '', '2026-07-30 01:43:06'),
+(67, 25, 1, '2026-07-30', 0, '', '2026-07-30 01:43:06');
 
 -- --------------------------------------------------------
 
@@ -206,7 +222,7 @@ CREATE TABLE `compras_proveedores` (
 
 CREATE TABLE `configuracion` (
   `clave` varchar(50) NOT NULL,
-  `valor` varchar(255) NOT NULL
+  `valor` text NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
@@ -215,8 +231,15 @@ CREATE TABLE `configuracion` (
 
 INSERT INTO `configuracion` (`clave`, `valor`) VALUES
 ('dia_limite_pago', '10'),
+('limite_horas_profesionales', '200'),
 ('porcentaje_beca', '45.45'),
-('recargo_por_dia', '1000');
+('recargo_por_dia', '1000'),
+('recibo_logo', ''),
+('recibo_mensaje', 'Gracias por confiar en EvoSpace'),
+('recibo_nombre', 'EvoSpace'),
+('recibo_pie', 'Este documento es un comprobante de pago válido'),
+('recibo_ruc', '12345678-0'),
+('recibo_titulo', 'Academia de Artes Escénicas');
 
 -- --------------------------------------------------------
 
@@ -229,35 +252,36 @@ CREATE TABLE `cursos` (
   `nombre` varchar(100) NOT NULL,
   `tipo` enum('Acrotelas','Infantil','Superior') NOT NULL,
   `orden` int(11) NOT NULL,
-  `activo` tinyint(1) DEFAULT 1
+  `activo` tinyint(1) DEFAULT 1,
+  `cupo_maximo` int(11) DEFAULT NULL COMMENT 'NULL = sin limite'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `cursos`
 --
 
-INSERT INTO `cursos` (`id_curso`, `nombre`, `tipo`, `orden`, `activo`) VALUES
-(1, 'Inicial', 'Acrotelas', 1, 1),
-(2, 'Primer Curso', 'Acrotelas', 2, 1),
-(3, 'Segundo Curso', 'Acrotelas', 3, 1),
-(4, 'Tercer Curso', 'Acrotelas', 4, 1),
-(5, 'Cuarto Curso', 'Acrotelas', 5, 1),
-(6, 'Quinto Curso', 'Acrotelas', 6, 1),
-(7, 'Nivel Inicial I', 'Infantil', 1, 1),
-(8, 'Nivel Inicial II', 'Infantil', 2, 1),
-(9, 'Primer Grado', 'Infantil', 3, 1),
-(10, 'Segundo Grado', 'Infantil', 4, 1),
-(11, 'Tercer Grado', 'Infantil', 5, 1),
-(12, 'Cuarto Grado', 'Infantil', 6, 1),
-(13, 'Quinto Grado', 'Infantil', 7, 1),
-(14, 'Sexto Grado', 'Infantil', 8, 1),
-(15, 'Principiante Superior', 'Superior', 1, 1),
-(16, 'Preparatorio Superior', 'Superior', 2, 1),
-(17, 'Primer Curso', 'Superior', 3, 1),
-(18, 'Segundo Curso', 'Superior', 4, 1),
-(19, 'Tercer Curso', 'Superior', 5, 1),
-(20, 'Cuarto Curso', 'Superior', 6, 1),
-(21, 'Quinto Curso', 'Superior', 7, 1);
+INSERT INTO `cursos` (`id_curso`, `nombre`, `tipo`, `orden`, `activo`, `cupo_maximo`) VALUES
+(1, 'Inicial', 'Acrotelas', 1, 1, 14),
+(2, 'Primer Curso', 'Acrotelas', 2, 1, NULL),
+(3, 'Segundo Curso', 'Acrotelas', 3, 1, NULL),
+(4, 'Tercer Curso', 'Acrotelas', 4, 1, NULL),
+(5, 'Cuarto Curso', 'Acrotelas', 5, 1, NULL),
+(6, 'Quinto Curso', 'Acrotelas', 6, 1, NULL),
+(7, 'Nivel Inicial I', 'Infantil', 1, 1, NULL),
+(8, 'Nivel Inicial II', 'Infantil', 2, 1, NULL),
+(9, 'Primer Grado', 'Infantil', 3, 1, NULL),
+(10, 'Segundo Grado', 'Infantil', 4, 1, NULL),
+(11, 'Tercer Grado', 'Infantil', 5, 1, NULL),
+(12, 'Cuarto Grado', 'Infantil', 6, 1, NULL),
+(13, 'Quinto Grado', 'Infantil', 7, 1, NULL),
+(14, 'Sexto Grado', 'Infantil', 8, 1, NULL),
+(15, 'Principiante Superior', 'Superior', 1, 1, NULL),
+(16, 'Preparatorio Superior', 'Superior', 2, 1, NULL),
+(17, 'Primer Curso', 'Superior', 3, 1, NULL),
+(18, 'Segundo Curso', 'Superior', 4, 1, NULL),
+(19, 'Tercer Curso', 'Superior', 5, 1, NULL),
+(20, 'Cuarto Curso', 'Superior', 6, 1, NULL),
+(21, 'Quinto Curso', 'Superior', 7, 1, NULL);
 
 -- --------------------------------------------------------
 
@@ -304,7 +328,15 @@ INSERT INTO `detalle_ventas` (`id_detalle`, `id_venta`, `id_producto`, `cantidad
 (8, 5, 1, 1, 20000.00, 20000.00),
 (9, 5, 1, 1, 20000.00, 20000.00),
 (12, 7, 1, 6, 20000.00, 120000.00),
-(13, 8, 3, 3, 3000.00, 9000.00);
+(13, 8, 3, 3, 3000.00, 9000.00),
+(14, 9, 3, 4, 3000.00, 12000.00),
+(15, 10, 3, 1, 3000.00, 3000.00),
+(16, 11, 3, 6, 3000.00, 18000.00),
+(17, 12, 4, 1, 5000.00, 5000.00),
+(18, 13, 4, 20, 5000.00, 100000.00),
+(19, 14, 4, 30, 5000.00, 150000.00),
+(20, 14, 3, 1, 3000.00, 3000.00),
+(21, 15, 3, 1, 3000.00, 3000.00);
 
 -- --------------------------------------------------------
 
@@ -321,8 +353,17 @@ CREATE TABLE `eventos` (
   `lugar` varchar(200) DEFAULT NULL,
   `enlace_ubicacion` varchar(255) DEFAULT NULL,
   `color` varchar(7) DEFAULT '#c81015',
-  `fecha_creacion` timestamp NOT NULL DEFAULT current_timestamp()
+  `fecha_creacion` timestamp NOT NULL DEFAULT current_timestamp(),
+  `imagen` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `eventos`
+--
+
+INSERT INTO `eventos` (`id_evento`, `titulo`, `descripcion`, `fecha`, `hora`, `lugar`, `enlace_ubicacion`, `color`, `fecha_creacion`, `imagen`) VALUES
+(2, 'Festival para el dia de mañana', 'Llevar ropa adecuada', '2026-07-29', '12:40:00', 'Teatro', 'https://maps.app.goo.gl/h3cDEHZ6ZeE27swW6', '#c61010', '2026-07-29 02:41:12', NULL),
+(3, 'Festival para el dia de mañana', 'JASDF', '2026-07-30', '09:37:00', NULL, 'https://maps.app.goo.gl/h3cDEHZ6ZeE27swW6', '#ffffff', '2026-07-29 12:36:42', NULL);
 
 -- --------------------------------------------------------
 
@@ -334,6 +375,100 @@ CREATE TABLE `evento_curso` (
   `id_evento` int(11) NOT NULL,
   `id_curso` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `evento_curso`
+--
+
+INSERT INTO `evento_curso` (`id_evento`, `id_curso`) VALUES
+(2, 1),
+(2, 2),
+(2, 3),
+(2, 4),
+(2, 5),
+(2, 6),
+(2, 7),
+(2, 8),
+(2, 9),
+(2, 10),
+(2, 11),
+(2, 12),
+(2, 13),
+(2, 14),
+(2, 15),
+(2, 16),
+(2, 17),
+(2, 18),
+(2, 19),
+(2, 20),
+(2, 21),
+(3, 1),
+(3, 2),
+(3, 3),
+(3, 4),
+(3, 5),
+(3, 6),
+(3, 7),
+(3, 8),
+(3, 9),
+(3, 10),
+(3, 11),
+(3, 12),
+(3, 13),
+(3, 14),
+(3, 15),
+(3, 16),
+(3, 17),
+(3, 18),
+(3, 19),
+(3, 20),
+(3, 21);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `horarios`
+--
+
+CREATE TABLE `horarios` (
+  `id_horario` int(11) NOT NULL,
+  `id_curso` int(11) NOT NULL,
+  `id_profesor` int(11) DEFAULT NULL,
+  `dia_semana` varchar(20) NOT NULL DEFAULT '1',
+  `hora_inicio` time NOT NULL,
+  `hora_fin` time NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `horarios`
+--
+
+INSERT INTO `horarios` (`id_horario`, `id_curso`, `id_profesor`, `dia_semana`, `hora_inicio`, `hora_fin`) VALUES
+(1, 1, 3, '5', '21:40:00', '22:15:00'),
+(2, 1, 3, '1', '19:30:00', '20:30:00');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `horas_profesionales_log`
+--
+
+CREATE TABLE `horas_profesionales_log` (
+  `id_log` int(11) NOT NULL,
+  `id_alumno` int(11) NOT NULL,
+  `horas` decimal(6,2) NOT NULL,
+  `descripcion` varchar(255) DEFAULT NULL,
+  `fecha` date NOT NULL,
+  `fecha_creacion` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `horas_profesionales_log`
+--
+
+INSERT INTO `horas_profesionales_log` (`id_log`, `id_alumno`, `horas`, `descripcion`, `fecha`, `fecha_creacion`) VALUES
+(1, 66, 20.00, NULL, '2026-07-30', '2026-07-29 23:21:57'),
+(2, 66, 1.00, NULL, '2026-07-30', '2026-07-29 23:22:09');
 
 -- --------------------------------------------------------
 
@@ -352,6 +487,17 @@ CREATE TABLE `notificaciones` (
   `fecha` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+--
+-- Dumping data for table `notificaciones`
+--
+
+INSERT INTO `notificaciones` (`id_notificacion`, `id_evento`, `id_usuario`, `titulo`, `mensaje`, `tipo`, `leida`, `fecha`) VALUES
+(43, 2, 3, 'Nuevo evento: Festival para el dia de mañana', 'Llevar ropa adecuada', 'evento', 1, '2026-07-29 02:41:17'),
+(44, 3, 3, 'Nuevo evento: Festival para el dia de mañana', 'JASDF', 'evento', 1, '2026-07-29 12:36:48'),
+(45, 3, 3, 'Nuevo evento: Festival para el dia de mañana', 'JASDF', 'evento', 0, '2026-07-30 00:00:38'),
+(46, 3, 3, 'Festival para el dia de mañana', 'JASDF', 'evento', 0, '2026-07-30 00:06:18'),
+(47, 3, 3, 'Festival para el dia de mañana', 'JASDF', 'evento', 0, '2026-07-30 00:06:39');
+
 -- --------------------------------------------------------
 
 --
@@ -369,6 +515,8 @@ CREATE TABLE `pagos` (
   `recargo` decimal(10,2) DEFAULT 0.00,
   `total` decimal(10,2) NOT NULL,
   `metodo_pago` enum('Efectivo','Transferencia','Tarjeta','Otro') DEFAULT 'Efectivo',
+  `descripcion` text DEFAULT NULL,
+  `imagen` varchar(255) DEFAULT NULL,
   `fecha_creacion` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -376,11 +524,18 @@ CREATE TABLE `pagos` (
 -- Dumping data for table `pagos`
 --
 
-INSERT INTO `pagos` (`id_pago`, `id_alumno`, `fecha`, `concepto`, `cantidad`, `monto`, `descuento`, `recargo`, `total`, `metodo_pago`, `fecha_creacion`) VALUES
-(1, 41, '2026-07-26', 'cuota', 1, 220000.00, 0.00, 15000.00, 235000.00, 'Efectivo', '2026-07-27 02:13:53'),
-(2, 41, '2026-07-27', 'cuota', 1, 220000.00, 0.00, 16000.00, 236000.00, 'Efectivo', '2026-07-27 23:01:50'),
-(3, 17, '2026-07-28', 'cuota', 1, 91000.00, 0.00, 17000.00, 108000.00, 'Efectivo', '2026-07-28 19:57:07'),
-(4, 57, '2026-07-28', 'cuota', 1, 114000.00, 0.00, 17000.00, 131000.00, 'Efectivo', '2026-07-28 19:58:07');
+INSERT INTO `pagos` (`id_pago`, `id_alumno`, `fecha`, `concepto`, `cantidad`, `monto`, `descuento`, `recargo`, `total`, `metodo_pago`, `descripcion`, `imagen`, `fecha_creacion`) VALUES
+(1, 41, '2026-07-26', 'cuota', 1, 220000.00, 0.00, 15000.00, 235000.00, 'Efectivo', NULL, NULL, '2026-07-27 02:13:53'),
+(2, 41, '2026-07-27', 'cuota', 1, 220000.00, 0.00, 16000.00, 236000.00, 'Efectivo', NULL, NULL, '2026-07-27 23:01:50'),
+(3, 17, '2026-07-28', 'cuota', 1, 91000.00, 0.00, 17000.00, 108000.00, 'Efectivo', NULL, NULL, '2026-07-28 19:57:07'),
+(4, 57, '2026-07-28', 'cuota', 1, 114000.00, 0.00, 17000.00, 131000.00, 'Efectivo', NULL, NULL, '2026-07-28 19:58:07'),
+(5, 41, '2026-07-28', 'cuota', 1, 220000.00, 0.00, 17000.00, 237000.00, 'Efectivo', NULL, NULL, '2026-07-29 02:32:10'),
+(6, 57, '2026-07-28', 'cuota', 1, 114000.00, 0.00, 17000.00, 131000.00, 'Efectivo', NULL, NULL, '2026-07-29 02:39:45'),
+(7, 41, '2026-07-29', 'cuota', 1, 220000.00, 0.00, 18000.00, 238000.00, 'Efectivo', NULL, NULL, '2026-07-29 12:32:39'),
+(8, 17, '2026-07-29', 'cuota', 1, 91000.00, 0.00, 18000.00, 109000.00, 'Efectivo', NULL, NULL, '2026-07-29 12:32:56'),
+(9, 46, '2026-07-29', 'cuota', 1, 220000.00, 0.00, 19000.00, 239000.00, 'Efectivo', 'Pago de cuota', NULL, '2026-07-29 22:00:16'),
+(10, 1, '2026-07-30', 'cuota', 1, 250000.00, 0.00, 20000.00, 270000.00, 'Efectivo', NULL, NULL, '2026-07-29 22:12:24'),
+(11, 66, '2026-07-30', 'cuota', 1, 114000.00, 0.00, 20000.00, 134000.00, 'Efectivo', NULL, NULL, '2026-07-29 22:26:59');
 
 -- --------------------------------------------------------
 
@@ -404,7 +559,10 @@ INSERT INTO `pagos_alumnos_cantina` (`id_pago`, `id_alumno`, `fecha`, `monto`, `
 (1, 1, '2026-07-28', 120000.00, '2026-07-28 21:36:18'),
 (2, 1, '2026-07-28', 120000.00, '2026-07-28 21:36:36'),
 (3, 1, '2026-07-28', 120000.00, '2026-07-28 21:38:31'),
-(4, 17, '2026-07-28', 9000.00, '2026-07-28 21:38:38');
+(4, 17, '2026-07-28', 9000.00, '2026-07-28 21:38:38'),
+(5, 18, '2026-07-29', 1500.00, '2026-07-29 02:33:58'),
+(6, 32, '2026-07-29', 18000.00, '2026-07-29 12:33:59'),
+(7, 1, '2026-07-30', 5000.00, '2026-07-29 23:25:51');
 
 -- --------------------------------------------------------
 
@@ -446,7 +604,8 @@ INSERT INTO `permisos` (`id_permiso`, `nombre`, `descripcion`) VALUES
 (22, 'cantina', 'Ver y editar cantina'),
 (23, 'asistencia', 'Ver y editar asistencia'),
 (24, 'configuracion', 'Ver y editar configuración'),
-(25, 'usuarios', 'Gestionar usuarios');
+(25, 'usuarios', 'Gestionar usuarios'),
+(27, 'horarios', 'Ver y editar horarios de cursos');
 
 -- --------------------------------------------------------
 
@@ -592,7 +751,8 @@ CREATE TABLE `productos` (
 INSERT INTO `productos` (`id_producto`, `nombre`, `precio`, `activo`, `fecha_creacion`, `precio_compra`, `cantidad`, `id_proveedor`) VALUES
 (1, 'Papas a la crema', 20000.00, 1, '2026-07-26 17:41:32', 15000.00, 0, 1),
 (2, 'Papas fritas', 123.00, 1, '2026-07-26 17:45:49', 0.00, 0, NULL),
-(3, 'Papas a la crema', 3000.00, 1, '2026-07-28 21:29:57', 1300.00, 27, 1);
+(3, 'Papas a la crema2', 3000.00, 1, '2026-07-28 21:29:57', 1300.00, 14, 1),
+(4, 'Bolsa de papas', 5000.00, 1, '2026-07-29 12:34:40', 3500.00, 49, 1);
 
 -- --------------------------------------------------------
 
@@ -613,8 +773,8 @@ CREATE TABLE `profesores` (
 --
 
 INSERT INTO `profesores` (`id_profesor`, `id_usuario`, `salario_base`, `fecha_contratacion`, `activo`) VALUES
-(1, 2, 2500000.00, '2026-07-26', 1),
-(2, 5, 2500000.00, '2026-07-26', 1),
+(1, 2, 5000000.00, '2026-07-26', 1),
+(2, 5, 15000000.00, '2026-07-26', 1),
 (3, 6, 5000000.00, '2026-07-26', 1);
 
 -- --------------------------------------------------------
@@ -707,10 +867,11 @@ CREATE TABLE `usuarios` (
 
 INSERT INTO `usuarios` (`id_usuario`, `usuario`, `email`, `cedula`, `password_hash`, `id_rol`, `nombre_completo`, `telefono`, `activo`, `fecha_creacion`) VALUES
 (1, 'admin', 'admin@evospace.com', '1234567', '$2y$10$LBSyD2UFwBLJA/G1i4CRh.pVZJ/q/n2zhkSGNilT5OxM6IK3ccyBC', 1, 'Administrador', NULL, 1, '2026-07-23 01:58:31'),
-(2, 'profesor', 'profe@evospace.com', '2345678', '$2y$10$19GT94aaJLh/UxAhesrC9OwP5oY57xYuzes4FJeHSsUtyhyv7Rp3q', 2, 'Profesor Ejemplo', NULL, 1, '2026-07-23 01:58:31'),
+(2, 'profesor', 'profe@evospace.com', '2345678', '$2y$10$0PZciBLEdsMtmyGGvdhqZ.z4v9gM8BzW58AWsHTTgehmRdn.iR5VS', 2, 'Profesor Ejemplo', NULL, 1, '2026-07-23 01:58:31'),
 (3, 'padre', 'villoan73@gmail.com', '3456789', '$2y$10$MEtWjyh39YEj62xf0fCsrebtyVdBmdwBzz8gwh.1/4WmjMj0C6zIi', 3, 'Padre Ejemplo', NULL, 1, '2026-07-23 01:58:31'),
 (5, 'jhoan.ramirez', '', '7007909', '$2y$10$.dgzoYtUKLxS4q/szOodEeubeh0dboBo9KeaMgDS90JDxazsmAXv2', 2, 'Jhoan Ramirez', NULL, 1, '2026-07-26 17:05:36'),
-(6, 'Maria Benitez', 'maradsf@gmail.com', '123', '$2y$10$36bXBybs.APGTb5L0v9vMuC7JYpvMCwDWpKIui39ff5.sW5bxW.QK', 2, NULL, NULL, 1, '2026-07-26 20:59:55');
+(6, 'Maria Benitez', 'maradsf@gmail.com', '123', '$2y$10$36bXBybs.APGTb5L0v9vMuC7JYpvMCwDWpKIui39ff5.sW5bxW.QK', 2, 'Maria Benitez', NULL, 1, '2026-07-26 20:59:55'),
+(8, 'cantinero', 'maradsf@gaamail.com', '123123123', '$2y$10$o.hINDQDrKyQKRTP3qjJaeHLgN4eltq06LZT8HEJhL9Qdxhsdflrq', 4, 'cantinero', NULL, 1, '2026-07-29 12:41:28');
 
 -- --------------------------------------------------------
 
@@ -732,19 +893,17 @@ INSERT INTO `usuarios_permisos` (`id_usuario`, `permiso`) VALUES
 (2, 'asistencia'),
 (2, 'eventos'),
 (2, 'pagos'),
+(2, 'usuarios'),
 (5, 'alumnos'),
 (5, 'asistencia'),
 (5, 'eventos'),
 (5, 'pagos'),
 (6, 'alumnos'),
 (6, 'asistencia'),
-(6, 'cantina'),
-(6, 'configuracion'),
 (6, 'eventos'),
-(6, 'gestionar_usuarios'),
 (6, 'pagos'),
-(6, 'profesores'),
-(6, 'usuarios');
+(8, 'cantina'),
+(8, 'pagos');
 
 -- --------------------------------------------------------
 
@@ -776,7 +935,14 @@ INSERT INTO `ventas` (`id_venta`, `fecha`, `total`, `metodo_pago`, `tipo_comprad
 (4, '2026-07-27 00:00:00', 20000.00, 'Efectivo', 'alumno', 'Mariela Nuñez Esteche', 1, NULL, '', 'pagado'),
 (5, '2026-07-28 00:00:00', 60000.00, 'Fiado', 'alumno', 'Joaquín Romero', 18, NULL, '', 'pagado'),
 (7, '2026-07-28 00:00:00', 120000.00, 'Fiado', 'alumno', 'Mariela Nuñez Esteche', 1, NULL, '', 'pagado'),
-(8, '2026-07-28 00:00:00', 9000.00, 'Fiado', 'alumno', 'Emma Álvarez', 17, NULL, '', 'pagado');
+(8, '2026-07-28 00:00:00', 9000.00, 'Fiado', 'alumno', 'Emma Álvarez', 17, NULL, '', 'pagado'),
+(9, '2026-07-29 00:00:00', 12000.00, 'Efectivo', 'alumno', 'Brenda Córdoba', 66, NULL, '', 'pagado'),
+(10, '2026-07-29 00:00:00', 3000.00, 'Efectivo', 'alumno', 'Joaquín Romero', 18, NULL, '', 'pagado'),
+(11, '2026-07-29 00:00:00', 18000.00, 'Fiado', 'alumno', 'Thiago Cáceres', 32, NULL, '', 'pagado'),
+(12, '2026-07-30 00:00:00', 5000.00, 'Fiado', 'alumno', 'Mariela Nuñez Esteche', 1, NULL, '', 'pagado'),
+(13, '2026-07-30 00:00:00', 100000.00, 'Fiado', 'alumno', 'Joaquín Romero', 18, NULL, '', 'pagado'),
+(14, '2026-07-30 00:00:00', 153000.00, 'Efectivo', 'alumno', 'Tomás Escobar', 59, NULL, '', 'pagado'),
+(15, '2026-07-30 00:00:00', 3000.00, 'Fiado', 'alumno', 'Jessica Giménez', 4, NULL, '', 'pagado');
 
 --
 -- Indexes for dumped tables
@@ -859,6 +1025,21 @@ ALTER TABLE `eventos`
 ALTER TABLE `evento_curso`
   ADD PRIMARY KEY (`id_evento`,`id_curso`),
   ADD KEY `id_curso` (`id_curso`);
+
+--
+-- Indexes for table `horarios`
+--
+ALTER TABLE `horarios`
+  ADD PRIMARY KEY (`id_horario`),
+  ADD KEY `id_curso` (`id_curso`),
+  ADD KEY `id_profesor` (`id_profesor`);
+
+--
+-- Indexes for table `horas_profesionales_log`
+--
+ALTER TABLE `horas_profesionales_log`
+  ADD PRIMARY KEY (`id_log`),
+  ADD KEY `id_alumno` (`id_alumno`);
 
 --
 -- Indexes for table `notificaciones`
@@ -967,7 +1148,7 @@ ALTER TABLE `ventas`
 -- AUTO_INCREMENT for table `abonos`
 --
 ALTER TABLE `abonos`
-  MODIFY `id_abono` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id_abono` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
 -- AUTO_INCREMENT for table `alumnos`
@@ -979,7 +1160,7 @@ ALTER TABLE `alumnos`
 -- AUTO_INCREMENT for table `asistencia`
 --
 ALTER TABLE `asistencia`
-  MODIFY `id_asistencia` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
+  MODIFY `id_asistencia` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=68;
 
 --
 -- AUTO_INCREMENT for table `compras_alumnos`
@@ -1009,31 +1190,43 @@ ALTER TABLE `detalle_compra_proveedor`
 -- AUTO_INCREMENT for table `detalle_ventas`
 --
 ALTER TABLE `detalle_ventas`
-  MODIFY `id_detalle` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
+  MODIFY `id_detalle` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=22;
 
 --
 -- AUTO_INCREMENT for table `eventos`
 --
 ALTER TABLE `eventos`
-  MODIFY `id_evento` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id_evento` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+
+--
+-- AUTO_INCREMENT for table `horarios`
+--
+ALTER TABLE `horarios`
+  MODIFY `id_horario` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+
+--
+-- AUTO_INCREMENT for table `horas_profesionales_log`
+--
+ALTER TABLE `horas_profesionales_log`
+  MODIFY `id_log` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `notificaciones`
 --
 ALTER TABLE `notificaciones`
-  MODIFY `id_notificacion` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=43;
+  MODIFY `id_notificacion` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=48;
 
 --
 -- AUTO_INCREMENT for table `pagos`
 --
 ALTER TABLE `pagos`
-  MODIFY `id_pago` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id_pago` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
 -- AUTO_INCREMENT for table `pagos_alumnos_cantina`
 --
 ALTER TABLE `pagos_alumnos_cantina`
-  MODIFY `id_pago` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id_pago` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT for table `pagos_proveedores`
@@ -1045,7 +1238,7 @@ ALTER TABLE `pagos_proveedores`
 -- AUTO_INCREMENT for table `permisos`
 --
 ALTER TABLE `permisos`
-  MODIFY `id_permiso` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=27;
+  MODIFY `id_permiso` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=28;
 
 --
 -- AUTO_INCREMENT for table `precios`
@@ -1057,7 +1250,7 @@ ALTER TABLE `precios`
 -- AUTO_INCREMENT for table `productos`
 --
 ALTER TABLE `productos`
-  MODIFY `id_producto` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id_producto` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `profesores`
@@ -1081,13 +1274,13 @@ ALTER TABLE `roles`
 -- AUTO_INCREMENT for table `usuarios`
 --
 ALTER TABLE `usuarios`
-  MODIFY `id_usuario` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+  MODIFY `id_usuario` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT for table `ventas`
 --
 ALTER TABLE `ventas`
-  MODIFY `id_venta` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+  MODIFY `id_venta` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
 
 --
 -- Constraints for dumped tables
@@ -1139,6 +1332,19 @@ ALTER TABLE `detalle_ventas`
 ALTER TABLE `evento_curso`
   ADD CONSTRAINT `evento_curso_ibfk_1` FOREIGN KEY (`id_evento`) REFERENCES `eventos` (`id_evento`) ON DELETE CASCADE,
   ADD CONSTRAINT `evento_curso_ibfk_2` FOREIGN KEY (`id_curso`) REFERENCES `cursos` (`id_curso`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `horarios`
+--
+ALTER TABLE `horarios`
+  ADD CONSTRAINT `horarios_ibfk_1` FOREIGN KEY (`id_curso`) REFERENCES `cursos` (`id_curso`) ON DELETE CASCADE,
+  ADD CONSTRAINT `horarios_ibfk_2` FOREIGN KEY (`id_profesor`) REFERENCES `profesores` (`id_profesor`) ON DELETE SET NULL;
+
+--
+-- Constraints for table `horas_profesionales_log`
+--
+ALTER TABLE `horas_profesionales_log`
+  ADD CONSTRAINT `horas_profesionales_log_ibfk_1` FOREIGN KEY (`id_alumno`) REFERENCES `alumnos` (`id_alumno`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `notificaciones`

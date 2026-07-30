@@ -83,9 +83,6 @@ $statsHoy = $pdo->prepare("
                             <a href="mensual.php?id_curso=<?= $curso['id_curso'] ?>" class="btn btn-danger btn-sm">
                                 <i class="bi bi-calendar-month"></i> Mensual
                             </a>
-                            <a href="ver.php?id_curso=<?= $curso['id_curso'] ?>" class="btn btn-info btn-sm text-white">
-                                <i class="bi bi-eye"></i> Historial
-                            </a>
                         </div>
                     </div>
                 </div>

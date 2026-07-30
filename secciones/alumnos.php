@@ -64,8 +64,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $tipoMensaje = 'danger';
             } else {
             try {
-                if ($id_alumno > 0) {
-                    // EDITAR
+                if (!$id_alumno) {
+                    $mensaje = '<i class="bi bi-exclamation-triangle-fill text-danger"></i> Usá Inscripciones para dar de alta nuevos alumnos.';
+                    $tipoMensaje = 'danger';
+                } else {
                     $sql = "UPDATE alumnos SET 
                                 nombre=?, apellido=?, id_curso=?, anio_ingreso=?, 
                                 horas_profesionales=?, ci=?, telefono=?, id_padre=?, becado=?, activo=?
@@ -73,14 +75,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $stmt = $pdo->prepare($sql);
                     $stmt->execute([$nombre, $apellido, $id_curso, $anio_ingreso, $horas_profesionales, $ci, $telefono, $id_padre, $becado, $activo, $id_alumno]);
                     $mensaje = '<i class="bi bi-check-circle-fill text-success"></i> Alumno actualizado correctamente.';
-                    $tipoMensaje = 'success';
-                } else {
-                    // AGREGAR
-                    $sql = "INSERT INTO alumnos (nombre, apellido, id_curso, anio_ingreso, horas_profesionales, ci, telefono, id_padre, becado, activo)
-                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-                    $stmt = $pdo->prepare($sql);
-                    $stmt->execute([$nombre, $apellido, $id_curso, $anio_ingreso, $horas_profesionales, $ci, $telefono, $id_padre, $becado, $activo]);
-                    $mensaje = '<i class="bi bi-check-circle-fill text-success"></i> Alumno creado correctamente.';
                     $tipoMensaje = 'success';
                 }
             } catch (PDOException $e) {
@@ -95,13 +89,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 // ==========================================================
 // OBTENER LISTA DE ALUMNOS CON DATOS DE CURSO Y PADRE
 // ==========================================================
-$sql = "SELECT a.*, c.nombre AS curso_nombre, c.tipo AS curso_tipo,
+$esProfesor = ($_SESSION['rol'] ?? '') === 'profesor';
+$id_profesor = null;
+if ($esProfesor) {
+    $stmt = $pdo->prepare("SELECT id_profesor FROM profesores WHERE id_usuario = ?");
+    $stmt->execute([(int)$_SESSION['id_usuario']]);
+    $id_profesor = $stmt->fetchColumn();
+}
+
+$sql = "SELECT a.id_alumno, a.nombre, a.apellido, a.id_curso, a.anio_ingreso, a.ci, a.telefono, a.id_padre, a.becado, a.activo,
+               COALESCE((SELECT SUM(horas) FROM horas_profesionales_log WHERE id_alumno = a.id_alumno), 0) AS horas_profesionales,
+               c.nombre AS curso_nombre, c.tipo AS curso_tipo,
                u.usuario AS nombre_padre, u.email AS email_padre
         FROM alumnos a
         INNER JOIN cursos c ON a.id_curso = c.id_curso
-        LEFT JOIN usuarios u ON a.id_padre = u.id_usuario
-        ORDER BY a.id_alumno DESC";
-$stmt = $pdo->query($sql);
+        LEFT JOIN usuarios u ON a.id_padre = u.id_usuario";
+if ($esProfesor && $id_profesor) {
+    $sql .= " INNER JOIN horarios h ON h.id_curso = c.id_curso AND h.id_profesor = ?";
+}
+$sql .= " ORDER BY a.id_alumno DESC";
+$stmt = $pdo->prepare($sql);
+$stmt->execute($esProfesor && $id_profesor ? [$id_profesor] : []);
 $alumnos = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 // Obtener lista de cursos para el formulario
@@ -119,9 +127,9 @@ $padres = $stmt->fetchAll(PDO::FETCH_ASSOC);
             <h4 class="h4 fw-bold mb-0"><i class="bi bi-people-fill me-2"></i>Gestión de Alumnos</h4>
             <small>Administra los alumnos del sistema</small>
         </div>
-        <button class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#modalAlumno" onclick="limpiarFormulario()">
-            <i class="bi bi-person-plus-fill me-1"></i> Nuevo Alumno
-        </button>
+        <a href="inscripciones.php" class="btn btn-light btn-sm">
+            <i class="bi bi-person-plus-fill me-1"></i> Nueva Inscripción
+        </a>
     </div>
 
     <?php if ($mensaje): ?>
@@ -191,6 +199,9 @@ $padres = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                     </td>
                                     <td class="text-center align-middle">
                                         <div class="d-flex gap-1 justify-content-center">
+                                            <a href="ficha_alumno.php?id=<?= $alumno['id_alumno'] ?>" class="btn btn-info btn-sm text-white" title="Ver ficha">
+                                                <i class="bi bi-file-person-fill"></i>
+                                            </a>
                                             <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalAlumno"
                                                     onclick="editarAlumno(<?= htmlspecialchars(json_encode($alumno)) ?>)">
                                                 <i class="bi bi-pencil-square"></i>
@@ -215,13 +226,13 @@ $padres = $stmt->fetchAll(PDO::FETCH_ASSOC);
 </div>
 
 <!-- ========================================================== -->
-<!-- MODAL para AGREGAR / EDITAR ALUMNO -->
+<!-- MODAL para EDITAR ALUMNO -->
 <!-- ========================================================== -->
 <div class="modal fade" id="modalAlumno" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header bg-evo text-white">
-                <h5 class="modal-title" id="modalTituloAlumno"><i class="bi bi-person-plus-fill me-2"></i>Nuevo Alumno</h5>
+                <h5 class="modal-title" id="modalTituloAlumno"><i class="bi bi-pencil-fill me-2"></i>Editar Alumno</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <form method="POST" id="formAlumno">
@@ -286,7 +297,7 @@ $padres = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-danger">Guardar</button>
+                    <button type="submit" class="btn btn-danger">Guardar cambios</button>
                 </div>
             </form>
         </div>
@@ -322,23 +333,6 @@ $padres = $stmt->fetchAll(PDO::FETCH_ASSOC);
         document.getElementById('listaPadres').style.display = 'none';
     }
 
-    function limpiarFormulario() {
-        document.getElementById('modalTituloAlumno').innerHTML = '<i class="bi bi-person-plus-fill me-2"></i>Nuevo Alumno';
-        document.getElementById('id_alumno').value = '0';
-        document.getElementById('nombre').value = '';
-        document.getElementById('apellido').value = '';
-        document.getElementById('id_curso').value = '';
-        document.getElementById('anio_ingreso').value = new Date().getFullYear();
-        document.getElementById('horas_profesionales').value = '0';
-        document.getElementById('ci').value = '';
-        document.getElementById('telefono').value = '';
-        document.getElementById('buscarPadre').value = '';
-        document.getElementById('id_padre').value = '';
-        document.getElementById('listaPadres').style.display = 'none';
-        document.getElementById('becado').checked = false;
-        document.getElementById('activo').checked = true;
-    }
-
     function editarAlumno(alumno) {
         document.getElementById('modalTituloAlumno').innerHTML = '<i class="bi bi-pencil-fill me-2"></i>Editar Alumno';
         document.getElementById('id_alumno').value = alumno.id_alumno;
@@ -356,7 +350,6 @@ $padres = $stmt->fetchAll(PDO::FETCH_ASSOC);
         document.getElementById('activo').checked = (alumno.activo == 1);
     }
 
-    // Buscador en tiempo real + filtro por curso
     document.addEventListener('DOMContentLoaded', function() {
         const buscador = document.getElementById('buscador');
         const filtroCurso = document.getElementById('filtroCurso');
@@ -380,7 +373,6 @@ $padres = $stmt->fetchAll(PDO::FETCH_ASSOC);
         if (buscador) buscador.addEventListener('keyup', filtrar);
         if (filtroCurso) filtroCurso.addEventListener('change', filtrar);
 
-        // Buscador de padre
         const inputPadre = document.getElementById('buscarPadre');
         if (inputPadre) {
             inputPadre.addEventListener('input', function() { buscarPadre(this.value); });

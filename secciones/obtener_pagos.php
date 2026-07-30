@@ -97,6 +97,8 @@ $sumaOtros = array_sum(array_column($otros, 'total'));
                                     <th>Recargo</th>
                                     <th>Total</th>
                                     <th>Método</th>
+                                    <th>Nota</th>
+                                    <th></th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -110,6 +112,17 @@ $sumaOtros = array_sum(array_column($otros, 'total'));
                                         <td><?= number_format($pago['recargo'], 0, ',', '.') ?> Gs</td>
                                         <td><strong><?= number_format($pago['total'], 0, ',', '.') ?> Gs</strong></td>
                                         <td><?= $pago['metodo_pago'] ?></td>
+                                        <td>
+                                            <?php if (!empty($pago['descripcion'])): ?>
+                                                <span class="small text-muted" title="<?= htmlspecialchars($pago['descripcion'], ENT_QUOTES, 'UTF-8') ?>">
+                                                    <?= mb_strimwidth(htmlspecialchars($pago['descripcion'], ENT_QUOTES, 'UTF-8'), 0, 20, '...') ?>
+                                                </span>
+                                            <?php endif; ?>
+                                            <?php if (!empty($pago['imagen'])): ?>
+                                                <a href="/evospace/<?= $pago['imagen'] ?>" target="_blank" class="text-decoration-none ms-1" title="Ver comprobante"><i class="bi bi-paperclip"></i></a>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td><a href="recibo.php?id_pago=<?= $pago['id_pago'] ?>" target="_blank" class="btn btn-sm btn-outline-primary" title="Recibo"><i class="bi bi-file-pdf"></i></a></td>
                                     </tr>
                                 <?php endforeach; ?>
                             </tbody>
@@ -118,15 +131,18 @@ $sumaOtros = array_sum(array_column($otros, 'total'));
                                     <th colspan="6" class="text-end">Resumen de cuotas:</th>
                                     <th><?= number_format($sumaCuotas, 0, ',', '.') ?> Gs</th>
                                     <th></th>
+                                    <th></th>
                                 </tr>
                                 <tr class="table-light">
                                     <td colspan="6" class="text-end"><small>Promedio por cuota:</small></td>
                                     <td><small><?= number_format($promedioCuota, 0, ',', '.') ?> Gs</small></td>
                                     <td></td>
+                                    <td></td>
                                 </tr>
                                 <tr class="table-light">
                                     <td colspan="6" class="text-end"><small>Cantidad de cuotas:</small></td>
                                     <td><small><?= $totalCuotas ?></small></td>
+                                    <td></td>
                                     <td></td>
                                 </tr>
                             </tfoot>
@@ -152,6 +168,7 @@ $sumaOtros = array_sum(array_column($otros, 'total'));
                                     <th>Recargo</th>
                                     <th>Total</th>
                                     <th>Método</th>
+                                    <th></th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -165,6 +182,7 @@ $sumaOtros = array_sum(array_column($otros, 'total'));
                                         <td><?= number_format($pago['recargo'], 0, ',', '.') ?> Gs</td>
                                         <td><strong><?= number_format($pago['total'], 0, ',', '.') ?> Gs</strong></td>
                                         <td><?= $pago['metodo_pago'] ?></td>
+                                        <td><a href="recibo.php?id_pago=<?= $pago['id_pago'] ?>" target="_blank" class="btn btn-sm btn-outline-primary" title="Recibo"><i class="bi bi-file-pdf"></i></a></td>
                                     </tr>
                                 <?php endforeach; ?>
                             </tbody>

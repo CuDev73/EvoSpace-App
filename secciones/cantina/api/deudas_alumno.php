@@ -10,10 +10,10 @@ $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 if (!$id) { echo json_encode([]); exit; }
 
 $stmt = $pdo->prepare("
-    SELECT c.id_compra, c.fecha, c.producto, c.monto
-    FROM compras_alumnos c
-    WHERE c.id_alumno = ? AND c.pagado = 0
-    ORDER BY c.fecha DESC
+    SELECT v.id_venta AS id_compra, v.fecha, v.observaciones AS producto, v.total AS monto
+    FROM ventas v
+    WHERE v.id_alumno = ? AND v.estado_pago IN ('pendiente','parcial')
+    ORDER BY v.fecha DESC
 ");
 $stmt->execute([$id]);
 echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));

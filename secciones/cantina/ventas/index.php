@@ -21,6 +21,18 @@ if (isset($_GET['tipo_comprador']) && $_GET['tipo_comprador']) {
 if (isset($_GET['estado_pago']) && $_GET['estado_pago']) {
     $filtros['estado_pago'] = $_GET['estado_pago'];
 }
+if (isset($_GET['nombre_comprador']) && $_GET['nombre_comprador']) {
+    $filtros['nombre_comprador'] = $_GET['nombre_comprador'];
+}
+
+// Marcar como pagado inline
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['marcar_pagado'])) {
+    $id = (int)$_POST['id_venta'];
+    $stmt = $pdo->prepare("UPDATE ventas SET estado_pago = 'pagado' WHERE id_venta = ?");
+    $stmt->execute([$id]);
+    header('Location: index.php');
+    exit;
+}
 
 $ventas = obtenerVentas($pdo, $filtros);
 $total_ventas = array_sum(array_column($ventas, 'total'));
@@ -49,8 +61,12 @@ include '../../../includes/navbar.php';
                     <label class="form-label small">Fecha fin</label>
                     <input type="date" name="fecha_fin" class="form-control form-control-sm" value="<?= $_GET['fecha_fin'] ?? '' ?>">
                 </div>
-                <div class="col-md-2">
-                    <label class="form-label small">Comprador</label>
+                <div class="col-md-3">
+                    <label class="form-label small">Buscar por nombre</label>
+                    <input type="text" name="nombre_comprador" class="form-control form-control-sm" placeholder="Nombre del comprador..." value="<?= htmlspecialchars($_GET['nombre_comprador'] ?? '') ?>">
+                </div>
+                <div class="col-md-1">
+                    <label class="form-label small">Tipo</label>
                     <select name="tipo_comprador" class="form-select form-select-sm">
                         <option value="">Todos</option>
                         <option value="alumno" <?= ($_GET['tipo_comprador'] ?? '') == 'alumno' ? 'selected' : '' ?>>Alumno</option>
@@ -59,20 +75,19 @@ include '../../../includes/navbar.php';
                         <option value="otro" <?= ($_GET['tipo_comprador'] ?? '') == 'otro' ? 'selected' : '' ?>>Otro</option>
                     </select>
                 </div>
-                <div class="col-md-2">
-                    <label class="form-label small">Estado pago</label>
+                <div class="col-md-1">
+                    <label class="form-label small">Estado</label>
                     <select name="estado_pago" class="form-select form-select-sm">
                         <option value="">Todos</option>
                         <option value="pagado" <?= ($_GET['estado_pago'] ?? '') == 'pagado' ? 'selected' : '' ?>>Pagado</option>
                         <option value="pendiente" <?= ($_GET['estado_pago'] ?? '') == 'pendiente' ? 'selected' : '' ?>>Pendiente</option>
-                        <option value="parcial" <?= ($_GET['estado_pago'] ?? '') == 'parcial' ? 'selected' : '' ?>>Parcial</option>
                     </select>
                 </div>
-                <div class="col-md-2">
+                <div class="col-md-1">
                     <button type="submit" class="btn btn-danger btn-sm w-100">Filtrar</button>
                 </div>
-                <div class="col-md-2">
-                    <a href="index.php" class="btn btn-secondary btn-sm w-100">Limpiar</a>
+                <div class="col-md-1">
+                    <a href="index.php" class="btn btn-sm btn-outline-secondary w-100">Limpiar</a>
                 </div>
             </form>
         </div>
@@ -109,7 +124,7 @@ include '../../../includes/navbar.php';
                             <?php foreach ($ventas as $v): ?>
                                 <tr>
                                     <td><?= $v->id_venta ?></td>
-                                    <td><?= date('d/m/Y H:i', strtotime($v->fecha)) ?></td>
+                                    <td><?= date('d/m/Y', strtotime($v->fecha)) ?></td>
                                     <td><?= htmlspecialchars($v->nombre_comprador ?? 'Anónimo') ?></td>
                                     <td><span class="badge bg-<?= $v->tipo_comprador == 'alumno' ? 'primary' : ($v->tipo_comprador == 'profesor' ? 'info' : 'secondary') ?>"><?= ucfirst($v->tipo_comprador ?? 'otro') ?></span></td>
                                     <td class="text-end"><?= number_format($v->total, 0, ',', '.') ?></td>
@@ -117,7 +132,11 @@ include '../../../includes/navbar.php';
                                     <td><span class="badge bg-<?= $v->estado_pago == 'pagado' ? 'success' : ($v->estado_pago == 'pendiente' ? 'danger' : 'warning') ?>"><?= ucfirst($v->estado_pago ?? 'pagado') ?></span></td>
                                     <td class="text-center"><?= $v->total_items ?></td>
                                     <td>
-                                        <a href="ver.php?id=<?= $v->id_venta ?>" class="btn btn-primary btn-sm"><i class="bi bi-eye"></i></a>
+                                        <?php if ($v->estado_pago == 'pendiente' || $v->estado_pago == 'parcial'): ?>
+                                            <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#pagarModal" data-id="<?= $v->id_venta ?>" data-comprador="<?= htmlspecialchars($v->nombre_comprador ?? 'Anónimo', ENT_QUOTES) ?>" data-total="<?= number_format($v->total, 0, ',', '.') ?>"><i class="bi bi-check-circle"></i></button>
+                                        <?php else: ?>
+                                            <span class="text-success"><i class="bi bi-check-circle-fill"></i></span>
+                                        <?php endif; ?>
                                         <a href="eliminar.php?id=<?= $v->id_venta ?>" class="btn btn-danger btn-sm" onclick="return confirm('¿Eliminar esta venta?')"><i class="bi bi-trash"></i></a>
                                     </td>
                                 </tr>
@@ -129,5 +148,39 @@ include '../../../includes/navbar.php';
         </div>
     </div>
 </div>
+
+<!-- Modal pagar -->
+<div class="modal fade" id="pagarModal" tabindex="-1">
+    <div class="modal-dialog modal-sm modal-dialog-centered">
+        <div class="modal-content">
+            <form method="POST">
+                <input type="hidden" name="id_venta" id="modalIdVenta">
+                <div class="modal-header bg-success text-white">
+                    <h6 class="modal-title"><i class="bi bi-check-circle"></i> Confirmar pago</h6>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <p class="mb-1">¿Marcar como pagada la venta <strong id="modalIdText">#</strong>?</p>
+                    <p class="mb-0"><strong id="modalComprador"></strong></p>
+                    <h4 class="text-success mt-2" id="modalTotal"></h4>
+                </div>
+                <div class="modal-footer justify-content-center">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" name="marcar_pagado" class="btn btn-success btn-sm"><i class="bi bi-check-circle"></i> Confirmar pago</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('pagarModal').addEventListener('show.bs.modal', function (e) {
+    const btn = e.relatedTarget;
+    document.getElementById('modalIdVenta').value = btn.dataset.id;
+    document.getElementById('modalIdText').textContent = '#' + btn.dataset.id;
+    document.getElementById('modalComprador').textContent = btn.dataset.comprador;
+    document.getElementById('modalTotal').textContent = 'Gs ' + btn.dataset.total;
+});
+</script>
 
 <?php include '../../../includes/footer.php'; ?>

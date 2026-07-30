@@ -17,10 +17,12 @@ class EventoModel
     {
         $this->validar($data);
 
+        $imagen = $this->subirImagen($_FILES['imagen'] ?? null);
+
         $this->db->beginTransaction();
         try {
-            $sql = "INSERT INTO eventos (titulo, descripcion, fecha, hora, lugar, enlace_ubicacion, color) 
-                    VALUES (?, ?, ?, ?, ?, ?, ?)";
+            $sql = "INSERT INTO eventos (titulo, descripcion, fecha, hora, lugar, enlace_ubicacion, color, imagen) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
             $stmt = $this->db->prepare($sql);
             $stmt->execute([
                 $data['titulo'],
@@ -29,7 +31,8 @@ class EventoModel
                 $data['hora'] ?? null,
                 $data['lugar'] ?? null,
                 $data['enlace_ubicacion'] ?? null,
-                $data['color'] ?? '#c81015'
+                $data['color'] ?? '#c81015',
+                $imagen
             ]);
             $eventoId = (int) $this->db->lastInsertId();
 
@@ -44,7 +47,8 @@ class EventoModel
                 $data['hora'] ?? null,
                 $data['lugar'] ?? null,
                 $data['enlace_ubicacion'] ?? null,
-                $data['ramas']
+                $data['ramas'],
+                $data['color'] ?? '#c81015'
             );
 
             $this->db->commit();
@@ -59,11 +63,13 @@ class EventoModel
     {
         $this->validar($data);
 
+        $imagen = $this->subirImagen($_FILES['imagen'] ?? null);
+
         $this->db->beginTransaction();
         try {
             $sql = "UPDATE eventos SET 
                         titulo = ?, descripcion = ?, fecha = ?, hora = ?, 
-                        lugar = ?, enlace_ubicacion = ?, color = ?
+                        lugar = ?, enlace_ubicacion = ?, color = ?, imagen = COALESCE(?, imagen)
                     WHERE id_evento = ?";
             $stmt = $this->db->prepare($sql);
             $stmt->execute([
@@ -74,6 +80,7 @@ class EventoModel
                 $data['lugar'] ?? null,
                 $data['enlace_ubicacion'] ?? null,
                 $data['color'] ?? '#c81015',
+                $imagen,
                 $id
             ]);
 
@@ -90,7 +97,8 @@ class EventoModel
                 $data['hora'] ?? null,
                 $data['lugar'] ?? null,
                 $data['enlace_ubicacion'] ?? null,
-                $data['ramas']
+                $data['ramas'],
+                $data['color'] ?? '#c81015'
             );
 
             $this->db->commit();
@@ -157,6 +165,19 @@ class EventoModel
         $stmt = $this->db->prepare($sql);
         $stmt->execute([$eventoId]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    private function subirImagen($file): ?string
+    {
+        if (!$file || $file['error'] !== UPLOAD_ERR_OK) return null;
+        $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+        if (!in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp'])) return null;
+        $nombre = uniqid('ev_') . '.' . $ext;
+        $destino = __DIR__ . '/../../../uploads/eventos/' . $nombre;
+        if (move_uploaded_file($file['tmp_name'], $destino)) {
+            return 'uploads/eventos/' . $nombre;
+        }
+        return null;
     }
 
     private function validar(array $data): void

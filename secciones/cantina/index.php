@@ -25,19 +25,7 @@ verificarPermiso('cantina');
             </div>
         </div>
 
-        <!-- 2. Compras Alumnos -->
-        <div class="col-md-4 col-lg-3">
-            <div class="card shadow h-100 text-center">
-                <div class="card-body d-flex flex-column align-items-center justify-content-center">
-                    <i class="bi bi-person-lines-fill fs-1 text-warning"></i>
-                    <h5 class="card-title mt-3">Compras Alumnos</h5>
-                    <p class="card-text text-muted small">Fiado y pagos</p>
-                    <a href="compras_alumnos/index.php" class="btn btn-warning mt-2 text-dark"><i class="bi bi-arrow-right"></i> Gestionar</a>
-                </div>
-            </div>
-        </div>
-
-        <!-- 3. Productos -->
+        <!-- 2. Productos -->
         <div class="col-md-4 col-lg-3">
             <div class="card shadow h-100 text-center">
                 <div class="card-body d-flex flex-column align-items-center justify-content-center">
@@ -48,30 +36,7 @@ verificarPermiso('cantina');
             </div>
         </div>
 
-        <!-- 4. Compras a Proveedores -->
-        <div class="col-md-4 col-lg-3">
-            <div class="card shadow h-100 text-center">
-                <div class="card-body d-flex flex-column align-items-center justify-content-center">
-                    <i class="bi bi-cart-dash fs-1 text-secondary"></i>
-                    <h5 class="card-title mt-3">Compras a Proveedores</h5>
-                    <p class="card-text text-muted small">Registro de compras y gastos</p>
-                    <a href="compras_proveedores/index.php" class="btn btn-secondary mt-2"><i class="bi bi-arrow-right"></i> Gestionar</a>
-                </div>
-            </div>
-        </div>
-
-        <!-- 5. Proveedores -->
-        <div class="col-md-4 col-lg-3">
-            <div class="card shadow h-100 text-center">
-                <div class="card-body d-flex flex-column align-items-center justify-content-center">
-                    <i class="bi bi-truck fs-1 text-info"></i>
-                    <h5 class="card-title mt-3">Proveedores</h5>
-                    <a href="proveedores/index.php" class="btn btn-info mt-2 text-white"><i class="bi bi-arrow-right"></i> Gestionar</a>
-                </div>
-            </div>
-        </div>
-
-        <!-- (Opcional) Historial de Ventas -->
+        <!-- 4. Historial de Ventas -->
         <div class="col-md-4 col-lg-3">
             <div class="card shadow h-100 text-center">
                 <div class="card-body d-flex flex-column align-items-center justify-content-center">
@@ -82,7 +47,7 @@ verificarPermiso('cantina');
             </div>
         </div>
 
-        <!-- (Opcional) Resumen -->
+        <!-- 5. Resumen -->
         <div class="col-md-4 col-lg-3">
             <div class="card shadow h-100 text-center">
                 <div class="card-body d-flex flex-column align-items-center justify-content-center">

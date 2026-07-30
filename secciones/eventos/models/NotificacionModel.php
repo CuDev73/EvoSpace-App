@@ -14,7 +14,7 @@ class NotificacionModel
      * Ahora evita duplicados: un padre recibe un solo correo y una sola notificación en BD,
      * aunque tenga hijos en varios cursos seleccionados.
      */
-    public function enviarNotificacionEvento($eventoId, $titulo, $descripcion, $fecha, $hora, $lugar, $enlace, $cursosIds)
+    public function enviarNotificacionEvento($eventoId, $titulo, $descripcion, $fecha, $hora, $lugar, $enlace, $cursosIds, $color = '#c81015')
     {
         // 1. Obtener padres únicos (DISTINCT) con sus IDs y emails
         $placeholders = implode(',', array_fill(0, count($cursosIds), '?'));
@@ -34,27 +34,26 @@ class NotificacionModel
             $descripcionTexto = $descripcion ?: '';
             $enlaceTexto = $enlace ?: '';
 
-            $asunto = "Nuevo evento: $titulo";
+            $asunto = $titulo;
             $mensajeHTML = "
                 <html>
                 <head>
                     <style>
                         body { font-family: Arial, sans-serif; }
-                        .evento { background: #f8f9fa; padding: 20px; border-radius: 8px; border-left: 5px solid #c81015; }
+                        .evento { background: #f8f9fa; padding: 20px; border-radius: 8px; border-left: 5px solid $color; }
                         .detalle { margin: 8px 0; }
-                        .map-link { display: inline-block; margin-top: 10px; padding: 8px 16px; background: #c81015; color: #fff !important; text-decoration: none; border-radius: 5px; }
-                        .map-link:hover { background: #a30d11; }
+                        .map-link { display: inline-block; margin-top: 10px; padding: 8px 16px; background: $color; color: #fff !important; text-decoration: none; border-radius: 5px; }
+                        .map-link:hover { opacity: 0.85; }
                     </style>
                 </head>
                 <body>
-                    <h2 style='color: #c81015;'>📢 Nuevo Evento Programado</h2>
                     <div class='evento'>
-                        <p><strong>Título:</strong> $titulo</p>
+                        <h2 style='margin-top:0;color:$color;'>$titulo</h2>
                         <p><strong>Fecha:</strong> $fechaFormateada</p>
                         <p><strong>Hora:</strong> $horaFormateada</p>
                         <p><strong>Lugar:</strong> $lugarTexto</p>
-                        " . ($enlaceTexto ? "<p><a href='$enlaceTexto' target='_blank' class='map-link'><i class='bi bi-geo-alt'></i> Ver en mapa</a></p>" : "") . "
-                        <p><strong>Descripción:</strong><br>" . nl2br($descripcionTexto) . "</p>
+                        " . ($enlaceTexto ? "<p><a href='$enlaceTexto' target='_blank' class='map-link'>Ver en mapa</a></p>" : "") . "
+                        " . ($descripcionTexto ? "<p><strong>Descripción:</strong><br>" . nl2br($descripcionTexto) . "</p>" : "") . "
                     </div>
                     <p style='margin-top: 20px;'>Por favor, revisa el panel de EvoSpace para más detalles.</p>
                     <p style='color: #6c757d; font-size: 0.9rem;'>Este correo es automático, no respondas a esta dirección.</p>
@@ -71,7 +70,7 @@ class NotificacionModel
         $sqlInsert = "INSERT INTO notificaciones (id_evento, id_usuario, titulo, mensaje, tipo) VALUES (?, ?, ?, ?, 'evento')";
         $stmtInsert = $this->db->prepare($sqlInsert);
         foreach ($padres as $padre) {
-            $stmtInsert->execute([$eventoId, $padre['id_usuario'], "Nuevo evento: $titulo", $descripcionTexto]);
+            $stmtInsert->execute([$eventoId, $padre['id_usuario'], $titulo, $descripcionTexto]);
         }
     }
 

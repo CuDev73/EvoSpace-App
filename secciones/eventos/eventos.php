@@ -198,6 +198,7 @@ $tipoColores = [
                                 <th>Título</th>
                                 <th>Fecha y Hora</th>
                                 <th>Lugar</th>
+                                <th style="width: 60px;">Flyer</th>
                                 <th>Cursos Notificados</th>
                                 <th>Acciones</th>
                             </tr>
@@ -209,31 +210,36 @@ $tipoColores = [
                                         <div class="rounded shadow-sm" style="width: 28px; height: 28px; background-color: <?= htmlspecialchars($ev['color'] ?? '#c81015') ?>; margin: 0 auto;"></div>
                                     </td>
                                     <td>
-                                        <span class="fw-bold text-dark d-block"><?= htmlspecialchars($ev['titulo']) ?></span>
-                                        <small class="text-muted d-block text-truncate" style="max-width: 250px;"><?= htmlspecialchars($ev['descripcion'] ?? 'Sin descripción') ?></small>
+                                        <span class="fw-bold text-dark d-block"><?= htmlspecialchars($ev['titulo'], ENT_QUOTES, 'UTF-8') ?></span>
+                                        <small class="text-muted d-block text-truncate" style="max-width: 250px;"><?= htmlspecialchars($ev['descripcion'] ?? '', ENT_QUOTES, 'UTF-8') ?></small>
                                     </td>
                                     <td class="text-center">
                                         <i class="bi bi-calendar3 text-danger me-1"></i><?= date('d/m/Y', strtotime($ev['fecha'])) ?><br>
-                                        <small class="text-muted fw-bold"><i class="bi bi-clock me-1"></i><?= !empty($ev['hora']) ? htmlspecialchars($ev['hora']) : '--:--' ?></small>
+                                        <small class="text-muted fw-bold"><i class="bi bi-clock me-1"></i><?= !empty($ev['hora']) ? date('H:i', strtotime($ev['hora'])) : '--:--' ?></small>
                                     </td>
-                                    <td>
-                                        <span class="small d-block text-center"><?= htmlspecialchars($ev['lugar'] ?? 'No especificado') ?></span>
+                                    <td class="text-center">
+                                        <span class="small"><?= htmlspecialchars($ev['lugar'] ?? '', ENT_QUOTES, 'UTF-8') ?: '<span class="text-muted">No especificado</span>' ?></span>
                                         <?php if (!empty($ev['enlace_ubicacion'])): ?>
-                                            <a href="<?= htmlspecialchars($ev['enlace_ubicacion']) ?>" target="_blank" class="btn btn-link p-0 d-block text-center small text-primary"><i class="bi bi-geo-alt-fill"></i> Ver mapa</a>
+                                            <a href="<?= htmlspecialchars($ev['enlace_ubicacion'], ENT_QUOTES, 'UTF-8') ?>" target="_blank" class="btn btn-link p-0 d-block small text-primary"><i class="bi bi-geo-alt-fill"></i> Mapa</a>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td class="text-center">
+                                        <?php if (!empty($ev['imagen'])): ?>
+                                            <a href="/evospace/<?= $ev['imagen'] ?>" target="_blank">
+                                                <img src="/evospace/<?= $ev['imagen'] ?>" alt="flyer" style="width:50px;height:50px;object-fit:cover;border-radius:6px;">
+                                            </a>
+                                        <?php else: ?>
+                                            <span class="text-muted small">-</span>
                                         <?php endif; ?>
                                     </td>
                                     <td>
                                         <div class="d-flex flex-wrap gap-1 justify-content-center">
                                             <?php if (empty($ev['ramas'])): ?>
-                                                <span class="badge bg-secondary small">General (Todos)</span>
+                                                <span class="badge bg-secondary small">General</span>
                                             <?php else: ?>
                                                 <?php foreach ($ev['ramas'] as $rama): ?>
-                                                    <?php 
-                                                        $tipo = $rama['tipo'] ?? 'Superior';
-                                                        $color = $tipoColores[$tipo] ?? 'secondary';
-                                                    ?>
-                                                    <span class="badge bg-<?= $color ?> text-dark font-monospace small" style="font-size: 0.7rem;">
-                                                        <?= htmlspecialchars($tipo . ' - ' . ($rama['nombre'] ?? 'Curso')) ?>
+                                                    <span class="badge font-monospace small" style="font-size:0.7rem;background-color:<?= $ev['color'] ?? '#c81015' ?>;color:#fff;">
+                                                        <?= htmlspecialchars($rama['tipo'] ?? 'Superior', ENT_QUOTES, 'UTF-8') ?> - <?= htmlspecialchars($rama['nombre'] ?? '', ENT_QUOTES, 'UTF-8') ?>
                                                     </span>
                                                 <?php endforeach; ?>
                                             <?php endif; ?>
@@ -242,13 +248,13 @@ $tipoColores = [
                                     <td class="text-center">
                                         <div class="d-flex gap-1 justify-content-center">
                                             <button class="btn btn-warning btn-sm px-3" data-bs-toggle="modal" data-bs-target="#modalEditarEvento"
-                                                    onclick="cargarEvento(<?= htmlspecialchars(json_encode($ev)) ?>)">
+                                                    data-evento='<?= htmlspecialchars(json_encode($ev, JSON_HEX_APOS), ENT_QUOTES, 'UTF-8') ?>'>
                                                 <i class="bi bi-pencil-fill"></i>
                                                 <span class="d-none d-sm-inline">Editar</span>
                                             </button>
                                             <a href="?accion=eliminar&id=<?= $ev['id_evento'] ?><?= $cursoSeleccionado ? '&curso='.$cursoSeleccionado : '' ?>" 
                                                class="btn btn-danger btn-sm px-3"
-                                               onclick="return confirm('¿Estás seguro de que querés eliminar el evento: \'<?= htmlspecialchars($ev['titulo']) ?>\'?');">
+                                               onclick="return confirm('¿Estás seguro de que querés eliminar el evento: \'<?= htmlspecialchars($ev['titulo'], ENT_QUOTES, 'UTF-8') ?>\'?');">
                                                 <i class="bi bi-trash-fill"></i>
                                                 <span class="d-none d-sm-inline">Eliminar</span>
                                             </a>
@@ -274,7 +280,7 @@ $tipoColores = [
                 <h5 class="modal-title"><i class="bi bi-plus-circle-fill"></i> Registrar Nuevo Evento</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <form method="POST" id="formEvento">
+            <form method="POST" id="formEvento" enctype="multipart/form-data">
                 <div class="modal-body">
                     <input type="hidden" name="accion" value="agregar_evento">
 
@@ -306,6 +312,10 @@ $tipoColores = [
                         <div class="col-md-3">
                             <label class="form-label fw-bold small">Color</label>
                             <input type="color" name="color" class="form-control form-control-color w-100" value="#c81015" style="height: 38px;">
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label fw-bold small">Flyer / Imagen</label>
+                            <input type="file" name="imagen" class="form-control form-control-sm" accept="image/*">
                         </div>
                         <div class="col-md-12">
                             <label class="form-label fw-bold text-danger mb-1 small"><i class="bi bi-bell-fill"></i> Seleccionar Cursos a Notificar:</label>
@@ -356,7 +366,7 @@ $tipoColores = [
                 <h5 class="modal-title"><i class="bi bi-pencil-fill"></i> Editar Evento</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <form method="POST" id="formEditarEvento">
+            <form method="POST" id="formEditarEvento" enctype="multipart/form-data">
                 <div class="modal-body">
                     <input type="hidden" name="accion" value="editar_evento">
                     <input type="hidden" name="id_evento" id="edit_id_evento" value="0">
@@ -389,6 +399,10 @@ $tipoColores = [
                         <div class="col-md-3">
                             <label class="form-label fw-bold small">Color</label>
                             <input type="color" name="color" id="edit_color" class="form-control form-control-color w-100" value="#c81015" style="height: 38px;">
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label fw-bold small">Flyer / Imagen</label>
+                            <input type="file" name="imagen" class="form-control form-control-sm" accept="image/*">
                         </div>
                         <div class="col-md-12">
                             <label class="form-label fw-bold text-danger mb-1 small"><i class="bi bi-bell-fill"></i> Seleccionar Cursos a Notificar:</label>
@@ -431,7 +445,6 @@ $tipoColores = [
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Buscador en tabla
     const buscador = document.getElementById('buscador');
     if (buscador) {
         buscador.addEventListener('keyup', function() {
@@ -442,7 +455,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // "Seleccionar todos" en modal nuevo
     document.querySelectorAll('.seleccionar-todos').forEach(btn => {
         btn.addEventListener('click', function() {
             const container = this.closest('.mb-3');
@@ -453,7 +465,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // "Seleccionar todos" en modal editar
     document.querySelectorAll('.seleccionar-todos-edit').forEach(btn => {
         btn.addEventListener('click', function() {
             const container = this.closest('.mb-3');
@@ -463,33 +474,33 @@ document.addEventListener('DOMContentLoaded', function() {
             this.textContent = todasMarcadas ? 'Seleccionar todos' : 'Deseleccionar todos';
         });
     });
+
+    document.querySelectorAll('#tablaEventos [data-evento]').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const ev = JSON.parse(this.dataset.evento);
+            document.getElementById('edit_id_evento').value = ev.id_evento;
+            document.getElementById('edit_titulo').value = ev.titulo;
+            document.getElementById('edit_fecha').value = ev.fecha;
+            document.getElementById('edit_hora').value = ev.hora || '';
+            document.getElementById('edit_lugar').value = ev.lugar || '';
+            document.getElementById('edit_enlace').value = ev.enlace_ubicacion || '';
+            document.getElementById('edit_descripcion').value = ev.descripcion || '';
+            document.getElementById('edit_color').value = ev.color || '#c81015';
+
+            const ramasIds = ev.ramas ? ev.ramas.map(r => r.id_curso) : [];
+            document.querySelectorAll('#modalEditarEvento input[name="ramas[]"]').forEach(cb => {
+                cb.checked = ramasIds.includes(parseInt(cb.value));
+            });
+
+            document.querySelectorAll('.seleccionar-todos-edit').forEach(btn => {
+                const container = btn.closest('.mb-3');
+                const checkboxes = container.querySelectorAll('input[type="checkbox"]');
+                const todasMarcadas = Array.from(checkboxes).every(cb => cb.checked);
+                btn.textContent = todasMarcadas ? 'Deseleccionar todos' : 'Seleccionar todos';
+            });
+        });
+    });
 });
-
-// Cargar datos del evento en el modal de edición
-function cargarEvento(evento) {
-    document.getElementById('edit_id_evento').value = evento.id_evento;
-    document.getElementById('edit_titulo').value = evento.titulo;
-    document.getElementById('edit_fecha').value = evento.fecha;
-    document.getElementById('edit_hora').value = evento.hora || '';
-    document.getElementById('edit_lugar').value = evento.lugar || '';
-    document.getElementById('edit_enlace').value = evento.enlace_ubicacion || '';
-    document.getElementById('edit_descripcion').value = evento.descripcion || '';
-    document.getElementById('edit_color').value = evento.color || '#c81015';
-
-    // Marcar checkboxes de cursos según las ramas del evento
-    const ramasIds = evento.ramas ? evento.ramas.map(r => r.id_curso) : [];
-    document.querySelectorAll('#modalEditarEvento input[name="ramas[]"]').forEach(cb => {
-        cb.checked = ramasIds.includes(parseInt(cb.value));
-    });
-
-    // Actualizar texto de los botones "Seleccionar todos" según el estado
-    document.querySelectorAll('.seleccionar-todos-edit').forEach(btn => {
-        const container = btn.closest('.mb-3');
-        const checkboxes = container.querySelectorAll('input[type="checkbox"]');
-        const todasMarcadas = Array.from(checkboxes).every(cb => cb.checked);
-        btn.textContent = todasMarcadas ? 'Deseleccionar todos' : 'Seleccionar todos';
-    });
-}
 </script>
 
 <?php include '../../includes/footer.php'; ?>

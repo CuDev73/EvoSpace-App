@@ -10,15 +10,8 @@ if (!isset($_SESSION['id_usuario']) || $_SESSION['rol'] !== 'padre') {
 include '../includes/header.php';
 include '../includes/navbar.php';
 require_once '../config/db.php';
-require_once '../secciones/eventos/models/NotificacionModel.php';
 
 $id_padre = $_SESSION['id_usuario'];
-
-// Obtener notificaciones para el padre
-$notificacionModel = new NotificacionModel($pdo);
-$notificaciones = $notificacionModel->obtenerNotificacionesPadre($id_padre);
-
-// Obtener datos del padre
 $stmt = $pdo->prepare("SELECT * FROM usuarios WHERE id_usuario = ?");
 $stmt->execute([$id_padre]);
 $padre = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -164,38 +157,6 @@ function calcularDeuda($pdo, $id_alumno, $mes, $anio, $porcentajeBeca, $recargoP
         </div>
     </div>
 
-    <!-- Notificaciones (ya se arregló en NotificacionModel) -->
-    <div class="card shadow mb-4">
-        <div class="card-header bg-evo text-white">
-            <i class="bi bi-bell-fill"></i> Notificaciones
-            <?php if (count($notificaciones) > 0): ?>
-                <span class="badge bg-danger rounded-pill ms-2"><?= count($notificaciones) ?></span>
-            <?php endif; ?>
-        </div>
-        <div class="card-body">
-            <?php if (empty($notificaciones)): ?>
-                <p class="text-muted">No tienes notificaciones.</p>
-            <?php else: ?>
-                <ul class="list-group">
-                    <?php foreach ($notificaciones as $notif): ?>
-                        <li class="list-group-item d-flex justify-content-between align-items-start">
-                            <div>
-                                <strong><?= htmlspecialchars($notif['titulo']) ?></strong>
-                                <p class="mb-0 small"><?= htmlspecialchars($notif['mensaje']) ?></p>
-                                <small class="text-muted"><?= date('d/m/Y H:i', strtotime($notif['fecha'])) ?></small>
-                            </div>
-                            <?php if (!$notif['leida']): ?>
-                                <a href="/evospace/secciones/eventos/marcar_leida.php?id=<?= $notif['id_notificacion'] ?>" class="btn btn-sm btn-outline-primary">Marcar como leída</a>
-                            <?php else: ?>
-                                <span class="badge bg-secondary">Leída</span>
-                            <?php endif; ?>
-                        </li>
-                    <?php endforeach; ?>
-                </ul>
-            <?php endif; ?>
-        </div>
-    </div>
-
     <!-- Filtro de mes/año -->
     <div class="card shadow-sm mb-3">
         <div class="card-body py-2">
@@ -296,9 +257,9 @@ function calcularDeuda($pdo, $id_alumno, $mes, $anio, $porcentajeBeca, $recargoP
                                         <span class="badge bg-<?= $estadoColor ?>"><?= $estadoTexto ?></span>
                                     </p>
 
-                                    <a href="/evospace/secciones/pagos.php?ver_hijo=<?= $hijo['id_alumno'] ?>" class="btn btn-primary btn-sm">
-                                        <i class="bi bi-eye-fill"></i> Ver pagos
-                                    </a>
+                                    <button onclick="verPagos(<?= $hijo['id_alumno'] ?>)" class="btn btn-primary btn-sm">
+                                        <i class="bi bi-eye-fill"></i> Ver pagos / Recibos
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -319,5 +280,49 @@ function calcularDeuda($pdo, $id_alumno, $mes, $anio, $porcentajeBeca, $recargoP
         </div>
     </div>
 </div>
+
+<!-- Modal para ver pagos y descargar recibos -->
+<div class="modal fade" id="modalVerPagos" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content" id="contenidoVerPagos">
+            <div class="modal-body text-center">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Cargando...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function verPagos(idAlumno) {
+    const modal = new bootstrap.Modal(document.getElementById('modalVerPagos'));
+    modal.show();
+
+    document.getElementById('contenidoVerPagos').innerHTML = `
+        <div class="modal-body text-center">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Cargando...</span>
+            </div>
+        </div>
+    `;
+
+    fetch('../secciones/obtener_pagos.php?id_alumno=' + idAlumno)
+        .then(response => {
+            if (!response.ok) throw new Error('Error al cargar los pagos');
+            return response.text();
+        })
+        .then(html => {
+            document.getElementById('contenidoVerPagos').innerHTML = html;
+        })
+        .catch(error => {
+            document.getElementById('contenidoVerPagos').innerHTML = `
+                <div class="modal-body">
+                    <div class="alert alert-danger">Error: ${error.message}</div>
+                </div>
+            `;
+        });
+}
+</script>
 
 <?php include '../includes/footer.php'; ?>

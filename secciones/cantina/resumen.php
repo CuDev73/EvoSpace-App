@@ -22,7 +22,7 @@ $ganancias = obtenerGanancias($pdo, $fecha_inicio, $fecha_fin);
 $productos_ganancias = obtenerGananciasPorProducto($pdo, $fecha_inicio, $fecha_fin);
 $total_ventas = $pdo->query("SELECT COUNT(*) FROM ventas WHERE estado_pago = 'pagado' AND fecha BETWEEN '$fecha_inicio' AND '$fecha_fin'")->fetchColumn();
 $total_pendientes = $pdo->query("SELECT COUNT(*) FROM ventas WHERE estado_pago = 'pendiente' AND fecha BETWEEN '$fecha_inicio' AND '$fecha_fin'")->fetchColumn();
-$total_compras_fiado = $pdo->query("SELECT COALESCE(SUM(monto), 0) FROM compras_alumnos WHERE pagado = 0")->fetchColumn();
+$total_compras_fiado = $pdo->query("SELECT COALESCE(SUM(total), 0) FROM ventas WHERE estado_pago IN ('pendiente','parcial')")->fetchColumn();
 
 // --- EXPORTAR A EXCEL (PHPSpreadsheet) ---
 if (isset($_GET['exportar_excel'])) {
@@ -129,7 +129,7 @@ include '../../includes/navbar.php';
 <div class="container mt-3">
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h4><i class="bi bi-graph-up-arrow"></i> Resumen de Ganancias</h4>
-        <a href="resumen.php?<?= $_SERVER['QUERY_STRING'] ? '?' . $_SERVER['QUERY_STRING'] . '&' : '?' ?>exportar_excel=1" class="btn btn-success btn-sm"><i class="bi bi-file-earmark-excel"></i> Exportar a Excel</a>
+        <a href="resumen.php?<?= htmlspecialchars($_SERVER['QUERY_STRING'] ?? '') ? '&' : '' ?>exportar_excel=1" class="btn btn-success btn-sm"><i class="bi bi-file-earmark-excel"></i> Exportar a Excel</a>
     </div>
 
     <!-- Filtros -->

@@ -14,7 +14,7 @@ $presentes = $_POST['presente'] ?? [];
 $observaciones = $_POST['observacion'] ?? [];
 
 if ($id_curso == 0 || empty($fecha)) {
-    header('Location: /evospace/roles/profesor.php');
+    header('Location: index.php');
     exit;
 }
 

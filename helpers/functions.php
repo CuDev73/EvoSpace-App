@@ -51,7 +51,8 @@ function redirigirSegunRol($rol) {
     $rutas = [
         'admin'    => '/evospace/roles/admin.php',
         'profesor' => '/evospace/roles/profesor.php',
-        'padre'    => '/evospace/roles/padre.php'
+        'padre'    => '/evospace/roles/padre.php',
+        'auxiliar' => '/evospace/roles/admin.php'
     ];
     // Si el rol no está en el array, redirige al login
     $url = isset($rutas[$rol]) ? $rutas[$rol] : '/evospace/index.php';

@@ -1,7 +1,7 @@
 <nav class="navbar navbar-dark bg-evo fixed-top">
     <div class="container-fluid position-relative">
         <?php if (isset($mostrarVolver) && $mostrarVolver === true): ?>
-        <a href="<?= isset($volverUrl) ? $volverUrl : '/evospace/secciones/cantina/index.php' ?>" class="btn btn-sm text-white px-1">
+        <a href="<?= isset($volverUrl) ? $volverUrl : '/evospace/secciones/cantina/index.php' ?>" class="btn btn-sm text-white d-flex align-items-center justify-content-center" style="width:36px;height:36px;">
             <i class="bi bi-arrow-left fs-5"></i>
         </a>
         <?php else: ?>
@@ -23,15 +23,9 @@
 
         <!-- Offcanvas (menú lateral) -->
         <div class="offcanvas offcanvas-start" tabindex="-1" id="offcanvasNavbar">
-            <div class="offcanvas-header d-flex align-items-center">
-                <div class="d-flex align-items-center gap-2">
-                    <i class="bi bi-person-circle fs-4"></i>
-                    <div>
-                        <div class="fw-bold small"><?= htmlspecialchars($_SESSION['nombre_completo'] ?? $_SESSION['usuario'] ?? 'EvoSpace') ?></div>
-                        <div class="small opacity-75"><?= htmlspecialchars($_SESSION['rol'] ?? '') ?></div>
-                    </div>
-                </div>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
+            <div class="offcanvas-header d-flex align-items-center justify-content-center position-relative">
+                <span class="fw-bold text-white">Secciones</span>
+                <button type="button" class="btn-close btn-close-white position-absolute end-0 me-3" data-bs-dismiss="offcanvas"></button>
             </div>
             <div class="offcanvas-body">
                 <ul class="navbar-nav flex-grow-1">
@@ -63,11 +57,17 @@
                             'icon' => 'bi-person-fill',
                             'permiso' => 'alumnos'
                         ],
-                        'Pagos' => [
-                            'url' => '/evospace/secciones/pagos.php',
-                            'icon' => 'bi-cash-coin',
-                            'permiso' => 'pagos'
+                        'Inscripciones' => [
+                            'url' => '/evospace/secciones/inscripciones.php',
+                            'icon' => 'bi-person-plus-fill',
+                            'permiso' => 'alumnos'
                         ],
+                        'Horarios' => [
+                            'url' => '/evospace/secciones/horarios.php',
+                            'icon' => 'bi-calendar-week-fill',
+                            'permiso' => 'horarios'
+                        ],
+
                         'Cantina' => [
                             'url' => '/evospace/secciones/cantina/index.php',
                             'icon' => 'bi-cup-straw',

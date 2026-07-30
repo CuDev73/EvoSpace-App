@@ -1,9 +1,5 @@
 <?php
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
 ob_start();
-
 session_start();
 if (!isset($_SESSION['id_usuario'])) {
     header('Location: /evospace/index.php');
@@ -14,9 +10,6 @@ require_once __DIR__ . '/../helpers/functions.php';
 require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/funciones.php';
 verificarPermiso('profesores');
-
-include '../includes/header.php';
-include '../includes/navbar.php';
 
 $error = '';
 $success = false;
@@ -31,7 +24,6 @@ if (isset($_REQUEST['guardar_salario'])) {
     $activo = isset($_REQUEST['activo']) ? 1 : 0;
 
     if (guardarSalarioProfesor($pdo, $id_usuario, $salario_base, $activo)) {
-        $success = true;
         header("Location: profesores.php?success=1");
         exit();
     } else {
@@ -40,80 +32,57 @@ if (isset($_REQUEST['guardar_salario'])) {
 }
 
 // ============================================================
-// PAGAR SALARIO COMPLETO (genera un abono por el saldo pendiente)
-// ============================================================
-if (isset($_REQUEST['pagar_salario'])) {
-    $id_usuario = (int)$_REQUEST['id_usuario'];
-    $mes = date('m');
-    $anio = date('Y');
-    $pendiente = salarioPendienteProfesor($pdo, $id_usuario, $mes, $anio);
-    
-    if ($pendiente > 0) {
-        // Obtener nombre del profesor
-        $stmt = $pdo->prepare("SELECT usuario FROM usuarios WHERE id_usuario = :id");
-        $stmt->execute(['id' => $id_usuario]);
-        $nombre = $stmt->fetchColumn();
-        
-        $fecha = date('Y-m-d');
-        $result = insertarAbono($pdo, $fecha, $nombre, $pendiente);
-        if ($result) {
-            $mensaje_abono = "Salario pagado correctamente (Gs " . number_format($pendiente, 0, ',', '.') . ")";
-            header("Location: profesores.php?success_abono=1");
-            exit();
-        } else {
-            $error = "Error al registrar el pago.";
-        }
-    } else {
-        $error = "Este profesor no tiene saldo pendiente este mes.";
-    }
-}
-
-// ============================================================
-// PROCESAR ABONOS (manuales)
+// PROCESAR ABONOS
 // ============================================================
 if (isset($_REQUEST['idBorrarAbono'])) {
     $id = (int)$_REQUEST['idBorrarAbono'];
+    $abono = obtenerAbonoPorId($pdo, $id);
+    if ($abono && $abono['imagen']) {
+        $imgPath = __DIR__ . '/../' . $abono['imagen'];
+        if (file_exists($imgPath)) unlink($imgPath);
+    }
     if (eliminarAbono($pdo, $id)) {
-        $mensaje_abono = "Abono eliminado correctamente.";
+        header("Location: profesores.php");
+        exit();
     } else {
         $error = "Error al eliminar abono.";
     }
-    header("Location: profesores.php");
-    exit();
 }
 
-$idEditarAbono = isset($_GET['idEditarAbono']) ? (int)$_GET['idEditarAbono'] : 0;
-$abono_edit = null;
-if ($idEditarAbono > 0) {
-    $abono_edit = obtenerAbonoPorId($pdo, $idEditarAbono);
-}
+if (isset($_POST['guardarAbono'])) {
+    $id_usuario = (int)$_POST['id_usuario_abono'];
+    $fecha_abono = $_POST['fecha_abono'];
+    $monto_abono = floatval($_POST['monto_abono']);
+    $descripcion = trim($_POST['descripcion_abono'] ?? '');
 
-if (isset($_REQUEST['guardarAbono'])) {
-    $id_abono = $_REQUEST['id_abono'] ?? '';
-    $fecha_abono = $_REQUEST['fecha_abono'];
-    $profesor_abono = trim($_REQUEST['profesor']);
-    $monto_abono = floatval($_REQUEST['monto_abono']);
+    $stmt = $pdo->prepare("SELECT usuario FROM usuarios WHERE id_usuario = ?");
+    $stmt->execute([$id_usuario]);
+    $profesor = $stmt->fetchColumn();
 
-    if (empty($profesor_abono) || $monto_abono <= 0) {
-        $error = "El nombre del profesor y el monto son obligatorios.";
+    if (empty($profesor) || $monto_abono <= 0) {
+        $error = "Datos inválidos.";
     } else {
-        if ($id_abono == '') {
-            $result = insertarAbono($pdo, $fecha_abono, $profesor_abono, $monto_abono);
-            if ($result) {
-                $mensaje_abono = "Abono registrado correctamente.";
-                header("Location: profesores.php?success_abono=1");
-                exit();
+        $imagen = null;
+        if (!empty($_FILES['imagen_abono']['name'])) {
+            $ext = strtolower(pathinfo($_FILES['imagen_abono']['name'], PATHINFO_EXTENSION));
+            if (!in_array($ext, ['jpg','jpeg','png','gif','webp'])) {
+                $error = "Formato de imagen no válido.";
             } else {
-                $error = "Error al insertar abono.";
+                $nombre = 'abono_' . uniqid() . '.' . $ext;
+                $destino = 'uploads/abonos/' . $nombre;
+                if (move_uploaded_file($_FILES['imagen_abono']['tmp_name'], __DIR__ . '/../' . $destino)) {
+                    $imagen = $destino;
+                } else {
+                    $error = "Error al subir la imagen.";
+                }
             }
-        } else {
-            $result = actualizarAbono($pdo, $id_abono, $fecha_abono, $profesor_abono, $monto_abono);
-            if ($result) {
-                $mensaje_abono = "Abono actualizado correctamente.";
+        }
+        if (!$error) {
+            if (insertarAbono($pdo, $fecha_abono, $profesor, $monto_abono, $descripcion, $imagen)) {
                 header("Location: profesores.php?success_abono=1");
                 exit();
             } else {
-                $error = "Error al actualizar abono.";
+                $error = "Error al registrar el abono.";
             }
         }
     }
@@ -130,29 +99,18 @@ $total_salarios = array_sum(array_column($profesores, 'salario_base'));
 $total_abonos_mes = array_sum(array_column($profesores, 'abonos_mes'));
 $total_pendiente = array_sum(array_column($profesores, 'salario_pendiente'));
 
-// Abonos con filtro por profesor
-$filtroProfesor = isset($_GET['filtro_profesor']) ? (int)$_GET['filtro_profesor'] : 0;
-if ($filtroProfesor > 0) {
-    $abonos = obtenerAbonosPorProfesor($pdo, $filtroProfesor, $mesActual, $anioActual);
-} else {
-    $abonos = obtenerAbonos($pdo);
-}
-$total_abonos = array_sum(array_column($abonos, 'monto_abono'));
+$todosAbonos = $pdo->query("
+    SELECT a.*, u.id_usuario, u.nombre_completo, u.usuario
+    FROM abonos a
+    JOIN usuarios u ON a.profesor = u.usuario
+    ORDER BY a.fecha_abono DESC
+")->fetchAll(PDO::FETCH_ASSOC);
 
-$listaProfesores = obtenerListaProfesores($pdo);
+include '../includes/header.php';
+include '../includes/navbar.php';
 
-if (isset($_GET['success'])) {
-    $success = true;
-}
-if (isset($_GET['success_abono'])) {
-    $mensaje_abono = "Abono registrado correctamente.";
-}
-
-// Variables para el formulario de abono (edición)
-$id_abono = $abono_edit ? $abono_edit['id_abono'] : '';
-$fecha_abono = $abono_edit ? $abono_edit['fecha_abono'] : date('Y-m-d');
-$profesor_abono = $abono_edit ? $abono_edit['profesor'] : '';
-$monto_abono = $abono_edit ? $abono_edit['monto_abono'] : '';
+if (isset($_GET['success'])) $success = true;
+if (isset($_GET['success_abono'])) $mensaje_abono = "Abono registrado correctamente.";
 ?>
 
 <div class="container mt-3">
@@ -177,7 +135,7 @@ $monto_abono = $abono_edit ? $abono_edit['monto_abono'] : '';
     <?php endif; ?>
 
     <!-- ========================================================== -->
-    <!-- SECCIÓN PROFESORES                                         -->
+    <!-- TABLA DE PROFESORES                                        -->
     <!-- ========================================================== -->
     <div class="row g-2 mb-3 align-items-center">
         <div class="col-md-8">
@@ -190,7 +148,6 @@ $monto_abono = $abono_edit ? $abono_edit['monto_abono'] : '';
         </div>
     </div>
 
-    <!-- Tabla de Profesores (con abonos del mes y pendiente) -->
     <div class="card shadow mb-4">
         <div class="card-header bg-evo text-white py-2">
             <i class="bi bi-people-fill"></i> Profesores Registrados
@@ -240,15 +197,10 @@ $monto_abono = $abono_edit ? $abono_edit['monto_abono'] : '';
                                                 ])) ?>)">
                                             <i class="bi bi-pencil-square"></i> <span class="d-none d-sm-inline">Salario</span>
                                         </button>
-                                        <?php if (($fila["salario_pendiente"] ?? 0) > 0): ?>
-                                            <a href="profesores.php?pagar_salario=1&id_usuario=<?= $fila['id_usuario'] ?>" 
-                                               class="btn btn-success btn-sm" 
-                                               onclick="return confirm('¿Pagar salario completo (Gs <?= number_format($fila['salario_pendiente'], 0, ',', '.') ?>) a <?= htmlspecialchars($fila['usuario']) ?>?')">
-                                                <i class="bi bi-cash"></i> Pagar
-                                            </a>
-                                        <?php else: ?>
-                                            <span class="badge bg-secondary">Pagado</span>
-                                        <?php endif; ?>
+                                        <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#modalPagos"
+                                                onclick="cargarPagos(<?= $fila['id_usuario'] ?>)">
+                                            <i class="bi bi-cash"></i> <span class="d-none d-sm-inline">Pagos</span>
+                                        </button>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
@@ -268,136 +220,9 @@ $monto_abono = $abono_edit ? $abono_edit['monto_abono'] : '';
         </div>
     </div>
 
-    <!-- ========================================================== -->
-    <!-- SECCIÓN ABONOS (Pagos a Profesores)                       -->
-    <!-- ========================================================== -->
-    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
-        <h5 class="mb-0 text-secondary"><i class="bi bi-cash-stack me-1"></i> Pagos a Profesores</h5>
-        <div class="d-flex gap-2">
-            <form method="GET" class="d-flex">
-                <select name="filtro_profesor" class="form-select form-select-sm me-1" onchange="this.form.submit()">
-                    <option value="0">Todos</option>
-                    <?php foreach ($listaProfesores as $p): ?>
-                        <option value="<?= $p['id_usuario'] ?>" <?= ($filtroProfesor == $p['id_usuario']) ? 'selected' : '' ?>>
-                            <?= htmlspecialchars($p['nombre_completo']) ?>
-                        </option>
-                    <?php endforeach; ?>
-                </select>
-                <a href="profesores.php" class="btn btn-secondary btn-sm"><i class="bi bi-x-lg"></i></a>
-            </form>
-            <button class="btn btn-success btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#collapseAbono">
-                <i class="bi bi-plus-circle-fill"></i> Nuevo Pago
-            </button>
-        </div>
-    </div>
-
-    <!-- Formulario de Abonos -->
-    <div class="collapse <?= ($idEditarAbono > 0) ? 'show' : '' ?> mb-4" id="collapseAbono">
-        <div class="card shadow">
-            <div class="card-header bg-success text-white py-2">
-            <i class="bi bi-plus-circle-fill me-1"></i> Registrar Pago a Profesor
-            </div>
-            <div class="card-body">
-                <form method="POST" action="profesores.php">
-                    <input type="hidden" name="id_abono" value="<?= $id_abono ?>">
-
-                    <div class="row g-3">
-                        <div class="col-md-4">
-                            <label class="form-label mb-1 small">Profesor *</label>
-                            <input type="text" name="profesor" class="form-control form-control-sm" list="listaProfesores" value="<?= htmlspecialchars($profesor_abono) ?>" placeholder="Escribe para buscar..." required autocomplete="off">
-                            <datalist id="listaProfesores">
-                                <?php foreach ($listaProfesores as $p): ?>
-                                    <option value="<?= htmlspecialchars($p['nombre_completo']) ?>">
-                                <?php endforeach; ?>
-                            </datalist>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label mb-1 small">Fecha del Abono *</label>
-                            <input type="date" name="fecha_abono" class="form-control form-control-sm" value="<?= htmlspecialchars($fecha_abono) ?>" required>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label mb-1 small">Monto (Gs) *</label>
-                            <input type="number" step="0.01" name="monto_abono" class="form-control form-control-sm" value="<?= htmlspecialchars($monto_abono) ?>" required>
-                        </div>
-                        <div class="col-12 d-flex gap-2 justify-content-end mt-3">
-                            <?php if ($idEditarAbono > 0): ?>
-                                <a href="profesores.php" class="btn btn-secondary btn-sm">Cancelar Edición</a>
-                            <?php endif; ?>
-                            <button type="submit" name="guardarAbono" class="btn <?= $idEditarAbono > 0 ? 'btn-warning' : 'btn-success' ?> btn-sm">
-                                <i class="bi bi-save-fill"></i> <?= $idEditarAbono > 0 ? 'Actualizar' : 'Guardar' ?>
-                            </button>
-                        </div>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <!-- Tabla de Abonos -->
-    <div class="card shadow mb-4">
-        <div class="card-header bg-evo text-white py-2">
-            <i class="bi bi-receipt"></i> Registro de Abonos
-            <span class="badge bg-light text-dark ms-2"><?= count($abonos) ?></span>
-            <?php if ($filtroProfesor > 0): ?>
-                <span class="badge bg-info ms-2">Filtrado por profesor</span>
-            <?php endif; ?>
-        </div>
-        <div class="card-body p-2">
-            <!-- Buscador para abonos -->
-            <div class="row g-2 mb-3">
-                <div class="col-md-6">
-                    <input type="text" id="buscadorAbonos" class="form-control form-control-sm" placeholder="Buscar abono por profesor o ID...">
-                </div>
-            </div>
-
-            <?php if (empty($abonos)): ?>
-                <div class="alert alert-info mb-0">No hay abonos registrados.</div>
-            <?php else: ?>
-                <div class="table-responsive">
-                    <table class="table table-hover table-sm mb-0" id="tablaAbonos">
-                        <thead class="text-center">
-                            <tr>
-                                <th>ID</th>
-                                <th>Fecha</th>
-                                <th>Profesor</th>
-                                <th>Monto</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach ($abonos as $abono): ?>
-                                <tr data-profesor="<?= strtolower(htmlspecialchars($abono["profesor"])) ?>" data-id="<?= $abono['id_abono'] ?>">
-                                    <td class="text-center align-middle"><?= $abono["id_abono"] ?></td>
-                                    <td class="text-center align-middle"><?= htmlspecialchars($abono["fecha_abono"]) ?></td>
-                                    <td class="text-center align-middle"><?= htmlspecialchars($abono["profesor"]) ?></td>
-                                    <td class="text-center align-middle"><?= number_format($abono["monto_abono"], 0, ',', '.') ?> Gs</td>
-                                    <td class="text-center align-middle">
-                                        <a href="profesores.php?idEditarAbono=<?= $abono['id_abono'] ?>" class="btn btn-primary btn-sm">
-                                            <i class="bi bi-pencil-square"></i> <span class="d-none d-sm-inline">Editar</span>
-                                        </a>
-                                        <a href="profesores.php?idBorrarAbono=<?= $abono['id_abono'] ?>" class="btn btn-danger btn-sm" onclick="return confirm('¿Estás seguro de eliminar este abono?')">
-                                            <i class="bi bi-trash-fill"></i> <span class="d-none d-sm-inline">Borrar</span>
-                                        </a>
-                                    </td>
-                                </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                        <tfoot class="table-dark">
-                            <tr>
-                                <th colspan="3" class="text-center">Total de abonos:</th>
-                                <th class="text-center"><?= number_format($total_abonos, 0, ',', '.') ?> Gs</th>
-                                <th></th>
-                            </tr>
-                        </tfoot>
-                    </table>
-                </div>
-            <?php endif; ?>
-        </div>
-    </div>
-
 </div>
 
-<!-- Modal para editar salario -->
+<!-- Modal Editar Salario -->
 <div class="modal fade" id="modalSalario" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -414,7 +239,7 @@ $monto_abono = $abono_edit ? $abono_edit['monto_abono'] : '';
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Salario Base (Gs)</label>
-                        <input type="number" step="0.01" name="salario_base" id="salario_base" class="form-control" required>
+                        <input type="number" name="salario_base" id="salario_base" class="form-control" required data-moneda>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Activo</label>
@@ -433,45 +258,155 @@ $monto_abono = $abono_edit ? $abono_edit['monto_abono'] : '';
     </div>
 </div>
 
+<!-- Modal Pagos a Profesor -->
+<div class="modal fade" id="modalPagos" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title"><i class="bi bi-cash-stack"></i> Pagos a <span id="pagosProfesorNombre"></span></h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="pagosIdUsuario">
+
+                <!-- Info saldo -->
+                <div class="row g-2 mb-3 text-center" id="pagosInfo">
+                    <div class="col-4"><small class="text-muted">Salario base</small><br><strong id="pagosSalarioBase">0</strong></div>
+                    <div class="col-4"><small class="text-muted">Abonado este mes</small><br><strong id="pagosAbonado">0</strong></div>
+                    <div class="col-4"><small class="text-muted">Pendiente</small><br><strong id="pagosPendiente" class="text-danger">0</strong></div>
+                </div>
+
+                <!-- Formulario nuevo pago -->
+                <div class="card border-success mb-3">
+                    <div class="card-header bg-success text-white py-1"><small><i class="bi bi-plus-circle"></i> Nuevo pago</small></div>
+                    <div class="card-body py-2">
+                        <form method="POST" enctype="multipart/form-data">
+                            <input type="hidden" name="id_usuario_abono" id="idUsuarioAbono">
+                            <div class="row g-2">
+                                <div class="col-md-3">
+                                    <label class="form-label small">Fecha</label>
+                                    <input type="date" name="fecha_abono" class="form-control form-control-sm" value="<?= date('Y-m-d') ?>" required>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label small">Monto (Gs) *</label>
+                                    <input type="number" name="monto_abono" class="form-control form-control-sm" required data-moneda>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label small">Descripción</label>
+                                    <input type="text" name="descripcion_abono" class="form-control form-control-sm" placeholder="Ej: Transferencia">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label small">Comprobante</label>
+                                    <input type="file" name="imagen_abono" class="form-control form-control-sm" accept="image/*">
+                                </div>
+                                <div class="col-12 text-end mt-2">
+                                    <button type="submit" name="guardarAbono" class="btn btn-success btn-sm"><i class="bi bi-check-circle"></i> Registrar pago</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Tabla de pagos -->
+                <div class="table-responsive">
+                    <table class="table table-hover table-sm mb-0" id="tablaAbonosModal">
+                        <thead class="table-light">
+                            <tr>
+                                <th>#</th>
+                                <th>Fecha</th>
+                                <th>Monto</th>
+                                <th>Descripción</th>
+                                <th>Comprobante</th>
+                                <th>Recibo</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="abonosBody"></tbody>
+                        <tfoot class="table-dark" id="abonosFoot" style="display:none;">
+                            <tr><th colspan="2" class="text-end">Total:</th><th id="abonosTotal" colspan="5"></th></tr>
+                        </tfoot>
+                    </table>
+                </div>
+                <p class="text-muted small text-center mt-2 mb-0" id="abonosEmpty">Sin pagos registrados.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
-    // Buscador de profesores
-    document.addEventListener('DOMContentLoaded', function() {
-        const buscador = document.getElementById('buscador');
-        const tabla = document.getElementById('tablaProfesores');
-        if (buscador && tabla) {
-            buscador.addEventListener('keyup', function() {
-                const filtro = this.value.toLowerCase();
-                const filas = tabla.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
-                for (let fila of filas) {
-                    const nombre = fila.cells[1].textContent.toLowerCase();
-                    fila.style.display = nombre.includes(filtro) ? '' : 'none';
-                }
-            });
-        }
+const abonosData = <?= json_encode($todosAbonos) ?>;
+const profesoresData = <?= json_encode($profesores) ?>;
 
-        // Buscador de abonos
-        const buscadorAbonos = document.getElementById('buscadorAbonos');
-        const tablaAbonos = document.getElementById('tablaAbonos');
-        if (buscadorAbonos && tablaAbonos) {
-            buscadorAbonos.addEventListener('keyup', function() {
-                const filtro = this.value.toLowerCase();
-                const filas = tablaAbonos.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
-                for (let fila of filas) {
-                    const profesor = fila.dataset.profesor || '';
-                    const id = fila.dataset.id || '';
-                    const texto = profesor + ' ' + id;
-                    fila.style.display = texto.includes(filtro) ? '' : 'none';
-                }
-            });
-        }
-    });
+function cargarPagos(idUsuario) {
+    document.getElementById('pagosIdUsuario').value = idUsuario;
+    document.getElementById('idUsuarioAbono').value = idUsuario;
 
-    function cargarSalario(data) {
-        document.getElementById('salario_id_usuario').value = data.id_usuario;
-        document.getElementById('salario_usuario').value = data.usuario;
-        document.getElementById('salario_base').value = data.salario_base || '';
-        document.getElementById('salario_activo').value = data.activo || 1;
+    const prof = profesoresData.find(p => p.id_usuario == idUsuario);
+    if (prof) {
+        document.getElementById('pagosProfesorNombre').textContent = prof.usuario;
+        document.getElementById('pagosSalarioBase').textContent = 'Gs ' + Number(prof.salario_base || 0).toLocaleString('es-PY');
+        document.getElementById('pagosAbonado').textContent = 'Gs ' + Number(prof.abonos_mes || 0).toLocaleString('es-PY');
+        document.getElementById('pagosPendiente').textContent = 'Gs ' + Number(prof.salario_pendiente || 0).toLocaleString('es-PY');
     }
+
+    const abonos = abonosData.filter(a => a.id_usuario == idUsuario);
+    const tbody = document.getElementById('abonosBody');
+    tbody.innerHTML = '';
+
+    if (abonos.length === 0) {
+        document.getElementById('abonosEmpty').style.display = '';
+        document.getElementById('abonosFoot').style.display = 'none';
+    } else {
+        document.getElementById('abonosEmpty').style.display = 'none';
+        document.getElementById('abonosFoot').style.display = '';
+        let total = 0;
+        abonos.forEach(a => {
+            total += parseFloat(a.monto_abono);
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${a.id_abono}</td>
+                <td>${a.fecha_abono}</td>
+                <td class="text-end">Gs ${Number(a.monto_abono).toLocaleString('es-PY')}</td>
+                <td>${a.descripcion ? escHtml(a.descripcion) : '-'}</td>
+                <td>${a.imagen ? '<a href="/evospace/' + a.imagen + '" target="_blank" class="btn btn-sm btn-outline-primary"><i class="bi bi-image"></i></a>' : '-'}</td>
+                <td><a href="recibo_profesor.php?id_abono=${a.id_abono}" target="_blank" class="btn btn-sm btn-outline-success"><i class="bi bi-file-pdf"></i></a></td>
+                <td><a href="profesores.php?idBorrarAbono=${a.id_abono}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Eliminar este pago?')"><i class="bi bi-trash"></i></a></td>
+            `;
+            tbody.appendChild(tr);
+        });
+        document.getElementById('abonosTotal').textContent = 'Gs ' + total.toLocaleString('es-PY');
+        document.getElementById('abonosTotal').colSpan = 5;
+    }
+}
+
+function escHtml(s) {
+    const d = document.createElement('div');
+    d.textContent = s;
+    return d.innerHTML;
+}
+
+// Buscador de profesores
+document.addEventListener('DOMContentLoaded', function() {
+    const buscador = document.getElementById('buscador');
+    const tabla = document.getElementById('tablaProfesores');
+    if (buscador && tabla) {
+        buscador.addEventListener('keyup', function() {
+            const filtro = this.value.toLowerCase();
+            const filas = tabla.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+            for (let fila of filas) {
+                const nombre = fila.cells[1].textContent.toLowerCase();
+                fila.style.display = nombre.includes(filtro) ? '' : 'none';
+            }
+        });
+    }
+});
+
+function cargarSalario(data) {
+    document.getElementById('salario_id_usuario').value = data.id_usuario;
+    document.getElementById('salario_usuario').value = data.usuario;
+    document.getElementById('salario_base').value = Math.round(data.salario_base) || '';
+    document.getElementById('salario_activo').value = data.activo || 1;
+}
 </script>
 
 <?php

@@ -14,7 +14,7 @@ $mes = isset($_GET['mes']) ? (int)$_GET['mes'] : date('m');
 $anio = isset($_GET['anio']) ? (int)$_GET['anio'] : date('Y');
 
 if ($id_curso == 0) {
-    header('Location: /evospace/roles/profesor.php');
+    header('Location: index.php');
     exit;
 }
 
@@ -23,7 +23,7 @@ $stmt = $pdo->prepare("SELECT nombre, tipo FROM cursos WHERE id_curso = ?");
 $stmt->execute([$id_curso]);
 $curso = $stmt->fetch();
 if (!$curso) {
-    header('Location: /evospace/roles/profesor.php');
+    header('Location: index.php');
     exit;
 }
 
@@ -33,20 +33,12 @@ $alumnos->execute([$id_curso]);
 $alumnos = $alumnos->fetchAll(PDO::FETCH_ASSOC);
 
 if (empty($alumnos)) {
-    header('Location: /evospace/roles/profesor.php?error=No+hay+alumnos');
+    header('Location: index.php?error=No+hay+alumnos');
     exit;
 }
 
-// Obtener días con registros de asistencia para este curso y mes
-$stmt = $pdo->prepare("SELECT DISTINCT DAY(fecha) as dia FROM asistencia WHERE id_curso = ? AND MONTH(fecha) = ? AND YEAR(fecha) = ? ORDER BY dia");
-$stmt->execute([$id_curso, $mes, $anio]);
-$diasConRegistros = $stmt->fetchAll(PDO::FETCH_COLUMN);
-
-// Si no hay registros, mostrar todos los días del mes (para que se puedan crear)
-if (empty($diasConRegistros)) {
-    $diasEnMes = cal_days_in_month(CAL_GREGORIAN, $mes, $anio);
-    $diasConRegistros = range(1, $diasEnMes);
-}
+$diasEnMes = cal_days_in_month(CAL_GREGORIAN, $mes, $anio);
+$diasConRegistros = range(1, $diasEnMes);
 
 // Obtener asistencias existentes
 $ids = array_column($alumnos, 'id_alumno');
@@ -194,7 +186,7 @@ $anios = range(date('Y')-2, date('Y')+1);
                             <button type="submit" name="guardar" class="btn btn-danger">
                                 <i class="bi bi-save"></i> Guardar mes
                             </button>
-                            <a href="/evospace/roles/profesor.php" class="btn btn-secondary">
+                            <a href="index.php" class="btn btn-secondary">
                                 <i class="bi bi-arrow-left"></i> Volver
                             </a>
                             <a href="exportar_excel_mensual.php?id_curso=<?= $id_curso ?>&mes=<?= $mes ?>&anio=<?= $anio ?>" class="btn btn-success">

@@ -21,7 +21,7 @@ use PhpOffice\PhpSpreadsheet\Style\Alignment;
 
 $id_curso = isset($_GET['id_curso']) ? (int)$_GET['id_curso'] : 0;
 if ($id_curso == 0) {
-    header('Location: /evospace/roles/profesor.php');
+    header('Location: index.php');
     exit;
 }
 
@@ -30,7 +30,7 @@ $stmt = $pdo->prepare("SELECT nombre, tipo FROM cursos WHERE id_curso = ?");
 $stmt->execute([$id_curso]);
 $curso = $stmt->fetch();
 if (!$curso) {
-    header('Location: /evospace/roles/profesor.php');
+    header('Location: index.php');
     exit;
 }
 

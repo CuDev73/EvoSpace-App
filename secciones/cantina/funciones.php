@@ -8,9 +8,7 @@
 // ============================================================
 
 function obtenerProductosCompletos($pdo, $activo = null) {
-    $sql = "SELECT p.*, pr.nombre AS proveedor_nombre 
-            FROM productos p
-            LEFT JOIN proveedores pr ON p.id_proveedor = pr.id_proveedor";
+    $sql = "SELECT p.* FROM productos p";
     if ($activo !== null) {
         $sql .= " WHERE p.activo = " . ($activo ? 1 : 0);
     }
@@ -19,15 +17,15 @@ function obtenerProductosCompletos($pdo, $activo = null) {
     return $stmt->fetchAll(PDO::FETCH_OBJ);
 }
 
-function guardarProducto($pdo, $id, $nombre, $precio_venta, $precio_compra, $cantidad, $id_proveedor = null, $activo = 1) {
+function guardarProducto($pdo, $id, $nombre, $precio_venta, $precio_compra, $cantidad, $activo = 1) {
     if ($id) {
-        $sql = "UPDATE productos SET nombre=?, precio=?, precio_compra=?, cantidad=?, id_proveedor=?, activo=? WHERE id_producto=?";
+        $sql = "UPDATE productos SET nombre=?, precio=?, precio_compra=?, cantidad=?, activo=? WHERE id_producto=?";
         $stmt = $pdo->prepare($sql);
-        return $stmt->execute([$nombre, $precio_venta, $precio_compra, $cantidad, $id_proveedor, $activo, $id]);
+        return $stmt->execute([$nombre, $precio_venta, $precio_compra, $cantidad, $activo, $id]);
     } else {
-        $sql = "INSERT INTO productos (nombre, precio, precio_compra, cantidad, id_proveedor, activo) VALUES (?, ?, ?, ?, ?, ?)";
+        $sql = "INSERT INTO productos (nombre, precio, precio_compra, cantidad, activo) VALUES (?, ?, ?, ?, ?)";
         $stmt = $pdo->prepare($sql);
-        return $stmt->execute([$nombre, $precio_venta, $precio_compra, $cantidad, $id_proveedor, $activo]);
+        return $stmt->execute([$nombre, $precio_venta, $precio_compra, $cantidad, $activo]);
     }
 }
 
@@ -101,6 +99,10 @@ function obtenerVentas($pdo, $filtros = []) {
     if (isset($filtros['estado_pago'])) {
         $sql .= " AND v.estado_pago = ?";
         $params[] = $filtros['estado_pago'];
+    }
+    if (isset($filtros['nombre_comprador'])) {
+        $sql .= " AND v.nombre_comprador LIKE ?";
+        $params[] = '%' . $filtros['nombre_comprador'] . '%';
     }
     $sql .= " ORDER BY v.fecha DESC";
     $stmt = $pdo->prepare($sql);
@@ -256,231 +258,20 @@ function buscarCompradores($pdo, $termino, $tipo = null) {
 }
 
 // ============================================================
-// COMPRAS DE ALUMNOS (Fiado)
+// DEUDA CANTINA (desde ventas)
 // ============================================================
 
-function obtenerComprasAlumnos($pdo, $rama = null) {
-    $sql = "
-        SELECT c.*, a.nombre, a.apellido, cu.nombre AS curso_nombre, cu.tipo AS rama
-        FROM compras_alumnos c
-        JOIN alumnos a ON c.id_alumno = a.id_alumno
-        JOIN cursos cu ON a.id_curso = cu.id_curso
-    ";
-    $params = [];
-    if ($rama) {
-        $sql .= " WHERE cu.tipo = ?";
-        $params[] = $rama;
-    }
-    $sql .= " ORDER BY c.fecha DESC, c.id_compra DESC";
-    $stmt = $pdo->prepare($sql);
-    $stmt->execute($params);
-    return $stmt->fetchAll(PDO::FETCH_OBJ);
-}
-
-function obtenerCompraAlumno($pdo, $id_compra) {
-    $sql = "
-        SELECT c.*, a.nombre, a.apellido, cu.tipo AS rama
-        FROM compras_alumnos c
-        JOIN alumnos a ON c.id_alumno = a.id_alumno
-        JOIN cursos cu ON a.id_curso = cu.id_curso
-        WHERE c.id_compra = ?
-    ";
-    $stmt = $pdo->prepare($sql);
-    $stmt->execute([$id_compra]);
-    return $stmt->fetch(PDO::FETCH_OBJ);
-}
-
-function insertarCompraAlumno($pdo, $fecha, $id_alumno, $producto, $monto, $pagado = 0) {
-    $sql = "INSERT INTO compras_alumnos (fecha, id_alumno, producto, monto, pagado) VALUES (?, ?, ?, ?, ?)";
-    $stmt = $pdo->prepare($sql);
-    return $stmt->execute([$fecha, $id_alumno, $producto, $monto, $pagado]);
-}
-
-function actualizarCompraAlumno($pdo, $id_compra, $fecha, $id_alumno, $producto, $monto, $pagado = 0) {
-    $sql = "UPDATE compras_alumnos SET fecha = ?, id_alumno = ?, producto = ?, monto = ?, pagado = ? WHERE id_compra = ?";
-    $stmt = $pdo->prepare($sql);
-    return $stmt->execute([$fecha, $id_alumno, $producto, $monto, $pagado, $id_compra]);
-}
-
-function eliminarCompraAlumno($pdo, $id_compra) {
-    $sql = "DELETE FROM compras_alumnos WHERE id_compra = ?";
-    $stmt = $pdo->prepare($sql);
-    return $stmt->execute([$id_compra]);
-}
-
 function obtenerDeudaAlumnoCantina($pdo, $id_alumno) {
-    $sql = "SELECT COALESCE(SUM(monto), 0) FROM compras_alumnos WHERE id_alumno = ? AND pagado = 0";
+    $sql = "SELECT COALESCE(SUM(total), 0) FROM ventas WHERE id_alumno = ? AND estado_pago IN ('pendiente','parcial')";
     $stmt = $pdo->prepare($sql);
     $stmt->execute([$id_alumno]);
     return (float) $stmt->fetchColumn();
 }
 
 function obtenerDeudaTotalCantina($pdo) {
-    $sql = "SELECT COALESCE(SUM(monto), 0) FROM compras_alumnos WHERE pagado = 0";
+    $sql = "SELECT COALESCE(SUM(total), 0) FROM ventas WHERE estado_pago IN ('pendiente','parcial')";
     $stmt = $pdo->query($sql);
     return (float) $stmt->fetchColumn();
-}
-
-function obtenerPagosAlumnoCantina($pdo, $id_alumno) {
-    $sql = "SELECT * FROM pagos_alumnos_cantina WHERE id_alumno = ? ORDER BY fecha DESC, id_pago DESC";
-    $stmt = $pdo->prepare($sql);
-    $stmt->execute([$id_alumno]);
-    return $stmt->fetchAll(PDO::FETCH_OBJ);
-}
-
-function insertarPagoAlumnoCantina($pdo, $fecha, $id_alumno, $monto) {
-    $sql = "INSERT INTO pagos_alumnos_cantina (fecha, id_alumno, monto) VALUES (?, ?, ?)";
-    $stmt = $pdo->prepare($sql);
-    return $stmt->execute([$fecha, $id_alumno, $monto]);
-}
-
-// ============================================================
-// PROVEEDORES Y PAGOS (sin campo celular)
-// ============================================================
-
-function obtenerProveedores($pdo) {
-    $sql = "SELECT * FROM proveedores ORDER BY nombre ASC";
-    $stmt = $pdo->query($sql);
-    return $stmt->fetchAll(PDO::FETCH_OBJ);
-}
-
-function obtenerProveedor($pdo, $id_proveedor) {
-    $sql = "SELECT * FROM proveedores WHERE id_proveedor = ?";
-    $stmt = $pdo->prepare($sql);
-    $stmt->execute([$id_proveedor]);
-    return $stmt->fetch(PDO::FETCH_OBJ);
-}
-
-function insertarProveedor($pdo, $nombre, $nombre_contacto = null, $telefono = null, $whatsapp = null, $email = null, $direccion = null, $tipo_productos = null) {
-    $sql = "INSERT INTO proveedores (nombre, nombre_contacto, telefono, whatsapp, email, direccion, tipo_productos) 
-            VALUES (?, ?, ?, ?, ?, ?, ?)";
-    $stmt = $pdo->prepare($sql);
-    return $stmt->execute([$nombre, $nombre_contacto, $telefono, $whatsapp, $email, $direccion, $tipo_productos]);
-}
-
-function actualizarProveedor($pdo, $id_proveedor, $nombre, $nombre_contacto = null, $telefono = null, $whatsapp = null, $email = null, $direccion = null, $tipo_productos = null) {
-    $sql = "UPDATE proveedores SET nombre=?, nombre_contacto=?, telefono=?, whatsapp=?, email=?, direccion=?, tipo_productos=? WHERE id_proveedor=?";
-    $stmt = $pdo->prepare($sql);
-    return $stmt->execute([$nombre, $nombre_contacto, $telefono, $whatsapp, $email, $direccion, $tipo_productos, $id_proveedor]);
-}
-
-function eliminarProveedor($pdo, $id_proveedor) {
-    $sql = "DELETE FROM proveedores WHERE id_proveedor = ?";
-    $stmt = $pdo->prepare($sql);
-    return $stmt->execute([$id_proveedor]);
-}
-
-function obtenerPagosProveedores($pdo) {
-    $sql = "
-        SELECT pp.*, pr.nombre AS proveedor_nombre
-        FROM pagos_proveedores pp
-        JOIN proveedores pr ON pp.id_proveedor = pr.id_proveedor
-        ORDER BY pp.fecha DESC, pp.id_pago DESC
-    ";
-    $stmt = $pdo->query($sql);
-    return $stmt->fetchAll(PDO::FETCH_OBJ);
-}
-
-function insertarPagoProveedor($pdo, $id_proveedor, $fecha, $monto, $concepto = null) {
-    $sql = "INSERT INTO pagos_proveedores (id_proveedor, fecha, monto, concepto) VALUES (?, ?, ?, ?)";
-    $stmt = $pdo->prepare($sql);
-    return $stmt->execute([$id_proveedor, $fecha, $monto, $concepto]);
-}
-
-function eliminarPagoProveedor($pdo, $id_pago) {
-    $sql = "DELETE FROM pagos_proveedores WHERE id_pago = ?";
-    $stmt = $pdo->prepare($sql);
-    return $stmt->execute([$id_pago]);
-}
-
-// ============================================================
-// COMPRAS A PROVEEDORES
-// ============================================================
-
-function obtenerComprasProveedores($pdo) {
-    $sql = "
-        SELECT cp.*, pr.nombre AS proveedor_nombre
-        FROM compras_proveedores cp
-        JOIN proveedores pr ON cp.id_proveedor = pr.id_proveedor
-        ORDER BY cp.fecha DESC, cp.id_compra DESC
-    ";
-    $stmt = $pdo->query($sql);
-    return $stmt->fetchAll(PDO::FETCH_OBJ);
-}
-
-function obtenerCompraProveedor($pdo, $id_compra) {
-    $sql = "
-        SELECT cp.*, pr.nombre AS proveedor_nombre
-        FROM compras_proveedores cp
-        JOIN proveedores pr ON cp.id_proveedor = pr.id_proveedor
-        WHERE cp.id_compra = ?
-    ";
-    $stmt = $pdo->prepare($sql);
-    $stmt->execute([$id_compra]);
-    return $stmt->fetch(PDO::FETCH_OBJ);
-}
-
-function obtenerDetalleCompraProveedor($pdo, $id_compra) {
-    $sql = "
-        SELECT dc.*, p.nombre AS producto_nombre
-        FROM detalle_compra_proveedor dc
-        JOIN productos p ON dc.id_producto = p.id_producto
-        WHERE dc.id_compra = ?
-    ";
-    $stmt = $pdo->prepare($sql);
-    $stmt->execute([$id_compra]);
-    return $stmt->fetchAll(PDO::FETCH_OBJ);
-}
-
-function registrarCompraProveedor($pdo, $id_proveedor, $fecha, $productos, $observaciones = '') {
-    try {
-        $pdo->beginTransaction();
-        
-        $total = 0;
-        foreach ($productos as $prod) {
-            $total += $prod['subtotal'];
-        }
-        
-        $sql = "INSERT INTO compras_proveedores (id_proveedor, fecha, total, observaciones) VALUES (?, ?, ?, ?)";
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute([$id_proveedor, $fecha, $total, $observaciones]);
-        $id_compra = $pdo->lastInsertId();
-        
-        $sqlDetalle = "INSERT INTO detalle_compra_proveedor (id_compra, id_producto, cantidad, precio_compra, subtotal) VALUES (?, ?, ?, ?, ?)";
-        $stmtDetalle = $pdo->prepare($sqlDetalle);
-        $sqlStock = "UPDATE productos SET cantidad = cantidad + ? WHERE id_producto = ?";
-        $stmtStock = $pdo->prepare($sqlStock);
-        foreach ($productos as $prod) {
-            $stmtDetalle->execute([$id_compra, $prod['id_producto'], $prod['cantidad'], $prod['precio_compra'], $prod['subtotal']]);
-            $stmtStock->execute([$prod['cantidad'], $prod['id_producto']]);
-        }
-        
-        $pdo->commit();
-        return $id_compra;
-    } catch (Exception $e) {
-        $pdo->rollBack();
-        throw $e;
-    }
-}
-
-function eliminarCompraProveedor($pdo, $id_compra) {
-    try {
-        $pdo->beginTransaction();
-        $detalles = obtenerDetalleCompraProveedor($pdo, $id_compra);
-        foreach ($detalles as $d) {
-            $sql = "UPDATE productos SET cantidad = cantidad - ? WHERE id_producto = ? AND cantidad >= ?";
-            $stmt = $pdo->prepare($sql);
-            $stmt->execute([$d->cantidad, $d->id_producto, $d->cantidad]);
-        }
-        $sql = "DELETE FROM compras_proveedores WHERE id_compra = ?";
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute([$id_compra]);
-        $pdo->commit();
-        return true;
-    } catch (Exception $e) {
-        $pdo->rollBack();
-        throw $e;
-    }
 }
 
 // ============================================================

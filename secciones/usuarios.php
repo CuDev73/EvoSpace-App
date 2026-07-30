@@ -41,6 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($accion === 'guardar') {
         $id_usuario = isset($_POST['id_usuario']) ? (int)$_POST['id_usuario'] : 0;
         $usuario = trim($_POST['usuario']);
+        $nombre_completo = trim($_POST['nombre_completo']);
         $email = trim($_POST['email']);
         $cedula = trim($_POST['cedula']);
         $id_rol = (int)$_POST['id_rol'];
@@ -70,13 +71,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     // EDITAR
                     if (!empty($password)) {
                         $hash = password_hash($password, PASSWORD_DEFAULT);
-                        $sql = "UPDATE usuarios SET usuario=?, email=?, cedula=?, password_hash=?, id_rol=?, activo=? WHERE id_usuario=?";
+                        $sql = "UPDATE usuarios SET usuario=?, nombre_completo=?, email=?, cedula=?, password_hash=?, id_rol=?, activo=? WHERE id_usuario=?";
                         $stmt = $pdo->prepare($sql);
-                        $stmt->execute([$usuario, $email, $cedula, $hash, $id_rol, $activo, $id_usuario]);
+                        $stmt->execute([$usuario, $nombre_completo, $email, $cedula, $hash, $id_rol, $activo, $id_usuario]);
                     } else {
-                        $sql = "UPDATE usuarios SET usuario=?, email=?, cedula=?, id_rol=?, activo=? WHERE id_usuario=?";
+                        $sql = "UPDATE usuarios SET usuario=?, nombre_completo=?, email=?, cedula=?, id_rol=?, activo=? WHERE id_usuario=?";
                         $stmt = $pdo->prepare($sql);
-                        $stmt->execute([$usuario, $email, $cedula, $id_rol, $activo, $id_usuario]);
+                        $stmt->execute([$usuario, $nombre_completo, $email, $cedula, $id_rol, $activo, $id_usuario]);
                     }
                     // Actualizar permisos
                     $permisosSeleccionados = isset($_POST['permisos']) ? array_map('trim', $_POST['permisos']) : [];
@@ -104,9 +105,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $tipoMensaje = 'danger';
                     } else {
                         $hash = password_hash($password, PASSWORD_DEFAULT);
-                        $sql = "INSERT INTO usuarios (usuario, email, cedula, password_hash, id_rol, activo) VALUES (?, ?, ?, ?, ?, ?)";
+                        $sql = "INSERT INTO usuarios (usuario, nombre_completo, email, cedula, password_hash, id_rol, activo) VALUES (?, ?, ?, ?, ?, ?, ?)";
                         $stmt = $pdo->prepare($sql);
-                        $stmt->execute([$usuario, $email, $cedula, $hash, $id_rol, $activo]);
+                        $stmt->execute([$usuario, $nombre_completo, $email, $cedula, $hash, $id_rol, $activo]);
                         $id_usuario = $pdo->lastInsertId();
                         // Guardar permisos
                         $permisosSeleccionados = isset($_POST['permisos']) ? array_map('trim', $_POST['permisos']) : [];
@@ -395,6 +396,10 @@ $alumnos_todos = $pdo->query("
                         <input type="text" name="usuario" id="usuario" class="form-control" required>
                     </div>
                     <div class="mb-3">
+                        <label class="form-label">Nombre completo *</label>
+                        <input type="text" name="nombre_completo" id="nombre_completo" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
                         <label class="form-label">Email *</label>
                         <input type="email" name="email" id="email" class="form-control" required>
                     </div>
@@ -540,6 +545,7 @@ $alumnos_todos = $pdo->query("
         document.getElementById('modalTituloUsuario').innerHTML = '<i class="bi bi-pencil-fill me-2"></i>Editar Usuario';
         document.getElementById('id_usuario').value = usuario.id_usuario;
         document.getElementById('usuario').value = usuario.usuario;
+        document.getElementById('nombre_completo').value = usuario.nombre_completo || '';
         document.getElementById('email').value = usuario.email;
         document.getElementById('cedula').value = usuario.cedula;
         document.getElementById('password').value = '';

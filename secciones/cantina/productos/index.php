@@ -17,14 +17,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['
     $precio_venta = (float) $_POST['precio_venta'];
     $precio_compra = (float) $_POST['precio_compra'];
     $cantidad = (int) $_POST['cantidad'];
-    $id_proveedor = !empty($_POST['id_proveedor']) ? (int) $_POST['id_proveedor'] : null;
     $activo = isset($_POST['activo']) ? 1 : 0;
 
     if (empty($nombre) || $precio_venta <= 0) {
         $error = "Nombre y precio de venta son obligatorios.";
     } else {
         try {
-            guardarProducto($pdo, $id, $nombre, $precio_venta, $precio_compra, $cantidad, $id_proveedor, $activo);
+            guardarProducto($pdo, $id, $nombre, $precio_venta, $precio_compra, $cantidad, $activo);
             $mensaje = "Producto guardado correctamente.";
             header("Location: index.php?exito=1");
             exit;
@@ -51,7 +50,6 @@ include '../../../includes/header.php';
 include '../../../includes/navbar.php';
 
 $productos = obtenerProductosCompletos($pdo);
-$proveedores = obtenerProveedores($pdo);
 $editProducto = null;
 if (isset($_GET['editar'])) {
     $stmt = $pdo->prepare("SELECT * FROM productos WHERE id_producto = ?");
@@ -87,14 +85,13 @@ if (isset($_GET['exito']) || isset($_GET['eliminado'])) {
                             <th class="text-end">Precio Venta</th>
                             <th class="text-end">Precio Compra</th>
                             <th class="text-center">Stock</th>
-                            <th>Proveedor</th>
                             <th>Estado</th>
                             <th>Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
                         <?php if (empty($productos)): ?>
-                            <tr><td colspan="8" class="text-center">No hay productos.</td></tr>
+                            <tr><td colspan="7" class="text-center">No hay productos.</td></tr>
                         <?php else: ?>
                             <?php foreach ($productos as $p): ?>
                                 <tr>
@@ -103,7 +100,6 @@ if (isset($_GET['exito']) || isset($_GET['eliminado'])) {
                                     <td class="text-end"><?= number_format($p->precio, 0, ',', '.') ?></td>
                                     <td class="text-end"><?= number_format($p->precio_compra ?? 0, 0, ',', '.') ?></td>
                                     <td class="text-center"><?= $p->cantidad ?></td>
-                                    <td><?= htmlspecialchars($p->proveedor_nombre ?? 'Sin proveedor') ?></td>
                                     <td><?= $p->activo ? '<span class="badge bg-success">Activo</span>' : '<span class="badge bg-secondary">Inactivo</span>' ?></td>
                                     <td>
                                         <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalProducto" onclick="editarProducto(<?= htmlspecialchars(json_encode($p)) ?>)"><i class="bi bi-pencil"></i></button>
@@ -138,24 +134,15 @@ if (isset($_GET['exito']) || isset($_GET['eliminado'])) {
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label class="form-label">Precio Venta (Gs) *</label>
-                            <input type="number" step="0.01" name="precio_venta" id="precio_venta" class="form-control" required>
+                            <input type="number" name="precio_venta" id="precio_venta" class="form-control" required data-moneda>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Precio Compra (Gs)</label>
-                            <input type="number" step="0.01" name="precio_compra" id="precio_compra" class="form-control" value="0">
+                            <input type="number" name="precio_compra" id="precio_compra" class="form-control" value="0" data-moneda>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Cantidad (Stock)</label>
                             <input type="number" name="cantidad" id="cantidad" class="form-control" value="0">
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Proveedor</label>
-                            <select name="id_proveedor" id="id_proveedor" class="form-select">
-                                <option value="">Sin proveedor</option>
-                                <?php foreach ($proveedores as $prov): ?>
-                                    <option value="<?= $prov->id_proveedor ?>"><?= htmlspecialchars($prov->nombre) ?></option>
-                                <?php endforeach; ?>
-                            </select>
                         </div>
                     </div>
                     <div class="form-check mt-3">
@@ -180,7 +167,6 @@ function limpiarFormulario() {
     document.getElementById('precio_venta').value = '';
     document.getElementById('precio_compra').value = '0';
     document.getElementById('cantidad').value = '0';
-    document.getElementById('id_proveedor').value = '';
     document.getElementById('activo').checked = true;
 }
 
@@ -188,10 +174,9 @@ function editarProducto(p) {
     document.getElementById('modalTitulo').innerText = 'Editar Producto';
     document.getElementById('id_producto').value = p.id_producto;
     document.getElementById('nombre').value = p.nombre;
-    document.getElementById('precio_venta').value = p.precio;
-    document.getElementById('precio_compra').value = p.precio_compra || 0;
+    document.getElementById('precio_venta').value = Math.round(p.precio);
+    document.getElementById('precio_compra').value = Math.round(p.precio_compra || 0);
     document.getElementById('cantidad').value = p.cantidad || 0;
-    document.getElementById('id_proveedor').value = p.id_proveedor || '';
     document.getElementById('activo').checked = p.activo == 1;
 }
 </script>

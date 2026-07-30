@@ -37,13 +37,6 @@ function guardarSalarioProfesor($pdo, $id_usuario, $salario_base, $activo) {
 // FUNCIONES DE ABONOS (usando PDO)
 // ============================================================
 
-function obtenerAbonos($pdo) {
-    $sql = "SELECT * FROM abonos ORDER BY id_abono DESC";
-    $stmt = $pdo->prepare($sql);
-    $stmt->execute();
-    return $stmt->fetchAll(PDO::FETCH_ASSOC);
-}
-
 function obtenerAbonoPorId($pdo, $id_abono) {
     $sql = "SELECT * FROM abonos WHERE id_abono = :id_abono";
     $stmt = $pdo->prepare($sql);
@@ -51,24 +44,28 @@ function obtenerAbonoPorId($pdo, $id_abono) {
     return $stmt->fetch(PDO::FETCH_ASSOC);
 }
 
-function insertarAbono($pdo, $fecha_abono, $profesor, $monto_abono) {
-    $sql = "INSERT INTO abonos (fecha_abono, profesor, monto_abono) VALUES (:fecha_abono, :profesor, :monto_abono)";
+function insertarAbono($pdo, $fecha_abono, $profesor, $monto_abono, $descripcion = null, $imagen = null) {
+    $sql = "INSERT INTO abonos (fecha_abono, profesor, monto_abono, descripcion, imagen) VALUES (:fecha_abono, :profesor, :monto_abono, :descripcion, :imagen)";
     $stmt = $pdo->prepare($sql);
     return $stmt->execute([
         'fecha_abono' => $fecha_abono,
         'profesor' => $profesor,
-        'monto_abono' => $monto_abono
+        'monto_abono' => $monto_abono,
+        'descripcion' => $descripcion,
+        'imagen' => $imagen
     ]);
 }
 
-function actualizarAbono($pdo, $id_abono, $fecha_abono, $profesor, $monto_abono) {
-    $sql = "UPDATE abonos SET fecha_abono = :fecha_abono, profesor = :profesor, monto_abono = :monto_abono WHERE id_abono = :id_abono";
+function actualizarAbono($pdo, $id_abono, $fecha_abono, $profesor, $monto_abono, $descripcion = null, $imagen = null) {
+    $sql = "UPDATE abonos SET fecha_abono = :fecha_abono, profesor = :profesor, monto_abono = :monto_abono, descripcion = :descripcion, imagen = :imagen WHERE id_abono = :id_abono";
     $stmt = $pdo->prepare($sql);
     return $stmt->execute([
         'id_abono' => $id_abono,
         'fecha_abono' => $fecha_abono,
         'profesor' => $profesor,
-        'monto_abono' => $monto_abono
+        'monto_abono' => $monto_abono,
+        'descripcion' => $descripcion,
+        'imagen' => $imagen
     ]);
 }
 
@@ -107,6 +104,15 @@ function obtenerAbonosPorProfesor($pdo, $id_usuario, $mes = null, $anio = null) 
             ORDER BY fecha_abono DESC";
     $stmt = $pdo->prepare($sql);
     $stmt->execute(['id_usuario' => $id_usuario, 'mes' => $mes, 'anio' => $anio]);
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+function obtenerAbonosProfesorAll($pdo, $id_usuario) {
+    $sql = "SELECT * FROM abonos 
+            WHERE profesor = (SELECT usuario FROM usuarios WHERE id_usuario = :id_usuario)
+            ORDER BY fecha_abono DESC";
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute(['id_usuario' => $id_usuario]);
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 

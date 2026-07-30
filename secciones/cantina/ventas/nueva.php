@@ -14,7 +14,7 @@ $error = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['accion'] === 'guardar_venta') {
     $fecha = $_POST['fecha'];
     $metodo_pago = $_POST['metodo_pago'];
-    $estado_pago = $_POST['estado_pago'];
+    $estado_pago = ($metodo_pago === 'Fiado') ? 'pendiente' : 'pagado';
     $tipo_comprador = $_POST['tipo_comprador'] ?? 'otro';
     $nombre_comprador = trim($_POST['nombre_comprador']);
     $id_alumno = !empty($_POST['id_alumno']) ? (int)$_POST['id_alumno'] : null;
@@ -58,7 +58,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['
 }
 
 $mostrarVolver = true;
-$volverUrl = 'index.php';
+$volverUrl = '../index.php';
 include '../../../includes/header.php';
 include '../../../includes/navbar.php';
 
@@ -103,14 +103,6 @@ $productos = $pdo->query("SELECT * FROM productos WHERE activo = 1 AND cantidad 
                             <option value="Transferencia">Transferencia</option>
                             <option value="Tarjeta">Tarjeta</option>
                             <option value="Fiado">Fiado</option>
-                        </select>
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label">Estado del pago</label>
-                        <select name="estado_pago" class="form-select">
-                            <option value="pagado">Pagado</option>
-                            <option value="pendiente">Pendiente (fiado)</option>
-                            <option value="parcial">Parcial</option>
                         </select>
                     </div>
                     <div class="col-md-6">

@@ -203,10 +203,10 @@ $iconos = [
                                             </label>
                             <div class="input-group input-group-sm">
                                 <span class="input-group-text">Gs</span>
-                                <input type="number" step="0.01"
+                                <input type="number"
                                     name="precio[<?= $precioData['id_precio'] ?>]"
                                     class="form-control form-control-sm"
-                                    value="<?= $precio ?>">
+                                    value="<?= (int)$precio ?>" data-moneda>
                                 <?php if ($concepto === 'cuota'): ?>
                                     <span class="input-group-text bg-warning-subtle text-dark small" title="Con descuento (<?= $porcentaje_beca ?>%)">
                                         <small>Dto: Gs <?= number_format($precioConBecaRedondeado, 0, ',', '.') ?></small>

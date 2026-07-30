@@ -76,3 +76,25 @@ function getParam(name) {
 function formatNumber(n) {
   return Number(n).toLocaleString('es-PY', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 }
+
+// ------------------------------------------------------------
+// 6. Vista previa formateada en inputs monetarios (data-moneda)
+// ------------------------------------------------------------
+document.addEventListener('input', function (e) {
+  var input = e.target.closest('[data-moneda]');
+  if (!input) return;
+
+  var preview = input.parentNode.querySelector('.moneda-preview');
+  var val = parseFloat(input.value.replace(/\./g, ''));
+  if (isNaN(val)) {
+    if (preview) preview.textContent = '';
+    return;
+  }
+
+  if (!preview) {
+    preview = document.createElement('small');
+    preview.className = 'moneda-preview text-muted mt-1 d-block';
+    input.parentNode.appendChild(preview);
+  }
+  preview.textContent = 'Gs ' + formatNumber(val);
+});

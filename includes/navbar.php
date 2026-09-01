@@ -2,14 +2,14 @@
     <div class="container-fluid position-relative">
         <div class="d-flex align-items-center gap-2">
             <?php $hayVolver = isset($mostrarVolver) && $mostrarVolver === true; ?>
-            <?php if ($hayVolver): ?>
-            <a href="#" onclick="history.back(); return false;" class="btn btn-sm text-white d-flex align-items-center justify-content-center flex-shrink-0" style="width:36px;height:36px;padding:0;font-size:1.5rem;" title="Volver">
-                &lt;
-            </a>
-            <?php endif; ?>
             <button class="navbar-toggler border-0 <?= $hayVolver ? 'd-none d-md-block' : '' ?>" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar">
                 <span class="navbar-toggler-icon"></span>
             </button>
+            <?php if ($hayVolver): ?>
+            <a href="#" onclick="history.back(); return false;" class="btn btn-sm text-white d-flex align-items-center justify-content-center flex-shrink-0" style="width:36px;height:36px;padding:0;" title="Volver" aria-label="Volver">
+                <i class="bi bi-arrow-left" style="font-size:1.4rem;"></i>
+            </a>
+            <?php endif; ?>
         </div>
 
         <!-- Título centrado -->

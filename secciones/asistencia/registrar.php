@@ -60,27 +60,59 @@ if (isset($_GET['guardado']) && $_GET['guardado'] == 1) {
     $mensaje = '<div class="alert alert-success"><i class="bi bi-check-circle-fill"></i> Asistencia guardada correctamente.</div>';
 }
 ?>
+<style>
+    /* Móvil: convertir la tabla de asistencia en tarjetas apiladas */
+    @media (max-width: 767.98px) {
+        .tabla-asistencia thead { display: none; }
+        .tabla-asistencia, .tabla-asistencia tbody, .tabla-asistencia tr, .tabla-asistencia td {
+            display: block;
+            width: 100%;
+        }
+        .tabla-asistencia tbody {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+        .tabla-asistencia tr {
+            border: 1px solid #dee2e6;
+            border-radius: 0.5rem;
+            padding: 0.65rem 0.85rem;
+            background: #fff;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+        }
+        .tabla-asistencia tr > td { padding: 0.25rem 0; }
+        .tabla-asistencia tr > td:first-child { padding-top: 0.5rem; padding-bottom: 0.35rem; }
+        .tabla-asistencia tr > td:nth-child(3),
+        .tabla-asistencia tr > td:nth-child(4) { display: inline-block; width: auto; vertical-align: middle; }
+        .tabla-asistencia tr > td:nth-child(3) { margin-right: 0.5rem; }
+        .tabla-asistencia tr > td:nth-child(4) { width: 100%; }
+        .tabla-asistencia tr > td:nth-child(4) input { margin-top: 0.35rem; }
+    }
+</style>
 <div class="container mt-3">
-    <div class="bg-danger text-white p-4 rounded mb-4 d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <div class="bg-danger text-white rounded mb-4 p-3 p-md-4 d-flex flex-wrap justify-content-between align-items-center gap-2">
         <div>
-            <h3 class="h3 fw-bold"><i class="bi bi-clipboard-check"></i> Registrar Asistencia</h3>
+            <h3 class="h3 fw-bold mb-1"><i class="bi bi-clipboard-check"></i> Registrar Asistencia</h3>
             <p class="mb-0"><?= htmlspecialchars($curso['tipo'] . ' - ' . $curso['nombre']) ?> | <?= date('d/m/Y', strtotime($fecha)) ?></p>
         </div>
-        <?php if ($fecha === date('Y-m-d')): ?>
-            <span class="badge bg-light text-dark fs-6 px-3"><i class="bi bi-sun"></i> Hoy</span>
-        <?php endif; ?>
+        <div class="d-flex align-items-center gap-2">
+            <?php if ($fecha === date('Y-m-d')): ?>
+                <span class="badge bg-light text-dark fs-6 px-3"><i class="bi bi-sun"></i> Hoy</span>
+            <?php endif; ?>
+            <span class="badge bg-light text-dark px-3" id="resumenAsistencia">—</span>
+        </div>
     </div>
 
     <?= $mensaje ?>
 
     <div class="card shadow">
-        <div class="card-header bg-danger text-white d-flex justify-content-between align-items-center">
+        <div class="card-header bg-danger text-white d-flex flex-wrap justify-content-between align-items-center gap-2">
             <span><i class="bi bi-people-fill"></i> Lista de alumnos</span>
-            <div>
-                <button type="button" class="btn btn-light btn-sm me-2" onclick="marcarTodos(true)">
+            <div class="d-flex flex-wrap gap-2">
+                <button type="button" class="btn btn-light btn-sm mb-0" onclick="marcarTodos(true)">
                     <i class="bi bi-check-all"></i> Todos presentes
                 </button>
-                <button type="button" class="btn btn-light btn-sm" onclick="marcarTodos(false)">
+                <button type="button" class="btn btn-light btn-sm mb-0" onclick="marcarTodos(false)">
                     <i class="bi bi-x-lg"></i> Todos ausentes
                 </button>
             </div>
@@ -89,7 +121,7 @@ if (isset($_GET['guardado']) && $_GET['guardado'] == 1) {
             <form method="POST" id="formAsistencia">
                 <?= campoCSRF() ?>
                 <div class="table-responsive">
-                    <table class="table table-hover table-sm align-middle">
+                    <table class="table table-hover table-sm align-middle tabla-asistencia">
                         <thead class="table-light">
                             <tr>
                                 <th>#</th>
@@ -162,11 +194,24 @@ if (isset($_GET['guardado']) && $_GET['guardado'] == 1) {
 </div>
 
 <script>
+function actualizarResumen() {
+    const checks = document.querySelectorAll('input[name^="presente"]');
+    const total = checks.length;
+    const presentes = Array.from(checks).filter(c => c.checked).length;
+    const el = document.getElementById('resumenAsistencia');
+    if (el) {
+        el.innerHTML = '<i class="bi bi-check-circle-fill"></i> ' + presentes + '/' + total + ' presentes';
+        el.className = presentes === total && total > 0
+            ? 'badge bg-success text-white px-3'
+            : 'badge bg-light text-dark px-3';
+    }
+}
 function marcarTodos(presente) {
     document.querySelectorAll('input[name^="presente"]').forEach(cb => {
         cb.checked = presente;
         cb.dispatchEvent(new Event('change'));
     });
+    actualizarResumen();
 }
 document.querySelectorAll('input[name^="presente"]').forEach(cb => {
     cb.addEventListener('change', function() {
@@ -178,8 +223,10 @@ document.querySelectorAll('input[name^="presente"]').forEach(cb => {
             badge.textContent = 'Ausente';
             badge.className = 'badge bg-danger status-badge';
         }
+        actualizarResumen();
     });
 });
+actualizarResumen();
 </script>
 
 <?php include '../../includes/footer.php'; ?>

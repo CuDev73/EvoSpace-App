@@ -91,7 +91,7 @@ $productosJson = json_encode(array_map(function ($p) {
         <div class="alert alert-danger"><?= htmlspecialchars($error) ?></div>
     <?php endif; ?>
 
-    <form method="POST" id="formVenta" class="row g-3">
+    <form method="POST" id="formVenta">
         <?= campoCSRF() ?>
         <input type="hidden" name="accion" value="guardar_venta">
         <input type="hidden" name="id_alumno" id="id_alumno">
@@ -99,71 +99,83 @@ $productosJson = json_encode(array_map(function ($p) {
         <input type="hidden" name="tipo_comprador" id="tipo_comprador" value="otro">
         <div id="hiddenProductos"></div>
 
-        <div class="col-lg-8">
-            <div class="sticky-top rounded-bottom" style="top:76px; z-index:1020; background:var(--evo-bg,#f8f9fa);">
-                <div class="d-flex gap-2 pt-1 pb-1">
-                    <div class="input-group input-group-sm flex-fill">
-                        <span class="input-group-text"><i class="bi bi-search"></i></span>
-                        <input type="text" id="buscadorProducto" class="form-control" placeholder="Buscar producto por nombre o categoría...">
-                    </div>
-                </div>
-                <div class="d-flex gap-1 flex-wrap py-2" id="filtroCategorias">
-                    <button type="button" class="btn btn-sm btn-danger categoria-filtro active" data-cat="">Todos</button>
-                    <?php foreach ($categorias as $cat): ?>
-                        <button type="button" class="btn btn-sm btn-outline-danger categoria-filtro" data-cat="<?= htmlspecialchars($cat) ?>"><?= htmlspecialchars($cat) ?></button>
-                    <?php endforeach; ?>
-                </div>
+        <!-- 1. DATOS DE LA VENTA / COMPRADOR (arriba) -->
+        <div class="card shadow mb-3" id="panelCompra">
+            <div class="card-header bg-danger text-white">
+                <i class="bi bi-person-lines-fill"></i> Datos de la venta
             </div>
-
-            <div class="row g-2" id="gridProductos"></div>
-            <div id="sinResultados" class="text-center text-muted py-4 d-none"></div>
-        </div>
-
-        <div class="col-lg-4" id="panelCompra">
-            <div class="card shadow">
-                <div class="card-header bg-danger text-white d-flex justify-content-between align-items-center">
-                    <span><i class="bi bi-cart"></i> Carrito</span>
-                    <span id="badgeTotalItems" class="badge bg-light text-danger">0</span>
-                </div>
-                <div class="card-body">
-                    <div id="listaCarrito"></div>
-                    <div id="carritoVacio" class="text-muted text-center small py-3">
-                        El carrito está vacío<br>Añadí productos con el botón <strong>Agregar</strong>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label small">Buscar comprador (alumno, profesor, tutor/a)</label>
+                        <input type="text" id="buscadorComprador" class="form-control form-control-sm" placeholder="Escribe para buscar...">
+                        <div id="resultadosBusqueda" class="list-group mt-1" style="display:none;"></div>
                     </div>
-                    <hr>
-                    <div class="d-flex justify-content-between fw-bold">
-                        <span>Total</span>
-                        <span id="lblTotal">Gs 0</span>
-                    </div>
-                    <hr>
-                    <label class="form-label small">Buscar comprador (alumno, profesor, tutor/a)</label>
-                    <input type="text" id="buscadorComprador" class="form-control form-control-sm" placeholder="Escribe para buscar...">
-                    <div id="resultadosBusqueda" class="list-group mt-1" style="display:none;"></div>
-                    <div class="mt-2">
+                    <div class="col-md-6">
                         <label class="form-label small">Nombre comprador *</label>
                         <input type="text" name="nombre_comprador" id="nombre_comprador" class="form-control form-control-sm" required>
                     </div>
-                    <div class="row g-2 mt-1">
-                        <div class="col-6">
-                            <label class="form-label small">Fecha *</label>
-                            <input type="date" name="fecha" class="form-control form-control-sm" value="<?= date('Y-m-d') ?>" required>
-                        </div>
-                        <div class="col-6">
-                            <label class="form-label small">Método de pago</label>
-                            <select name="metodo_pago" class="form-select form-select-sm">
-                                <option value="Efectivo">Efectivo</option>
-                                <option value="Transferencia">Transferencia</option>
-                                <option value="Tarjeta">Tarjeta</option>
-                                <option value="Fiado">Fiado</option>
-                            </select>
+                    <div class="col-md-4">
+                        <label class="form-label small">Fecha *</label>
+                        <input type="date" name="fecha" class="form-control form-control-sm" value="<?= date('Y-m-d') ?>" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small">Método de pago</label>
+                        <select name="metodo_pago" class="form-select form-select-sm">
+                            <option value="Efectivo">Efectivo</option>
+                            <option value="Transferencia">Transferencia</option>
+                            <option value="Tarjeta">Tarjeta</option>
+                            <option value="Fiado">Fiado</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4 d-flex align-items-end">
+                        <div class="w-100 d-flex justify-content-between align-items-center bg-light border rounded p-2">
+                            <span class="small text-muted">Total</span>
+                            <strong id="lblTotalDatos">Gs 0</strong>
                         </div>
                     </div>
-                    <div class="mt-2">
+                    <div class="col-12">
                         <label class="form-label small">Observaciones</label>
                         <input type="text" name="observaciones" class="form-control form-control-sm" placeholder="Ej: Cliente regular, descuento, etc.">
                     </div>
-                    <button type="submit" class="btn btn-danger w-100 mt-3"><i class="bi bi-check-circle"></i> Registrar Venta</button>
                 </div>
+            </div>
+        </div>
+
+        <!-- 2. PRODUCTOS -->
+        <div class="sticky-top rounded-bottom" style="top:76px; z-index:1020; background:var(--evo-bg,#f8f9fa);">
+            <div class="d-flex gap-2 pt-1 pb-1">
+                <div class="input-group input-group-sm flex-fill">
+                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                    <input type="text" id="buscadorProducto" class="form-control" placeholder="Buscar producto por nombre o categoría...">
+                </div>
+            </div>
+            <div class="d-flex gap-1 flex-wrap py-2" id="filtroCategorias">
+                <button type="button" class="btn btn-sm btn-danger categoria-filtro active" data-cat="">Todos</button>
+                <?php foreach ($categorias as $cat): ?>
+                    <button type="button" class="btn btn-sm btn-outline-danger categoria-filtro" data-cat="<?= htmlspecialchars($cat) ?>"><?= htmlspecialchars($cat) ?></button>
+                <?php endforeach; ?>
+            </div>
+        </div>
+
+        <div class="row g-2" id="gridProductos"></div>
+        <div id="sinResultados" class="text-center text-muted py-4 d-none"></div>
+
+        <!-- 3. CARRITO (abajo, con scroll propio) -->
+        <div class="card shadow mt-3">
+            <div class="card-header bg-danger text-white d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-cart"></i> Carrito</span>
+                <span id="badgeTotalItems" class="badge bg-light text-danger">0</span>
+            </div>
+            <div class="card-body p-0">
+                <div id="listaCarrito" style="max-height:320px; overflow-y:auto;"></div>
+                <div id="carritoVacio" class="text-muted text-center small py-3">
+                    El carrito está vacío<br>Añadí productos con el botón <strong>Agregar</strong>
+                </div>
+            </div>
+            <div class="card-footer d-flex flex-wrap justify-content-between align-items-center gap-2">
+                <div class="fw-bold fs-5">Total <span id="lblTotal" class="text-danger">Gs 0</span></div>
+                <button type="submit" class="btn btn-danger"><i class="bi bi-check-circle"></i> Registrar Venta</button>
             </div>
         </div>
     </form>
@@ -374,6 +386,7 @@ function actualizarCarrito() {
     document.getElementById('carritoVacio').style.display = items ? 'none' : '';
     const totalTxt = fmtGs(total);
     document.getElementById('lblTotal').textContent = totalTxt;
+    document.getElementById('lblTotalDatos').textContent = totalTxt;
     document.getElementById('lblTotalMovil').textContent = totalTxt;
     document.getElementById('lblTotalMovil2').textContent = totalTxt;
     document.getElementById('badgeTotalItems').textContent = items;

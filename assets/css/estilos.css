@@ -601,6 +601,14 @@ h1, h2, h3, h4, h5, h6 {
   .d-flex.gap-2 .btn {
     width: 100%;
   }
+  /* Mantener la barra superior con los controles en fila, nunca apilados */
+  .navbar .d-flex.gap-2 {
+    flex-direction: row;
+  }
+  .navbar .d-flex.gap-2 .btn {
+    width: auto;
+    height: auto;
+  }
   /* Tabla horizontal scroll en móvil */
   .table-responsive {
     font-size: 0.75rem;

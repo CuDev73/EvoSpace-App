@@ -1,28 +1,25 @@
-
 # EvoSpace
 
-Sistema de gestión integral para academias de danza, artes escénicas y centros formativos.  
-Diseñado para administrar alumnos, pagos, asistencia, eventos, ventas de cantina y usuarios con roles y permisos granulares.
+Sistema de gestión integral para academias de danza, artes escénicas y centros formativos.
+
+Lo desarrollé pensando en unificar todo el manejo diario de una academia en un solo lugar: alumnos, pagos, asistencia, eventos, la cantina, las rifas/entradas y los usuarios con sus permisos. Antes esto se llevaba en planillas Excel, libretas de asistencia, cuadernos de pagos y correos sueltos; ahora todo vive en una aplicación web a la que se accede desde cualquier navegador.
 
 ---
 
 ## Índice
 
 - [Descripción general](#descripción-general)
+- [Perfiles del sistema](#perfiles-del-sistema)
 - [Características principales](#características-principales)
 - [Tecnologías utilizadas](#tecnologías-utilizadas)
 - [Estructura del proyecto](#estructura-del-proyecto)
+- [Modelo de permisos](#modelo-de-permisos)
 - [Requisitos previos](#requisitos-previos)
 - [Instalación y configuración](#instalación-y-configuración)
 - [Usuarios predeterminados](#usuarios-predeterminados)
 - [Módulos funcionales](#módulos-funcionales)
-  - [Gestión de alumnos](#gestión-de-alumnos)
-  - [Pagos y recargos](#pagos-y-recargos)
-  - [Asistencia](#asistencia)
-  - [Eventos y notificaciones](#eventos-y-notificaciones)
-  - [Cantina](#cantina)
-  - [Usuarios y permisos](#usuarios-y-permisos)
 - [Notas técnicas](#notas-técnicas)
+- [Migraciones de base de datos](#migraciones-de-base-de-datos)
 - [Posibles problemas y soluciones](#posibles-problemas-y-soluciones)
 - [Licencia](#licencia)
 
@@ -30,43 +27,60 @@ Diseñado para administrar alumnos, pagos, asistencia, eventos, ventas de cantin
 
 ## Descripción general
 
-EvoSpace nació de la necesidad de tener un único sistema que cubriera todas las áreas operativas de una academia de danza. Reemplaza planillas Excel, libretas de asistencia, cuadernos de pagos y comunicaciones por correo, unificando todo en una aplicación web accesible desde cualquier navegador.
+EvoSpace nació de una necesidad concreta: la academia manejaba sus áreas operativas con herramientas separadas y eso generaba errores, pérdida de tiempo y datos desorganizados. El sistema centraliza:
 
-El sistema está pensado para tres perfiles principales:
-- **Administradores**: control total, estadísticas, configuración.
-- **Profesores**: registro de asistencia, visualización de alumnos.
-- **Padres**: seguimiento de pagos, eventos y notificaciones.
+- Registro y seguimiento de **alumnos** por nivel y curso.
+- **Pagos** con cuotas, conceptos, descuentos por beca y recargos por atraso.
+- **Asistencia** diaria y mensual con exportación.
+- **Eventos** y notificaciones por correo a los tutores.
+- **Cantina**: productos, ventas, fiado y ganancias.
+- **Rifas / entradas**: lotes, distribución y control de ventas.
+- **Usuarios** con roles y permisos granulares.
 
-Cada perfil ve solo lo que necesita, y los permisos se pueden afinar por usuario, no solo por rol.
+La idea central es que cada persona vea **solo lo que necesita** para su tarea, sin pantallas vacías ni datos ajenos.
+
+---
+
+## Perfiles del sistema
+
+| Perfil | Acceso principal |
+|--------|------------------|
+| **Admin** | Control total: todas las secciones, estadísticas y configuración. Ve el panel completo. |
+| **Auxiliar** | Panel de inicio adaptado a sus permisos (por ejemplo, un cantinero ve solo su sección de cantina). |
+| **Profesor** | Selección de cursos y registro de asistencia (diario, mensual, historial y exportación). |
+| **Tutor/a (padre)** | Eventos de los cursos de sus hijos, notificaciones y resumen de deudas por mes. |
+
+Los permisos no dependen solo del rol: cada usuario puede tener una lista propia de permisos, lo que permite perfiles muy específicos (un auxiliar que solo vea cantina, otro que también vea configuración, etc.).
 
 ---
 
 ## Características principales
 
-- **Gestión completa de alumnos**: alta, baja, edición, asignación de curso, becas, datos de contacto y relación con padres.
-- **Pagos inteligentes**: cálculo automático de cuotas con descuentos por beca (redondeo al millar), recargos automáticos a partir del día 11 de cada mes.
-- **Asistencia diaria y mensual**: registro rápido por día o vista mensual con selección de presente/ausente. Exportación a Excel (formato XLSX real con PhpSpreadsheet) o CSV.
-- **Eventos y notificaciones**: creación de eventos asociados a cursos. Envío automático de correos a los padres de los alumnos de esos cursos. Las notificaciones quedan registradas en la base de datos y se muestran en el panel del padre.
-- **Módulo de cantina**: administración de productos (precios, activos), registro de ventas con tipo de comprador (alumno, profesor, otro), método de pago (efectivo, transferencia, fiado). Resumen de caja diario, semanal y total, con gráfico de ventas de los últimos 7 días.
-- **Usuarios y permisos granulares**: no solo roles fijos (admin, profesor, padre, auxiliar), sino que cada usuario puede tener permisos individuales (ver alumnos, editar pagos, gestionar usuarios, etc.). Esto permite, por ejemplo, crear un usuario "profesor" que solo vea asistencia, o un "auxiliar" que vea alumnos pero no pagos.
-- **Paneles diferenciados**:
-  - **Admin**: estadísticas de alumnos, profesores, padres, recaudación, eventos próximos y acceso rápido a todas las secciones.
-  - **Profesor**: lista de cursos con acceso directo a registro de asistencia (diario, mensual, historial y exportación).
-  - **Padre**: eventos próximos, notificaciones, resumen de deudas de sus hijos por mes, con cálculo de recargo si corresponde.
-- **Interfaz moderna y responsive**: construida con Bootstrap 5, con estilos personalizados y una barra de navegación lateral (offcanvas) adaptada a móviles.
+- **Gestión completa de alumnos**: alta, baja, edición, asignación de curso, becas, datos de contacto, relación con el tutor/a y **ficha del alumno** con toda su información en un solo lugar.
+- **Pagos inteligentes**: cálculo de cuotas con descuento por beca (redondeo al millar), recargos automáticos por atraso, y conceptos variables según el nivel (matrícula, cuota, vestuarios, entradas, folleto).
+- **Ficha del alumno**: vista integral con curso, tutor/a, deuda actual, cantina, rifas/entradas, pagos históricos, asistencia y acciones (avanzar de curso, registrar pago, recordatorios).
+- **Registro de pagos**: desde la ficha se registran pagos de cuota, folleto, venta de entradas, matrícula o vestuarios, con cálculo automático de recargo y monto total.
+- **Asistencia diaria y mensual**: registro por curso y día, vista mensual con checkboxes, historial y exportación a Excel (XLSX real con PhpSpreadsheet) o CSV.
+- **Eventos y notificaciones**: creación de eventos asociados a cursos, envío automático por correo a los tutores de esos cursos y registro en la base de datos que se muestra en el panel del tutor/a.
+- **Cantina**: productos con stock y precios, ventas con tipo de comprador (alumno, profesor, tutor/a, otro), método de pago (efectivo, transferencia, tarjeta, fiado), control de cobros pendientes/parciales y resumen de caja con ganancias.
+- **Rifas / entradas**: creación de lotes por curso y evento, distribución de unidades a los alumnos, control de cuántas le quedan a cada uno y registro de la venta desde la ficha.
+- **Usuarios y permisos granulares**: roles fijos más permisos individuales por usuario, administrados desde un panel con tarjetas por rol.
+- **Panel de inicio adaptado (perm-aware)**: el admin ve el panel completo; los auxiliares (como el cantinero) ven un saludo de bienvenida y solo las tarjetas de las secciones que tienen habilitadas.
+- **Configuración del sistema**: precios por curso, beca, vencimiento y recargo, datos del recibo, plantilla del correo de eventos y recordatorio mensual de deudas.
+- **Interfaz moderna y responsive**: Bootstrap 5 con barra de navegación lateral (offcanvas) adaptada a móviles.
 
 ---
 
 ## Tecnologías utilizadas
 
-- **PHP 8.0+** con PDO para conexión segura a la base de datos.
+- **PHP 8.0+** con PDO para conexión segura a la base de datos (consultas preparadas contra inyección SQL).
 - **MySQL / MariaDB** como motor de base de datos relacional.
 - **Bootstrap 5** para el frontend (CSS y componentes).
 - **Bootstrap Icons** para la iconografía.
-- **JavaScript vanilla** para interactividad (cálculos en tiempo real, buscadores, modales, gráficos).
-- **PHPMailer** para envío de correos SMTP (compatible con Gmail, Outlook, etc.).
-- **PhpSpreadsheet** para exportación a Excel (formato XLSX).
-- **Chart.js** para gráficos en el resumen de cantina.
+- **JavaScript vanilla** para interactividad: cálculos en tiempo real, buscadores, modales y gráficos.
+- **PHPMailer** para envío de correos SMTP (Gmail, Outlook, etc.).
+- **PhpSpreadsheet** para exportación a Excel (formato XLSX) y **FPDF / mPDF** para recibos PDF.
+- **Chart.js** para los gráficos del dashboard y de la cantina.
 - **Git** para control de versiones.
 
 ---
@@ -76,51 +90,60 @@ Cada perfil ve solo lo que necesita, y los permisos se pueden afinar por usuario
 ```
 evospace/
 ├── config/
-│   └── db.php                    # Conexión a BD y constantes SMTP
+│   ├── db.php                    # Conexión a BD y constantes SMTP
+│   └── .env                      # Variables de entorno (si se usa)
 ├── database/
-│   └── evospace.sql              # Script completo de instalación de la BD
+│   ├── evospace.sql              # Script completo de instalación de la BD
+│   ├── backup.sh                 # Script de respaldo
+│   └── migraciones/              # Migraciones incrementales (faseN_*.sql)
 ├── helpers/
-│   └── functions.php             # Funciones globales (permisos, correo, formato, cálculos)
+│   ├── functions.php             # Funciones globales (permisos, correo, formato, cálculos)
+│   └── asistencia.php            # Lógica de asistencia
 ├── includes/
 │   ├── header.php                # Cabecera HTML y estilos CSS
-│   ├── navbar.php                # Menú lateral (offcanvas) con lógica de permisos
-│   └── footer.php                # Scripts de Bootstrap
+│   ├── navbar.php                # Menú lateral con lógica de permisos (oculta grupos vacíos)
+│   ├── footer.php                # Scripts de Bootstrap
+│   └── curso_picker.php          # Selector de curso reutilizable
 ├── roles/
-│   ├── admin.php                 # Panel del administrador
-│   ├── profesor.php              # Panel del profesor (selección de curso)
-│   └── padre.php                 # Panel del padre (resumen, eventos, notificaciones)
+│   ├── admin.php                 # Panel del administrador / panel adaptado para auxiliares
+│   ├── profesor.php              # Panel del profesor (cursos y asistencia)
+│   └── padre.php                 # Panel del tutor/a (hijos, deudas, eventos)
 ├── secciones/
-│   ├── alumnos.php               # CRUD de alumnos con tabla y modal
-│   ├── pagos.php                 # Registro de pagos con modal y precios dinámicos
+│   ├── alumnos.php               # CRUD de alumnos
+│   ├── inscripciones.php         # Alta de nuevos alumnos
+│   ├── ficha_alumno.php          # Ficha integral del alumno (pagos, rifas, deudas)
+│   ├── horarios.php              # Gestión de horarios por curso
+│   ├── profesores.php            # Gestión de profesores y abonos
+│   ├── usuarios.php              # Usuarios, roles y permisos
+│   ├── pagos.php / recibo.php*   # Registro de pagos y recibos PDF
 │   ├── asistencia/               # Módulo completo de asistencia
-│   │   ├── registrar.php         # Registro diario por curso
-│   │   ├── guardar.php           # Guardado de asistencia diaria
-│   │   ├── ver.php               # Historial de asistencia por curso
-│   │   ├── mensual.php           # Vista mensual con checkboxes
-│   │   ├── exportar_excel.php    # Exportación a CSV (historial)
-│   │   └── exportar_excel_mensual.php # Exportación a XLSX (mensual)
-│   ├── eventos/                  # Módulo de eventos
-│   │   ├── eventos.php           # CRUD de eventos con filtros
-│   │   ├── models/               # Modelos EventoModel y NotificacionModel
-│   │   └── marcar_leida.php      # Acción para marcar notificaciones como leídas
-│   ├── cantina/                  # Módulo de cantina
-│   │   ├── ventas.php            # Listado y formulario de ventas
-│   │   ├── productos.php         # CRUD de productos
-│   │   ├── resumen.php           # Resumen de caja y gráfico
-│   │   └── obtener_ventas_semana.php # API para gráfico
-│   ├── configuracion/            # Configuración del sistema
-│   │   ├── configuracion.php
-│   │   └── configurar_pagos.php  # Precios y porcentaje de beca
-│   ├── usuarios.php              # CRUD de usuarios con asignación de permisos
-│   ├── profesores.php            # Gestión de profesores (admin)
-│   ├── get_hijos.php             # API para asignar hijos a padres
-│   ├── obtener_precios.php       # API para precios de un curso
-│   └── obtener_pagos.php         # API para ver pagos de un alumno
-├── vendor/                       # Librerías externas (PHPMailer, PhpSpreadsheet)
+│   ├── eventos/                  # Módulo de eventos y notificaciones
+│   ├── entradas/                 # Rifas / entradas (lotes y distribución)
+│   ├── cantina/                  # Módulo de cantina (productos, ventas, resumen)
+│   └── configuracion/            # Panel de configuración del sistema
+├── assets/
+│   └── css/estilos.css           # Estilos personalizados
+├── uploads/                      # Archivos subidos (pagos, logo, recibo)
+├── vendor/                       # Librerías externas (PHPMailer, PhpSpreadsheet, mPDF)
 ├── index.php                     # Login
-├── logout.php                    # Cierre de sesión
-└── README.md                     # Este archivo
+└── logout.php                    # Cierre de sesión
 ```
+
+---
+
+## Modelo de permisos
+
+El sistema combina **roles** y **permisos individuales**:
+
+- Cada usuario pertenece a un **rol** (`admin`, `profesor`, `padre`, `auxiliar`).
+- El rol define permisos por defecto, pero se pueden **afinar por usuario**: la tabla `usuarios_permisos` guarda una lista propia de permisos que sobrescriben/complementan los del rol.
+- El **admin** tiene acceso total: la función `tienePermiso()` devuelve siempre `true` para él, sin necesidad de marcar permisos.
+- Al iniciar sesión, los permisos del usuario se cargan en la sesión y se consultan en cada sección con `tienePermiso()` / `verificarPermiso()`.
+
+Esto permite, por ejemplo, un **cantinero** (rol `auxiliar`) con permisos únicamente de `cantina` y `configuracion`: inicia en un panel donde solo ve las tarjetas de "Ver Cantina" y "Configuración", y la barra de navegación **oculta automáticamente los grupos donde no tiene ninguna sección habilitada**.
+
+Permisos disponibles (catálogo en la tabla `permisos`):
+`alumnos`, `pagos`, `profesores`, `eventos`, `cantina`, `asistencia`, `configuracion`, `usuarios`, `gestionar_usuarios`, `horarios`.
 
 ---
 
@@ -134,8 +157,8 @@ evospace/
   - `fileinfo` (para PhpSpreadsheet)
   - `zip` (para exportación a XLSX)
 - MySQL 5.7 o MariaDB 10.4+.
-- Composer (opcional, solo si se usan las librerías con autoload; en este proyecto están incluidas manualmente).
-- Cuenta de correo SMTP (ej. Gmail) con "Contraseña de aplicación" generada (requiere verificación en dos pasos).
+- Composer (opcional; las librerías están incluidas en `vendor/`).
+- Cuenta SMTP (ej. Gmail) con "Contraseña de aplicación" para el envío de correos.
 
 ---
 
@@ -144,39 +167,38 @@ evospace/
 1. **Clonar o descargar el código** en el directorio raíz del servidor (ej. `/var/www/html/evospace` o `C:\xampp\htdocs\evospace`).
 
 2. **Crear la base de datos**:
-   - Crear una base de datos vacía (ej. `evospace`).
-   - Importar el archivo `database/evospace.sql` (puede hacerse con phpMyAdmin, Adminer o desde línea de comandos: `mysql -u root -p evospace < evospace.sql`).
-
-3. **Configurar la conexión a la base de datos**:
-   - Editar `config/db.php` y ajustar las credenciales:
-     ```php
-     $host = 'localhost';
-     $dbname = 'evospace';
-     $user = 'tu_usuario';
-     $pass = 'tu_contraseña';
+   - Crear una base vacía (ej. `evospace`).
+   - Importar `database/evospace.sql`:
+     ```bash
+     mysql -u root -p evospace < database/evospace.sql
      ```
 
-4. **Configurar el envío de correos** (necesario para notificaciones de eventos):
-   - En el mismo archivo `config/db.php`, completar las constantes SMTP:
-     ```php
-     define('SMTP_HOST', 'smtp.gmail.com');
-     define('SMTP_PORT', 587);
-     define('SMTP_USER', 'tucorreo@gmail.com');
-     define('SMTP_PASS', 'contraseña_de_aplicacion');
-     define('SMTP_FROM', 'tucorreo@gmail.com');
-     define('SMTP_FROM_NAME', 'EvoSpace - Escuela');
-     ```
-   - La `SMTP_PASS` debe ser una **Contraseña de aplicación** de Google (no la contraseña normal). Se genera en la configuración de seguridad de la cuenta de Google (requiere verificación en dos pasos).
+3. **Configurar la conexión** en `config/db.php`:
+   ```php
+   $host = 'localhost';
+   $dbname = 'evospace';
+   $user = 'tu_usuario';
+   $pass = 'tu_contraseña';
+   ```
+
+4. **Configurar el correo SMTP** en `config/db.php` (necesario para notificaciones de eventos y recordatorios):
+   ```php
+   define('SMTP_HOST', 'smtp.gmail.com');
+   define('SMTP_PORT', 587);
+   define('SMTP_USER', 'tucorreo@gmail.com');
+   define('SMTP_PASS', 'contraseña_de_aplicacion');
+   define('SMTP_FROM', 'tucorreo@gmail.com');
+   define('SMTP_FROM_NAME', 'EvoSpace - Academia');
+   ```
+   La `SMTP_PASS` debe ser una **Contraseña de aplicación** de Google (requiere verificación en dos pasos).
 
 5. **Permisos de archivos** (en Linux):
    ```bash
    chmod -R 755 /ruta/a/evospace
-   chmod 600 /ruta/a/evospace/config/db.php  # si se quiere proteger
+   chmod 600 /ruta/a/evospace/config/db.php
    ```
 
-6. **Acceder al sistema**:
-   - Abrir el navegador y entrar a `http://localhost/evospace/`.
-   - Usar las credenciales predeterminadas (ver más abajo).
+6. **Acceder al sistema** en `http://localhost/evospace/` con las credenciales predeterminadas (ver más abajo).
 
 ---
 
@@ -189,81 +211,123 @@ evospace/
 | padre     | padre123   | Padre    |
 | auxiliar  | aux123     | Auxiliar |
 
-Las contraseñas están hasheadas en la base de datos con `password_hash()`. Se recomienda cambiarlas después del primer inicio de sesión.
+Las contraseñas están hasheadas con `password_hash()`. **Cambialas después del primer ingreso.**
 
 ---
 
 ## Módulos funcionales
 
-### Gestión de alumnos
+### Gestión de alumnos (`alumnos.php`, `inscripciones.php`)
 
-- Listado completo con búsqueda en tiempo real.
-- Creación y edición mediante modal.
-- Campos: nombre, apellido, curso, año de ingreso, horas profesionales (solo para nivel Superior), CI, teléfono, padre/madre asignado, becado, activo.
-- Asignación de padres desde el listado de usuarios con rol `padre`.
+- Listado con búsqueda en tiempo real.
+- Alta (`inscripciones.php`) y edición mediante modal.
+- Campos: nombre, apellido, curso, año de ingreso, horas profesionales (solo Superior), CI, teléfono, tutor/a asignado, becado y activo.
+- Asignación de tutor/a desde el listado de usuarios con rol `padre`, y correspondencia con sus hijos.
 - Eliminación con confirmación.
+
+### Ficha del alumno (`ficha_alumno.php`)
+
+Vista integral de cada alumno:
+
+- Datos personales, curso actual, tutor/a y día de cobro.
+- **Avanzar de curso**: botón para pasar al siguiente nivel/módulo del mismo tipo.
+- **Registrar pago / venta**: botón siempre visible que abre el modal de pago con selector de concepto (Cuota, Folleto, Entradas, Matrícula, Vestuarios). Para entradas/rifas se elige el lote y se descuenta la cantidad vendida.
+- Tarjetas de estado: total pagado, deuda de cantina, rifas/entradas y deuda actual de la cuota.
+- Listado de pagos históricos, asistencia y horas profesionales (nivel Superior).
 
 ### Pagos y recargos
 
-- Registro de pagos para un alumno en un curso específico.
-- Conceptos: matrícula, cuota, vestuarios, entradas, folleto (según el tipo de curso).
+- Conceptos por tipo de curso: `matrícula`, `cuota`, `vestuarios`, `entradas`, `folleto`.
 - Cálculo automático:
-  - Si el alumno es becado y se selecciona "cuota", el monto se reduce según el porcentaje de beca global (configurable en `configurar_pagos.php`) y se redondea a la unidad de millar.
-  - Si la fecha del pago es posterior al día 10 del mes, se aplica un recargo de 1000 Gs por día de atraso (configurable).
-- El total se actualiza dinámicamente en el modal.
-- Almacenamiento de: monto base, descuento, recargo, total, método de pago.
-- Visualización de pagos por alumno (modal con pestañas para cuotas y otros conceptos).
+  - Alumno becado → descuento por beca (porcentaje global configurable) redondeado a la unidad de millar.
+  - Fecha posterior al día límite + días de gracia → recargo por día de atraso.
+  - Total = (monto × cantidad) + recargo, actualizado en vivo.
+- Registro de imágenes de comprobante (opcional).
+- Generación de **recibos PDF**.
 
-### Asistencia
+### Asistencia (`asistencia/`)
 
-- **Registro diario**: selección de curso y fecha, lista de alumnos con switch presente/ausente y campo de observaciones. Por defecto todos los alumnos aparecen como "Presente" si no hay registro previo.
-- **Guardado seguro**: al guardar, se eliminan los registros anteriores de ese día y se insertan todos los alumnos del curso (con su estado).
-- **Vista mensual**: tabla con todos los días del mes (o solo días con registros, según configuración) y checkboxes para marcar presente/ausente. Permite guardar todo el mes de una vez.
-- **Historial**: lista de días con resumen de presentes/ausentes y detalle por alumno.
-- **Exportación**:
-  - Del historial a CSV.
-  - Del resumen mensual a XLSX (Excel real, con columnas de totales y porcentajes).
+- **Registro diario**: curso + fecha, lista de alumnos con switch presente/ausente y observaciones.
+- **Vista mensual**: tabla con días del mes y checkboxes; guardado del mes completo de una vez.
+- **Historial**: días con resumen de presentes/ausentes y detalle por alumno.
+- **Exportación**: historial a CSV y resumen mensual a XLSX (Excel real con totales y porcentajes).
 - Acceso restringido a profesores y administradores.
 
-### Eventos y notificaciones
+### Horarios (`horarios.php`)
 
-- **Creación de eventos**: título, fecha, hora, lugar, enlace de Google Maps (opcional), descripción y selección de cursos (múltiples).
-- **Notificaciones automáticas**:
-  - Al guardar un evento, se buscan los padres de los alumnos de los cursos seleccionados.
-  - Se envía un correo a cada padre con los detalles del evento.
-  - Se registra una notificación en la base de datos para cada curso (vinculada al evento).
-  - Las notificaciones aparecen en el panel del padre, con posibilidad de marcarlas como leídas.
+- Asignación de horarios por curso: día(s) de la semana, hora de inicio/fin y profesor.
+- Se muestran en la ficha del alumno y se consultan desde el panel del profesor.
+
+### Eventos y notificaciones (`eventos/`)
+
+- **Creación de eventos**: título, fecha, hora, lugar, enlace (opcional), descripción y cursos asociados (múltiples).
+- **Notificaciones automáticas**: al guardar, se envían correos a los tutores de los alumnos de los cursos y se registra la notificación en la BD (visible en el panel del tutor/a, con opción de marcarla como leída).
 - Edición y eliminación de eventos (actualiza notificaciones y reenvía correos si se edita).
 
-### Cantina
+### Cantina (`cantina/`)
 
-- **Productos**: alta, edición, desactivación. Cada producto tiene nombre y precio.
-- **Ventas**: registro de venta con selección de productos (uno o varios), cantidad, método de pago (efectivo, transferencia, fiado), tipo de comprador (alumno, profesor, otro) y nombre del comprador.
-- **Resumen de caja**:
-  - Ventas de hoy (desglosado por método).
-  - Ventas de la última semana (desglosado por método).
-  - Total general acumulado.
-  - Gráfico de barras con las ventas diarias de los últimos 7 días.
-- El listado de ventas incluye buscador por comprador o ID.
+- **Productos**: alta, edición, desactivación, con nombre, categoría, precio de venta, precio de compra y stock.
+- **Nueva venta**: carrito de productos, cantidades, método de pago (efectivo, transferencia, tarjeta, fiado) y tipo de comprador (alumno, profesor, tutor/a, otro) con búsqueda de comprador.
+- **Ventas / historial**: filtros por fecha, comprador, tipo y estado (pagado, pendiente, parcial); cobro total o parcial; anulación (devuelve stock).
+- **Fiado**: las ventas a crédito generan deuda para el alumno (se refleja en la ficha y en el panel del tutor/a).
+- **Resumen y ganancias**: por período, con ingresos, costos, ganancia por producto y exportación, además de un gráfico de ventas.
 
-### Usuarios y permisos
+### Rifas / Entradas (`entradas/`)
 
-- **Gestión de usuarios**: CRUD completo con campos: usuario, email, cédula, contraseña, rol, activo.
-- **Permisos individuales**: al crear o editar un usuario, se puede marcar una lista de permisos (ver alumnos, editar pagos, gestionar eventos, etc.) que sobrescriben los permisos por defecto del rol.
-- **Rol admin** tiene acceso total (no necesita permisos marcados, ya que la función `tienePermiso()` lo trata como verdadero siempre).
-- Los permisos se guardan en la tabla `usuarios_permisos` y se cargan al iniciar sesión.
+- **Lotes**: creación por curso y evento, con cantidad y precio unitario; estados `activa` / `cerrada`.
+- **Distribución**: asignar unidades de rifas a cada alumno del curso, validando que la suma no exceda el lote.
+- **Venta**: desde la ficha del alumno se registra la venta de rifas como un pago de concepto `entradas`, descontando la cantidad vendida y mostrando el progreso (ej. "0/5").
+- En la ficha, la tarjeta de rifas indica cuántas unidades tiene y cuántas se vendieron.
+
+### Usuarios y roles (`usuarios.php`)
+
+- **CRUD de usuarios**: usuario, email, cédula, contraseña, rol, activo.
+- **Permisos individuales**: al crear o editar, se marcan permisos que sobrescriben los del rol.
+- **Vista por rol**: tarjetas que agrupan a los usuarios por rol (Admin, Profesor, Tutor/a, Auxiliar) con acciones por usuario y modal de permisos.
+- **Panel de inicio adaptado**: los auxiliares ven un saludo de bienvenida y las tarjetas de las secciones que tienen permitidas.
+
+### Configuración (`configuracion/`)
+
+- **Pagos** (`configurar_pagos.php`): precios de todos los conceptos por curso, porcentaje de beca global, días de gracia, día límite y recargo por día.
+- **Recibo** (`configurar_recibo.php`): nombre de la academia, RUC, título, mensaje y pie del recibo PDF, más el logotipo.
+- **Correo de eventos** (`configurar_correo.php`): saludo, mensaje, firma y remitente.
+- **Recordatorio de deudas** (`configurar_recordatorio.php`): envío mensual por correo a tutores con deudas (cuota y cantina), con plantilla editable y envío manual.
+- **Horas profesionales**: límite de horas para el nivel Superior (desde el panel de configuración).
 
 ---
 
 ## Notas técnicas
 
-- Los precios de las cuotas se redondean a la unidad de millar (múltiplo de 1000) para todos los casos (con o sin beca), para mantener consistencia.
-- El porcentaje de beca es global y se aplica solo al concepto "cuota". Se configura en `configurar_pagos.php` y se guarda en `configuracion`.
-- El recargo por atraso se calcula en el cliente (JavaScript) y se guarda en la base de datos. El valor por día se obtiene de `configuracion` y se pasa al JS mediante variables PHP.
-- La exportación a Excel usa `PhpSpreadsheet` y genera archivos `.xlsx` con formato básico (fuente en negrita en encabezados, colores de fondo, autoajuste de columnas).
-- Las notificaciones se envían usando PHPMailer con autenticación SMTP. Si falla el envío, se registra el error en el log de PHP (`error_log`).
-- La base de datos incluye restricciones de clave foránea con `ON DELETE CASCADE` para mantener la integridad referencial.
-- El sistema utiliza sesiones PHP para mantener el estado del usuario y sus permisos.
+- Los precios de las cuotas se redondean a la unidad de millar (múltiplo de 1000) para mantener consistencia.
+- El porcentaje de beca es global y aplica solo al concepto "cuota"; se configura y guarda en `configuracion`.
+- El recargo por atraso se calcula en el cliente (JS) con los valores de configuración y se persiste en el pago.
+- Las ventas de rifas descuentan primero las unidades restantes del alumno (`entradas_alumno.cantidad`) y guardan el total asignado en `cantidad_total`.
+- La exportación a Excel usa PhpSpreadsheet (`.xlsx`) y los recibos usan bibliotecas de PDF (mPDF/FPDF).
+- Se usan consultas preparadas con PDO en toda la aplicación para prevenir inyección SQL.
+- Las notificaciones se envían con PHPMailer (SMTP); si falla, se registra en `error_log`.
+- La base de datos usa claves foráneas con `ON DELETE CASCADE` para mantener la integridad referencial.
+- Las sesiones PHP mantienen el estado del usuario y sus permisos.
+- El menú lateral es dinámico y **oculta automáticamente los grupos sin secciones permitidas** para el usuario logueado.
+
+---
+
+## Migraciones de base de datos
+
+Las tablas nuevas se agregan de forma incremental en `database/migraciones/`:
+
+| Archivo | Contenido |
+|---------|-----------|
+| `fase4_distribucion_pagos.sql` | Distribución de pagos / conceptos por curso. |
+| `fase5_recargos.sql` | Recargos por atraso y configuración. |
+| `fase8_cantina_categorias.sql` | Categorías de productos de cantina. |
+| `fase9_pago_parcial.sql` | Pagos parciales y estado de ventas. |
+| `fase9_recordatorio_eventos.sql` | Recordatorios de eventos. |
+| `fase11_fiado.sql` | Venta fiada / deuda de cantina. |
+| `fase12_config_correo.sql` | Plantilla del correo de eventos. |
+| `fase13_dia_cobro.sql` | Día de cobro por tutor/a. |
+| `fase14_recordatorio_deuda.sql` | Recordatorio mensual de deudas. |
+
+Si importás `evospace.sql` desde cero, ya incluye la última versión del esquema; las migraciones son para actualizar instalaciones existentes.
 
 ---
 
@@ -271,14 +335,15 @@ Las contraseñas están hasheadas en la base de datos con `password_hash()`. Se 
 
 | Problema | Causa probable | Solución |
 |----------|----------------|----------|
-| Error de conexión a BD | Credenciales incorrectas en `db.php` | Verificar usuario, contraseña, host y nombre de BD. |
-| Error al enviar correos | SMTP mal configurado o contraseña de aplicación incorrecta | Usar una Contraseña de Aplicación de Gmail (verificar en Seguridad de Google). |
-| No se guarda la asistencia de ausentes | Se omiten los checkboxes desmarcados | El guardado ya fue corregido para insertar todos los alumnos del curso, con estado presente=0 para los ausentes. |
-| El navbar no muestra todas las opciones al admin | El permiso del admin no se está cargando en sesión | Verificar que en `index.php` se asigne `$_SESSION['permisos'] = null` para admin. |
-| La exportación a Excel da error 500 | Falta la extensión `zip` o `fileinfo` en PHP | Activar esas extensiones en `php.ini`. Si no, usar la exportación a CSV. |
-| El gráfico de cantina no se muestra | `obtener_ventas_semana.php` no tiene permisos o hay error en la consulta | Revisar que el usuario tenga permisos y que la tabla `ventas` tenga datos. |
-| Los eventos no llegan a los padres | El curso seleccionado no tiene alumnos con padre asignado | Asignar un padre a algún alumno del curso y verificar que su email sea válido. |
-| Las notificaciones no aparecen en el panel del padre | El padre no tiene hijos en cursos con notificaciones o la tabla `notificaciones` está vacía | Crear un evento con un curso que tenga hijos del padre. |
+| Error de conexión a BD | Credenciales incorrectas en `db.php` | Verificar host, usuario, contraseña y nombre de BD. |
+| Error al enviar correos | SMTP mal configurado o contraseña de aplicación incorrecta | Usar una Contraseña de Aplicación de Gmail. |
+| No se guarda la asistencia de ausentes | Se omiten los checkboxes desmarcados | El guardado inserta todos los alumnos del curso, con `presente=0` para los ausentes. |
+| El navbar no muestra todas las opciones al admin | El permiso del admin no está cargado en sesión | Verificar que en `index.php` se asigne `$_SESSION['permisos'] = null` para admin. |
+| Un auxiliar no ve sus secciones en el inicio | Permisos no asignados en `usuarios_permisos` | Marcar los permisos correspondientes en el modal del usuario. |
+| La exportación a Excel da error 500 | Faltan las extensiones `zip` o `fileinfo` | Activarlas en `php.ini`; si no, usar CSV. |
+| El gráfico de cantina no se muestra | `obtener_ventas_semana.php` sin permisos o tabla `ventas` vacía | Revisar permisos y que existan ventas. |
+| Los eventos no llegan a los tutores | El curso no tiene alumnos con tutor/a asignado | Asignar un tutor/a con email válido a los alumnos del curso. |
+| Las rifas no descuentan al vender | No se eligió el lote en el modal de pago | Seleccionar el lote en "Entradas (rifas)" y la cantidad. |
 
 ---
 

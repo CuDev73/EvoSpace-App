@@ -433,4 +433,24 @@ function enviarCorreo($destinatario, $asunto, $mensajeHTML, $nombreDestinatario 
     }
 }
 
+/**
+ * Genera un texto legible con el resultado del envío de notificaciones de un evento.
+ */
+function resumenNotificacion(array $notif): string
+{
+    $total = (int)($notif['total'] ?? 0);
+    $enviados = (int)($notif['enviados'] ?? 0);
+    $invalidos = (int)($notif['invalidos'] ?? 0);
+    $errores = (int)($notif['errores'] ?? 0);
+
+    if ($total === 0) {
+        return '<span class="text-muted">No hay tutores con alumnos en los cursos seleccionados para notificar.</span>';
+    }
+    $partes = [];
+    $partes[] = "<strong>$enviados</strong> de <strong>$total</strong> tutor(es) notificado(s) por correo";
+    if ($invalidos > 0) $partes[] = "<strong>$invalidos</strong> con email inválido";
+    if ($errores > 0) $partes[] = "<strong>$errores</strong> con error de envío";
+    return '<span class="text-muted">(' . implode(', ', $partes) . ')</span>';
+}
+
 require_once __DIR__ . '/../vendor/autoload.php';

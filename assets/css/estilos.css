@@ -653,6 +653,41 @@ h1, h2, h3, h4, h5, h6 {
   }
 }
 
+/* Scroll to top */
+.scroll-top-btn {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 44px;
+  height: 44px;
+  z-index: 9999;
+  padding: 0;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(10px);
+  transition: opacity .2s ease, transform .2s ease, bottom .1s;
+}
+.scroll-top-btn.show {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+/* En páginas con barra fija inferior (cantina), el botón sube elegante */
+.scroll-top-btn:has(+ *), body .fixed-bottom ~ .scroll-top-btn {
+  /* fallback */
+}
+@media (max-width: 767.98px) {
+  .scroll-top-btn {
+    width: 36px;
+    height: 36px;
+    right: 12px;
+    bottom: 12px;
+    background: rgba(200, 16, 21, 0.85);
+    -webkit-backdrop-filter: blur(2px);
+    backdrop-filter: blur(2px);
+  }
+}
+
 /* ------------------------------------------------------------
    Scroll suave del offcanvas
    ------------------------------------------------------------ */

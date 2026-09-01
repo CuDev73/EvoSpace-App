@@ -863,6 +863,7 @@ CREATE TABLE `usuarios` (
   `nombre_completo` varchar(150) DEFAULT NULL,
   `telefono` varchar(20) DEFAULT NULL,
   `activo` tinyint(1) DEFAULT 1,
+  `dia_cobro` tinyint(4) DEFAULT NULL,
   `fecha_creacion` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -870,13 +871,13 @@ CREATE TABLE `usuarios` (
 -- Dumping data for table `usuarios`
 --
 
-INSERT INTO `usuarios` (`id_usuario`, `usuario`, `email`, `cedula`, `password_hash`, `id_rol`, `nombre_completo`, `telefono`, `activo`, `fecha_creacion`) VALUES
-(1, 'admin', 'admin@evospace.com', '1234567', '$2y$10$LBSyD2UFwBLJA/G1i4CRh.pVZJ/q/n2zhkSGNilT5OxM6IK3ccyBC', 1, 'Administrador', NULL, 1, '2026-07-23 01:58:31'),
-(2, 'profesor', 'profe@evospace.com', '2345678', '$2y$10$0PZciBLEdsMtmyGGvdhqZ.z4v9gM8BzW58AWsHTTgehmRdn.iR5VS', 2, 'Profesor Ejemplo', NULL, 1, '2026-07-23 01:58:31'),
-(3, 'padre', 'villoan73@gmail.com', '3456789', '$2y$10$MEtWjyh39YEj62xf0fCsrebtyVdBmdwBzz8gwh.1/4WmjMj0C6zIi', 3, 'Padre Ejemplo', NULL, 1, '2026-07-23 01:58:31'),
-(5, 'jhoan.ramirez', '', '7007909', '$2y$10$.dgzoYtUKLxS4q/szOodEeubeh0dboBo9KeaMgDS90JDxazsmAXv2', 2, 'Jhoan Ramirez', NULL, 1, '2026-07-26 17:05:36'),
-(6, 'Maria Benitez', 'maradsf@gmail.com', '123', '$2y$10$36bXBybs.APGTb5L0v9vMuC7JYpvMCwDWpKIui39ff5.sW5bxW.QK', 2, 'Maria Benitez', NULL, 1, '2026-07-26 20:59:55'),
-(8, 'cantinero', 'maradsf@gaamail.com', '123123123', '$2y$10$o.hINDQDrKyQKRTP3qjJaeHLgN4eltq06LZT8HEJhL9Qdxhsdflrq', 4, 'cantinero', NULL, 1, '2026-07-29 12:41:28');
+INSERT INTO `usuarios` (`id_usuario`, `usuario`, `email`, `cedula`, `password_hash`, `id_rol`, `nombre_completo`, `telefono`, `activo`, `dia_cobro`, `fecha_creacion`) VALUES
+(1, 'admin', 'admin@evospace.com', '1234567', '$2y$10$LBSyD2UFwBLJA/G1i4CRh.pVZJ/q/n2zhkSGNilT5OxM6IK3ccyBC', 1, 'Administrador', NULL, 1, NULL, '2026-07-23 01:58:31'),
+(2, 'profesor', 'profe@evospace.com', '2345678', '$2y$10$0PZciBLEdsMtmyGGvdhqZ.z4v9gM8BzW58AWsHTTgehmRdn.iR5VS', 2, 'Profesor Ejemplo', NULL, 1, NULL, '2026-07-23 01:58:31'),
+(3, 'padre', 'villoan73@gmail.com', '3456789', '$2y$10$MEtWjyh39YEj62xf0fCsrebtyVdBmdwBzz8gwh.1/4WmjMj0C6zIi', 3, 'Padre Ejemplo', NULL, 1, NULL, '2026-07-23 01:58:31'),
+(5, 'jhoan.ramirez', '', '7007909', '$2y$10$.dgzoYtUKLxS4q/szOodEeubeh0dboBo9KeaMgDS90JDxazsmAXv2', 2, 'Jhoan Ramirez', NULL, 1, NULL, '2026-07-26 17:05:36'),
+(6, 'Maria Benitez', 'maradsf@gmail.com', '123', '$2y$10$36bXBybs.APGTb5L0v9vMuC7JYpvMCwDWpKIui39ff5.sW5bxW.QK', 2, 'Maria Benitez', NULL, 1, NULL, '2026-07-26 20:59:55'),
+(8, 'cantinero', 'maradsf@gaamail.com', '123123123', '$2y$10$o.hINDQDrKyQKRTP3qjJaeHLgN4eltq06LZT8HEJhL9Qdxhsdflrq', 4, 'cantinero', NULL, 1, NULL, '2026-07-29 12:41:28');
 
 -- --------------------------------------------------------
 

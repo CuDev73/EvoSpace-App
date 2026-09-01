@@ -10,6 +10,16 @@ require_once '../config/db.php';
 
 verificarPermiso('usuarios'); 
 
+// Asegurar columna dia_cobro (migración fase13) para instalaciones desactualizadas
+try {
+    $checkCol = $pdo->query("SHOW COLUMNS FROM usuarios LIKE 'dia_cobro'");
+    if (!$checkCol->fetch()) {
+        $pdo->exec("ALTER TABLE usuarios ADD COLUMN dia_cobro TINYINT NULL DEFAULT NULL AFTER activo");
+    }
+} catch (PDOException $e) {
+    // No bloquear la página si falla la comprobación
+}
+
 $mensaje = '';
 $tipoMensaje = 'info';
 
@@ -329,11 +339,11 @@ $alumnos_todos = $pdo->query("
         </div>
     <?php endif; ?>
 
-    <!-- Filtros -->
+    <!-- Filtros y búsqueda -->
     <div class="row g-2 mb-3 align-items-end">
         <div class="col-md-3">
             <label class="form-label small">Rol</label>
-            <select id="filtroRol" class="form-select form-select-sm" onchange="window.location.href='?rol='+this.value+'&estado='+document.getElementById('filtroEstado').value">
+            <select id="filtroRol" class="form-select form-select-sm" onchange="aplicarFiltros()">
                 <option value="">Todos</option>
                 <?php foreach ($roles as $r): ?>
                     <option value="<?= $r['nombre'] ?>" <?= $filtro_rol === $r['nombre'] ? 'selected' : '' ?>><?= ucfirst($r['nombre']) ?></option>
@@ -342,75 +352,86 @@ $alumnos_todos = $pdo->query("
         </div>
         <div class="col-md-3">
             <label class="form-label small">Estado</label>
-            <select id="filtroEstado" class="form-select form-select-sm" onchange="window.location.href='?rol='+document.getElementById('filtroRol').value+'&estado='+this.value">
+            <select id="filtroEstado" class="form-select form-select-sm" onchange="aplicarFiltros()">
                 <option value="-1">Todos</option>
                 <option value="1" <?= $filtro_estado === 1 ? 'selected' : '' ?>>Activos</option>
                 <option value="0" <?= $filtro_estado === 0 ? 'selected' : '' ?>>Inactivos</option>
             </select>
         </div>
-        <div class="col-md-3 text-end">
-            <a href="?rol=&estado=-1" class="btn btn-outline-secondary btn-sm">Limpiar filtros</a>
-        </div>
         <div class="col-md-3">
             <label class="form-label small">Buscar</label>
             <input type="text" id="buscadorUsuario" class="form-control form-control-sm" placeholder="Nombre, email, cédula...">
         </div>
+        <div class="col-md-3 text-end">
+            <a href="?rol=&estado=-1" class="btn btn-outline-secondary btn-sm"><i class="bi bi-x-circle me-1"></i>Limpiar filtros</a>
+            <span id="contadorUsuarios" class="text-muted small ms-2"></span>
+        </div>
     </div>
 
-    <!-- Cards por rol -->
-    <?php if (empty($usuariosPorRol)): ?>
+    <!-- Lista única de usuarios -->
+    <?php if (empty($usuarios)): ?>
         <div class="alert alert-info">No hay usuarios registrados.</div>
     <?php else: ?>
-        <?php foreach ($usuariosPorRol as $rolKey => $rolData):
-            $iconoRol = $iconosRol[$rolKey] ?? 'bi-person-fill';
-            $color = $colorRol[$rolKey] ?? 'secondary';
-            $seccionesRol = $visibilidadRol[$rolKey] ?? [];
-        ?>
-        <div class="card shadow mb-4">
-            <div class="card-header bg-<?= $color ?> text-white d-flex justify-content-between align-items-center flex-wrap gap-2 py-2">
-                <div class="d-flex align-items-center gap-2">
-                    <i class="bi <?= $iconoRol ?> fs-5"></i>
-                    <h6 class="mb-0"><?= htmlspecialchars($rolData['nombre']) ?></h6>
-                    <span class="badge bg-light text-dark"><?= count($rolData['usuarios']) ?></span>
-                </div>
-            </div>
+        <div class="card shadow">
             <div class="card-body p-0">
                 <div class="table-responsive">
-                    <table class="table table-hover table-sm mb-0 tabla-rol">
+                    <table class="table table-hover table-sm align-middle mb-0" id="tablaUsuarios">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="min-width:50px;">ID</th>
+                                <th style="min-width:170px;">Usuario</th>
+                                <th style="min-width:130px;">Rol</th>
+                                <th style="min-width:200px;">Email</th>
+                                <th style="min-width:100px;">Cédula</th>
+                                <th class="text-center" style="min-width:100px;">Estado</th>
+                                <th class="text-center" style="min-width:170px;">Acciones</th>
+                            </tr>
+                        </thead>
                         <tbody>
-                            <?php foreach ($rolData['usuarios'] as $u): ?>
-                                <tr class="align-middle">
-                                    <td class="ps-3" style="width:5%"><?= $u['id_usuario'] ?></td>
-                                    <td class="text-start" style="width:22%">
-                                        <i class="bi bi-person-fill me-2 text-secondary"></i><?= htmlspecialchars($u['usuario']) ?>
-                                        <?php if ($u['id_usuario'] == $_SESSION['id_usuario']): ?>
-                                            <span class="badge bg-secondary ms-1">Tú</span>
-                                        <?php endif; ?>
-                                    </td>
-                                    <td style="width:20%"><?= htmlspecialchars($u['email']) ?></td>
-                                    <td style="width:12%"><?= htmlspecialchars($u['cedula']) ?></td>
-                                    <td class="text-center" style="width:10%">
-                                        <?php if ($rolKey === 'padre'): ?>
-                                            <span class="text-muted">—</span>
-                                            <button class="btn btn-outline-primary btn-sm ms-1" data-bs-toggle="modal" data-bs-target="#modalHijos"
-                                                    onclick="cargarHijos(<?= $u['id_usuario'] ?>, '<?= htmlspecialchars($u['usuario']) ?>')" title="Asignar hijos">
-                                                <i class="bi bi-pencil-fill"></i>
-                                            </button>
-                                            <?php if (($u['dia_cobro'] ?? null)): ?>
-                                                <span class="badge bg-secondary ms-1">Día <?= (int)$u['dia_cobro'] ?></span>
+                            <?php foreach ($usuarios as $u):
+                                $rolNombre = $u['rol_nombre'] ?? 'Sin rol';
+                                $iconoRol = $iconosRol[$rolNombre] ?? 'bi-person-fill';
+                                $colorRolU = $colorRol[$rolNombre] ?? 'secondary';
+                            ?>
+                            <tr data-rol="<?= htmlspecialchars($rolNombre) ?>" data-activo="<?= $u['activo'] ?>" class="fila-usuario">
+                                <td><?= $u['id_usuario'] ?></td>
+                                <td>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <i class="bi <?= $iconoRol ?> text-<?= $colorRolU ?>"></i>
+                                        <div>
+                                            <div class="fw-bold"><?= htmlspecialchars($u['usuario']) ?>
+                                            <?php if ($u['id_usuario'] == $_SESSION['id_usuario']): ?>
+                                                <span class="badge bg-secondary ms-1">Tú</span>
                                             <?php endif; ?>
-                                        <?php else: ?>
-                                            <span class="text-muted">—</span>
-                                        <?php endif; ?>
-                                    </td>
-                                    <td class="text-center" style="width:10%">
-                                        <?php if ($u['activo']): ?>
-                                            <span class="badge bg-success"><i class="bi bi-check-circle-fill me-1"></i>Activo</span>
-                                        <?php else: ?>
-                                            <span class="badge bg-danger"><i class="bi bi-x-circle-fill me-1"></i>Inactivo</span>
-                                        <?php endif; ?>
-                                    </td>
-                                    <td class="text-center" style="width:21%">
+                                            </div>
+                                            <small class="text-muted"><?= htmlspecialchars($u['nombre_completo']) ?></small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge bg-<?= $colorRolU ?>"><?= htmlspecialchars(ucfirst($rolNombre == 'padre' ? 'Tutor/a' : $rolNombre)) ?></span>
+                                    <?php if ($rolNombre === 'padre' && !empty($u['dia_cobro'])): ?>
+                                        <br><small class="text-muted">Día de cobro: <?= (int)$u['dia_cobro'] ?></small>
+                                    <?php endif; ?>
+                                </td>
+                                <td><?= htmlspecialchars($u['email']) ?></td>
+                                <td><?= htmlspecialchars($u['cedula']) ?></td>
+                                <td class="text-center">
+                                    <?php if ($u['activo']): ?>
+                                        <span class="badge bg-success"><i class="bi bi-check-circle-fill me-1"></i>Activo</span>
+                                    <?php else: ?>
+                                        <span class="badge bg-danger"><i class="bi bi-x-circle-fill me-1"></i>Inactivo</span>
+                                    <?php endif; ?>
+                                    <?php if ($rolNombre === 'padre'): ?>
+                                        <br>
+                                        <button class="btn btn-link btn-sm p-0 text-primary mt-1" data-bs-toggle="modal" data-bs-target="#modalHijos"
+                                                onclick="cargarHijos(<?= $u['id_usuario'] ?>, '<?= htmlspecialchars($u['usuario']) ?>')" title="Asignar hijos">
+                                            <i class="bi bi-people-fill"></i> Hijos (<?= (int)$u['total_hijos'] ?>)
+                                        </button>
+                                    <?php endif; ?>
+                                </td>
+                                <td class="text-center">
+                                    <div class="d-flex justify-content-center gap-1 flex-wrap">
                                         <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalUsuario"
                                                 onclick="editarUsuario(<?= htmlspecialchars(json_encode($u)) ?>)">
                                             <i class="bi bi-pencil-fill"></i>
@@ -434,15 +455,15 @@ $alumnos_todos = $pdo->query("
                                                 </button>
                                             </form>
                                         <?php endif; ?>
-                                    </td>
-                                </tr>
+                                    </div>
+                                </td>
+                            </tr>
                             <?php endforeach; ?>
                         </tbody>
                     </table>
                 </div>
             </div>
         </div>
-        <?php endforeach; ?>
     <?php endif; ?>
 </div>
 
@@ -678,18 +699,31 @@ $alumnos_todos = $pdo->query("
         }
     });
 
-    // Buscador en cards de usuarios por rol
+    // Filtro combinado: búsqueda + rol + estado en la lista única
+    function aplicarFiltros() {
+        const term = (document.getElementById('buscadorUsuario').value || '').toLowerCase().trim();
+        const rol = document.getElementById('filtroRol').value;
+        const estado = document.getElementById('filtroEstado').value;
+        let visibles = 0;
+        document.querySelectorAll('#tablaUsuarios .fila-usuario').forEach(row => {
+            const cumpleRol = !rol || row.dataset.rol === rol;
+            const cumpleEstado = estado === '-1' || row.dataset.activo === estado;
+            const texto = row.textContent.toLowerCase();
+            const cumpleTexto = !term || texto.includes(term);
+            const vis = cumpleRol && cumpleEstado && cumpleTexto;
+            row.style.display = vis ? '' : 'none';
+            if (vis) visibles++;
+        });
+        const contador = document.getElementById('contadorUsuarios');
+        if (contador) contador.textContent = visibles + ' de ' + document.querySelectorAll('#tablaUsuarios .fila-usuario').length + ' usuarios';
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
         const input = document.getElementById('buscadorUsuario');
         if (input) {
-            input.addEventListener('keyup', function() {
-                const term = this.value.toLowerCase().trim();
-                document.querySelectorAll('.tabla-rol tbody tr').forEach(row => {
-                    const texto = row.textContent.toLowerCase();
-                    row.style.display = texto.includes(term) ? '' : 'none';
-                });
-            });
+            input.addEventListener('keyup', aplicarFiltros);
         }
+        aplicarFiltros();
     });
 </script>
 

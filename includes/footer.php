@@ -2,14 +2,26 @@
 <script src="/evospace/assets/js/app.js"></script>
 
 <!-- Scroll to top -->
-<button id="scrollTopBtn" class="btn btn-evo rounded-circle shadow-sm" onclick="window.scrollTo({top:0,behavior:'smooth'})" style="display:none;position:fixed;bottom:20px;right:20px;width:44px;height:44px;z-index:9999;padding:0;">
+<button id="scrollTopBtn" class="btn btn-evo rounded-circle shadow-sm scroll-top-btn" onclick="window.scrollTo({top:0,behavior:'smooth'})" title="Subir">
     <i class="bi bi-chevron-up"></i>
 </button>
 <script>
-window.addEventListener('scroll', function() {
+(function() {
     const btn = document.getElementById('scrollTopBtn');
-    btn.style.display = window.scrollY > 300 ? 'block' : 'none';
-});
+    if (!btn) return;
+    const barraFija = document.querySelector('.fixed-bottom');
+    function actualizar() {
+        const visible = window.scrollY > 400;
+        btn.classList.toggle('show', visible);
+        if (barraFija) {
+            const altoBarra = barraFija.offsetHeight || 56;
+            btn.style.bottom = (altoBarra + 10) + 'px';
+        }
+    }
+    window.addEventListener('scroll', actualizar, { passive: true });
+    window.addEventListener('resize', actualizar);
+    actualizar();
+})();
 </script>
 </body>
 </html>

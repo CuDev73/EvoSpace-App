@@ -6,11 +6,17 @@ class EventoModel
 {
     private $db;
     private $notificacionModel;
+    private $resultadoNotificacion = ['total' => 0, 'enviados' => 0, 'invalidos' => 0, 'errores' => 0];
 
     public function __construct($pdo)
     {
         $this->db = $pdo;
         $this->notificacionModel = new NotificacionModel($pdo);
+    }
+
+    public function obtenerResultadoNotificacion(): array
+    {
+        return $this->resultadoNotificacion;
     }
 
     public function crearEvento(array $data): int
@@ -38,25 +44,26 @@ class EventoModel
 
             $this->guardarRamas($eventoId, $data['ramas']);
 
-            // 🔔 Notificar por correo a los padres
-            $this->notificacionModel->enviarNotificacionEvento(
-                $eventoId,
-                $data['titulo'],
-                $data['descripcion'] ?? '',
-                $data['fecha'],
-                $data['hora'] ?? null,
-                $data['lugar'] ?? null,
-                $data['enlace_ubicacion'] ?? null,
-                $data['ramas'],
-                $data['color'] ?? '#c81015'
-            );
-
             $this->db->commit();
-            return $eventoId;
         } catch (Throwable $e) {
             $this->db->rollBack();
             throw $e;
         }
+
+        // 🔔 Notificar por correo DESPUÉS del commit (evita correos huérfanos y no bloquea transacciones)
+        $this->resultadoNotificacion = $this->notificacionModel->enviarNotificacionEvento(
+            $eventoId,
+            $data['titulo'],
+            $data['descripcion'] ?? '',
+            $data['fecha'],
+            $data['hora'] ?? null,
+            $data['lugar'] ?? null,
+            $data['enlace_ubicacion'] ?? null,
+            $data['ramas'],
+            $data['color'] ?? '#c81015'
+        );
+
+        return $eventoId;
     }
 
     public function actualizarEvento(int $id, array $data): bool
@@ -88,25 +95,26 @@ class EventoModel
             $stmt->execute([$id]);
             $this->guardarRamas($id, $data['ramas']);
 
-            // También notificar al editar (opcional)
-            $this->notificacionModel->enviarNotificacionEvento(
-                $id,
-                $data['titulo'],
-                $data['descripcion'] ?? '',
-                $data['fecha'],
-                $data['hora'] ?? null,
-                $data['lugar'] ?? null,
-                $data['enlace_ubicacion'] ?? null,
-                $data['ramas'],
-                $data['color'] ?? '#c81015'
-            );
-
             $this->db->commit();
-            return true;
         } catch (Throwable $e) {
             $this->db->rollBack();
             throw $e;
         }
+
+        // 🔔 Notificar por correo DESPUÉS del commit
+        $this->resultadoNotificacion = $this->notificacionModel->enviarNotificacionEvento(
+            $id,
+            $data['titulo'],
+            $data['descripcion'] ?? '',
+            $data['fecha'],
+            $data['hora'] ?? null,
+            $data['lugar'] ?? null,
+            $data['enlace_ubicacion'] ?? null,
+            $data['ramas'],
+            $data['color'] ?? '#c81015'
+        );
+
+        return true;
     }
 
     public function enviarRecordatorio(int $id): int

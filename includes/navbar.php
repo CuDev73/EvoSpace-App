@@ -1,12 +1,13 @@
 <nav class="navbar navbar-dark bg-evo fixed-top">
     <div class="container-fluid position-relative">
         <div class="d-flex align-items-center gap-2">
-            <?php if (isset($mostrarVolver) && $mostrarVolver === true): ?>
-            <a href="#" onclick="history.back(); return false;" class="btn btn-sm text-white d-flex align-items-center justify-content-center flex-shrink-0" style="width:36px;height:36px;" title="Volver">
-                <i class="bi bi-arrow-left fs-5"></i>
+            <?php $hayVolver = isset($mostrarVolver) && $mostrarVolver === true; ?>
+            <?php if ($hayVolver): ?>
+            <a href="#" onclick="history.back(); return false;" class="btn btn-sm text-white d-flex align-items-center justify-content-center flex-shrink-0" style="width:36px;height:36px;padding:0;font-size:1.5rem;" title="Volver">
+                &lt;
             </a>
             <?php endif; ?>
-            <button class="navbar-toggler border-0" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar">
+            <button class="navbar-toggler border-0 <?= $hayVolver ? 'd-none d-md-block' : '' ?>" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar">
                 <span class="navbar-toggler-icon"></span>
             </button>
         </div>
@@ -83,6 +84,17 @@
 
                     <?php if (!$esPadre): ?>
                     <?php foreach ($grupoSecciones as $grupo => $iconoGrupo): ?>
+                        <?php
+                        // Contar secciones permitidas del grupo; ocultar grupo si no hay ninguna
+                        $grupoVisible = false;
+                        foreach ($secciones[$grupo] as $datos) {
+                            if (!$datos['permiso'] || tienePermiso($datos['permiso'])) {
+                                $grupoVisible = true;
+                                break;
+                            }
+                        }
+                        if (!$grupoVisible) continue;
+                        ?>
                         <li class="nav-item mt-2 mb-1">
                             <span class="nav-link text-uppercase small fw-bold" style="color:#c81015;letter-spacing:.5px;cursor:default;background:transparent!important;pointer-events:none;">
                                 <i class="bi <?= $iconoGrupo ?> me-1"></i> <?= $grupo ?>

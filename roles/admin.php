@@ -29,6 +29,64 @@ $mesNum = (int)date('n') - 1;
 $fechaFormateada = $diasES[$diaSemana] . ', ' . $diaNum . ' de ' . $mesesES[$mesNum] . ' de ' . date('Y');
 
 // ============================================================
+// DASHBOARD PERM-AWARE PARA USUARIOS NO ADMIN (auxiliar y otros)
+// Cada usuario ve solo cards de las secciones a las que tiene permiso.
+// ============================================================
+if (($_SESSION['rol'] ?? '') !== 'admin') {
+    $misSecciones = [
+        'cantina'       => ['titulo' => 'Ver Cantina',       'url' => '/evospace/secciones/cantina/index.php', 'icono' => 'bi-cup-straw', 'color' => 'warning'],
+        'configuracion' => ['titulo' => 'Configuración',     'url' => '/evospace/secciones/configuracion/configuracion.php', 'icono' => 'bi-gear-fill', 'color' => 'secondary'],
+        'alumnos'       => ['titulo' => 'Alumnos / Inscripciones', 'url' => '/evospace/secciones/alumnos.php', 'icono' => 'bi-people-fill', 'color' => 'primary'],
+        'eventos'       => ['titulo' => 'Eventos',           'url' => '/evospace/secciones/eventos/eventos.php', 'icono' => 'bi-calendar-event-fill', 'color' => 'info'],
+        'asistencia'    => ['titulo' => 'Asistencia',        'url' => '/evospace/secciones/asistencia/index.php', 'icono' => 'bi-clipboard-check', 'color' => 'danger'],
+        'profesores'    => ['titulo' => 'Profesores',        'url' => '/evospace/secciones/profesores.php', 'icono' => 'bi-person-badge-fill', 'color' => 'dark'],
+        'horarios'      => ['titulo' => 'Horarios',          'url' => '/evospace/secciones/horarios.php', 'icono' => 'bi-calendar-week-fill', 'color' => 'primary'],
+        'usuarios'      => ['titulo' => 'Usuarios',          'url' => '/evospace/secciones/usuarios.php', 'icono' => 'bi-people-fill', 'color' => 'secondary'],
+    ];
+    // Reconstruir por clave de permiso
+    $cardsPermitidas = [];
+    foreach ($misSecciones as $perm => $datos) {
+        if (tienePermiso($perm)) {
+            $cardsPermitidas[$perm] = $datos;
+        }
+    }
+    ?>
+    <div class="container mt-3">
+        <div class="dashboard-greeting">
+            <div>
+                <h4 class="fw-bold mb-0"><i class="bi bi-person-circle me-2"></i><?= $saludo ?>, <?= htmlspecialchars($nombreUsuario) ?></h4>
+                <small><?= $fechaFormateada ?></small>
+            </div>
+            <div class="text-end">
+                <span class="badge bg-light text-dark fs-6 px-3 py-2"><i class="bi bi-building me-1"></i> Academia Evolucionarte</span>
+            </div>
+        </div>
+        <h5 class="mt-4 mb-3 text-muted"><i class="bi bi-grid-3x3-gap-fill me-1"></i> Tus secciones</h5>
+        <?php if (empty($cardsPermitidas)): ?>
+            <div class="alert alert-warning">No tenés secciones habilitadas. Contactá al administrador.</div>
+        <?php else: ?>
+            <div class="row g-3">
+                <?php foreach ($cardsPermitidas as $datos): ?>
+                    <div class="col-6 col-md-4 col-lg-3">
+                        <a href="<?= $datos['url'] ?>" class="text-decoration-none">
+                            <div class="card h-100 border-0 shadow-sm text-center">
+                                <div class="card-body d-flex flex-column align-items-center justify-content-center py-4">
+                                    <div class="d-inline-flex align-items-center justify-content-center rounded-circle bg-<?= $datos['color'] ?> bg-opacity-10 mb-2" style="width:48px;height:48px;font-size:1.4rem;"><i class="bi <?= $datos['icono'] ?> text-<?= $datos['color'] ?>"></i></div>
+                                    <div class="fw-bold"><?= $datos['titulo'] ?></div>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+        <?php endif; ?>
+    </div>
+    <?php
+    include '../includes/footer.php';
+    exit;
+}
+
+// ============================================================
 // INDICADORES PRINCIPALES
 // ============================================================
 $totalAlumnos = (int)$pdo->query("SELECT COUNT(*) FROM alumnos WHERE activo = 1")->fetchColumn();

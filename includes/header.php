@@ -15,7 +15,7 @@ require_once __DIR__ . '/../helpers/functions.php';
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@100..900&display=swap" rel="stylesheet">
-    <link rel="icon" type="image/x-icon" href="/evospace/img/evolucionarte-removebg-preview.ico">
+    <link rel="icon" type="image/x-icon" href="/evospace/img/evo.ico">
     <link rel="stylesheet" href="/evospace/assets/css/estilos.css">
 </head>
 <body>

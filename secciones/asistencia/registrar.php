@@ -80,13 +80,12 @@ if (isset($_GET['guardado']) && $_GET['guardado'] == 1) {
             background: #fff;
             box-shadow: 0 1px 4px rgba(0,0,0,0.05);
         }
-        .tabla-asistencia tr > td { padding: 0.25rem 0; }
-        .tabla-asistencia tr > td:first-child { padding-top: 0.5rem; padding-bottom: 0.35rem; }
-        .tabla-asistencia tr > td:nth-child(3),
-        .tabla-asistencia tr > td:nth-child(4) { display: inline-block; width: auto; vertical-align: middle; }
-        .tabla-asistencia tr > td:nth-child(3) { margin-right: 0.5rem; }
-        .tabla-asistencia tr > td:nth-child(4) { width: 100%; }
-        .tabla-asistencia tr > td:nth-child(4) input { margin-top: 0.35rem; }
+        .tabla-asistencia tr > td { padding: 0.35rem 0; display: block; width: 100% !important; box-sizing: border-box; text-align: left; }
+        .tabla-asistencia tr > td:first-child { display: none; }
+        .tabla-asistencia tr > td:nth-child(2) { padding-top: 0.15rem; font-weight: 500; }
+        .tabla-asistencia tr > td:nth-child(3) { display: flex; align-items: center; gap: 0.5rem; }
+        .tabla-asistencia tr > td:nth-child(3) .form-check { display: flex; align-items: center; gap: 0.5rem; }
+        .tabla-asistencia tr > td:nth-child(4) input { margin-top: 0.25rem; width: 100%; }
     }
 </style>
 <div class="container mt-3">

@@ -34,6 +34,52 @@ try {
     die("Error de conexión a la base de datos.");
 }
 
+// ============================================================
+// MIGRACIONES AUTOMÁTICAS (una sola vez por columna/tabla)
+// Asegura que el esquema mínimo exista aunque la BD se importó
+// desde una versión anterior de evospace.sql.
+// ============================================================
+try {
+    $pdo->exec("CREATE TABLE IF NOT EXISTS migraciones_aplicadas (
+        nombre VARCHAR(100) PRIMARY KEY,
+        aplicada_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )");
+
+    $migraciones = [
+        // fase13_dia_cobro.sql
+        'fase13_dia_cobro' => "SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'usuarios' AND COLUMN_NAME = 'dia_cobro'",
+        // fase5_recargos.sql
+        'fase5_recargo_por_dia' => "SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'configuracion' AND COLUMN_NAME = 'recargo_por_dia'",
+        // fase12_config_correo.sql
+        'fase12_config_correo' => "SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'configuracion' AND COLUMN_NAME = 'smtp_host'",
+    ];
+
+    $hechas = $pdo->query("SELECT nombre FROM migraciones_aplicadas")->fetchAll(PDO::FETCH_COLUMN);
+
+    $acciones = [
+        'fase13_dia_cobro'   => "ALTER TABLE usuarios ADD COLUMN dia_cobro TINYINT(4) DEFAULT NULL AFTER activo",
+        'fase5_recargo_por_dia'   => "INSERT INTO configuracion (clave, valor) SELECT 'recargo_por_dia', '1000' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM configuracion WHERE clave = 'recargo_por_dia')",
+        'fase12_config_correo'   => "INSERT INTO configuracion (clave, valor) SELECT 'smtp_host', '' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM configuracion WHERE clave = 'smtp_host')",
+    ];
+
+    foreach ($migraciones as $nombre => $checkSQL) {
+        if (in_array($nombre, $hechas, true)) {
+            continue;
+        }
+        $falta = (int)$pdo->query($checkSQL)->fetchColumn() === 0;
+        if ($falta) {
+            try {
+                $pdo->exec($acciones[$nombre]);
+            } catch (PDOException $e) {
+                // Ignorar si ya existía o la acción no aplica
+            }
+        }
+        $pdo->prepare("INSERT IGNORE INTO migraciones_aplicadas (nombre) VALUES (?)")->execute([$nombre]);
+    }
+} catch (PDOException $e) {
+    // Si la BD no permite esto (permisos), se ignora silenciosamente.
+}
+
 // Incluir funciones
 require_once __DIR__ . '/../helpers/functions.php';
 

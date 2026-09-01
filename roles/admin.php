@@ -9,6 +9,11 @@ include '../includes/header.php';
 include '../includes/navbar.php';
 require_once '../config/db.php';
 
+if (recordatorioDeudaPendiente($pdo)) {
+    $enviados = enviarRecordatorioDeudasTutores($pdo);
+    $pdo->exec("UPDATE configuracion SET valor = '" . date('Y-m') . "' WHERE clave = 'recordatorio_deuda_ultimo'");
+}
+
 $hoy = date('Y-m-d');
 $mesActual = date('m');
 $anioActual = date('Y');
@@ -75,10 +80,12 @@ while ($cursoRow = $stmtCursos->fetch(PDO::FETCH_OBJ)) {
 // ============================================================
 $labelsMeses = [];
 $dataRecaudacion = [];
+$primerDiaMes = (new DateTime('first day of this month'));
 for ($i = 5; $i >= 0; $i--) {
-    $mes = date('m', strtotime("-$i months"));
-    $anio = date('Y', strtotime("-$i months"));
-    $labelsMeses[] = date('M', strtotime("-$i months"));
+    $fechaMes = (clone $primerDiaMes)->modify("-$i months");
+    $mes = $fechaMes->format('m');
+    $anio = $fechaMes->format('Y');
+    $labelsMeses[] = $fechaMes->format('M');
     $stmt = $pdo->prepare("SELECT COALESCE(SUM(total), 0) FROM pagos WHERE MONTH(fecha) = ? AND YEAR(fecha) = ?");
     $stmt->execute([$mes, $anio]);
     $dataRecaudacion[] = (float)$stmt->fetchColumn();
@@ -125,6 +132,50 @@ $stmt = $pdo->prepare("SELECT COUNT(DISTINCT id_alumno) FROM pagos WHERE concept
 $stmt->execute([$mesActual, $anioActual]);
 $totalAlumnosConCuota = (int)$stmt->fetchColumn();
 $porcentajeCumplimiento = $totalAlumnos > 0 ? round(($totalAlumnosConCuota / $totalAlumnos) * 100, 0) : 0;
+
+// ============================================================
+// MOROSIDAD DE CUOTA (alumnos activos sin pago de cuota del mes)
+// ============================================================
+$morososCuota = [];
+$stmtAlActivos = $pdo->query("
+    SELECT a.id_alumno, a.nombre, a.apellido, c.tipo, c.nombre AS curso_nombre
+    FROM alumnos a
+    JOIN cursos c ON a.id_curso = c.id_curso
+    WHERE a.activo = 1
+    ORDER BY c.tipo, c.orden, a.apellido
+");
+foreach ($stmtAlActivos as $al) {
+    $stmt = $pdo->prepare("SELECT COUNT(*) FROM pagos WHERE id_alumno = ? AND concepto = 'cuota' AND MONTH(fecha) = ? AND YEAR(fecha) = ?");
+    $stmt->execute([$al['id_alumno'], $mesActual, $anioActual]);
+    if ((int)$stmt->fetchColumn() === 0) {
+        $morososCuota[] = $al;
+    }
+}
+$totalMorososCuota = count($morososCuota);
+
+// ============================================================
+// MATRÍCULAS PENDIENTES DEL AÑO
+// ============================================================
+$stmtMat = $pdo->prepare("
+    SELECT COUNT(*) FROM alumnos a
+    WHERE a.activo = 1
+      AND NOT EXISTS (
+          SELECT 1 FROM pagos p
+          WHERE p.id_alumno = a.id_alumno AND p.concepto = 'matrícula' AND YEAR(p.fecha) = ?
+      )
+");
+$stmtMat->execute([$anioActual]);
+$matriculasPendientes = (int)$stmtMat->fetchColumn();
+
+// ============================================================
+// PRÓXIMOS EVENTOS (recordatorios 7 días)
+// ============================================================
+$proximosEventos = $pdo->query("
+    SELECT e.*, DATEDIFF(e.fecha, CURDATE()) AS dias_restantes
+    FROM eventos e
+    WHERE e.fecha BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 7 DAY)
+    ORDER BY e.fecha
+")->fetchAll(PDO::FETCH_OBJ);
 ?>
 <div class="container mt-3">
 
@@ -235,32 +286,22 @@ $porcentajeCumplimiento = $totalAlumnos > 0 ? round(($totalAlumnosConCuota / $to
     <!-- ========================================================== -->
     <!-- 4. ACCIONES RÁPIDAS -->
     <!-- ========================================================== -->
-    <div class="row g-2 mb-4">
-        <div class="col-6 col-md-4 col-lg-2">
-            <a href="/evospace/secciones/inscripciones.php" class="btn btn-success w-100 shadow-sm">
-                <i class="bi bi-person-plus-fill"></i> Inscribir alumno
-            </a>
-        </div>
-        <div class="col-6 col-md-4 col-lg-2">
-            <a href="/evospace/secciones/asistencia/index.php" class="btn btn-danger w-100 shadow-sm">
-                <i class="bi bi-clipboard-check"></i> Tomar asistencia
-            </a>
-        </div>
-        <div class="col-6 col-md-4 col-lg-2">
-            <a href="/evospace/secciones/cantina/ventas/nueva.php" class="btn btn-warning w-100 shadow-sm text-dark">
-                <i class="bi bi-cart-plus"></i> Venta cantina
-            </a>
-        </div>
-        <div class="col-6 col-md-4 col-lg-2">
-            <a href="/evospace/secciones/eventos/eventos.php" class="btn btn-info w-100 shadow-sm text-white">
-                <i class="bi bi-calendar-event"></i> Crear evento
-            </a>
-        </div>
-        <div class="col-6 col-md-4 col-lg-2">
-            <a href="/evospace/secciones/profesores.php" class="btn btn-secondary w-100 shadow-sm text-white">
-                <i class="bi bi-person-badge"></i> Profesores
-            </a>
-        </div>
+    <div class="d-flex flex-wrap gap-2 mb-4">
+        <a href="/evospace/secciones/inscripciones.php" class="btn btn-success shadow-sm flex-fill">
+            <i class="bi bi-person-plus-fill"></i> Inscribir alumno
+        </a>
+        <a href="/evospace/secciones/asistencia/index.php" class="btn btn-danger shadow-sm flex-fill">
+            <i class="bi bi-clipboard-check"></i> Tomar asistencia
+        </a>
+        <a href="/evospace/secciones/cantina/ventas/nueva.php" class="btn btn-warning shadow-sm flex-fill text-dark">
+            <i class="bi bi-cart-plus"></i> Venta cantina
+        </a>
+        <a href="/evospace/secciones/eventos/eventos.php" class="btn btn-info shadow-sm flex-fill text-white">
+            <i class="bi bi-calendar-event"></i> Crear evento
+        </a>
+        <a href="/evospace/secciones/profesores.php" class="btn btn-secondary shadow-sm flex-fill text-white">
+            <i class="bi bi-person-badge"></i> Profesores
+        </a>
     </div>
 
     <!-- ========================================================== -->
@@ -363,6 +404,109 @@ $porcentajeCumplimiento = $totalAlumnos > 0 ? round(($totalAlumnosConCuota / $to
 
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- ========================================================== -->
+    <!-- 6b. MOROSIDAD DE CUOTA + MATRÍCULAS PENDIENTES              -->
+    <!-- ========================================================== -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-7">
+            <div class="card <?= $totalMorososCuota > 0 ? 'border-danger' : '' ?> shadow h-100">
+                <div class="card-header bg-evo text-white d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-credit-card-2-front me-1"></i> Morosos de cuota - <?= date('F', mktime(0, 0, 0, $mesActual, 1)) ?></span>
+                    <span class="badge bg-<?= $totalMorososCuota > 0 ? 'danger' : 'success' ?>"><?= $totalMorososCuota ?> sin pagar</span>
+                </div>
+                <div class="card-body p-0">
+                    <?php if (empty($morososCuota)): ?>
+                        <div class="p-3 text-muted">Todos los alumnos activos pagaron la cuota este mes.</div>
+                    <?php else: ?>
+                        <div class="table-responsive">
+                            <table class="table table-hover table-sm mb-0">
+                                <thead class="table-light"><tr><th>Alumno</th><th>Nivel / Curso</th><th class="text-end">Acción</th></tr></thead>
+                                <tbody>
+                                    <?php foreach (array_slice($morososCuota, 0, 8) as $m): ?>
+                                        <tr>
+                                            <td><?= htmlspecialchars($m['apellido'] . ', ' . $m['nombre']) ?></td>
+                                            <td><span class="badge bg-light text-dark border"><?= htmlspecialchars($m['tipo'] . ' - ' . $m['curso_nombre']) ?></span></td>
+                                            <td class="text-end">
+                                                <a href="/evospace/secciones/ficha_alumno.php?id=<?= (int)$m['id_alumno'] ?>" class="btn btn-sm btn-outline-danger">Cobrar</a>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                        <?php if ($totalMorososCuota > 8): ?>
+                            <div class="p-2 text-center small text-muted">y <?= $totalMorososCuota - 8 ?> más...</div>
+                        <?php endif; ?>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-5">
+            <div class="card shadow h-100">
+                <div class="card-header bg-evo text-white"><i class="bi bi-mortarboard-fill me-1"></i> Matrículas <?= $anioActual ?></div>
+                <div class="card-body text-center">
+                    <h2 class="fw-bold <?= $matriculasPendientes > 0 ? 'text-danger' : 'text-success' ?>"><?= $matriculasPendientes ?></h2>
+                    <p class="text-muted mb-2">alumnos activos sin matrícula pagada este año</p>
+                    <?php $pctMat = $totalAlumnos > 0 ? round(($totalAlumnos - $matriculasPendientes) / $totalAlumnos * 100) : 0; ?>
+                    <div class="progress mb-3" style="height: 8px;">
+                        <div class="progress-bar bg-<?= $matriculasPendientes > 0 ? 'danger' : 'success' ?>" style="width: <?= $pctMat ?>%;"></div>
+                    </div>
+                    <small class="text-muted"><?= $totalAlumnos - $matriculasPendientes ?>/<?= $totalAlumnos ?> con matrícula al día (<?= $pctMat ?>%)</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================================== -->
+    <!-- 6c. PRÓXIMOS EVENTOS (recordatorios)                       -->
+    <!-- ========================================================== -->
+    <div class="card shadow mb-4">
+        <div class="card-header bg-evo text-white d-flex justify-content-between align-items-center">
+            <span><i class="bi bi-calendar-event-fill me-1"></i> Próximos eventos (7 días)</span>
+            <a href="/evospace/secciones/eventos/eventos.php" class="btn btn-sm btn-light text-danger fw-bold"><i class="bi bi-plus-circle"></i> Gestionar</a>
+        </div>
+        <div class="card-body p-0">
+            <?php if (empty($proximosEventos)): ?>
+                <div class="p-3 text-muted">No hay eventos programados para los próximos 7 días.</div>
+            <?php else: ?>
+                <div class="table-responsive">
+                    <table class="table table-hover table-sm mb-0">
+                        <thead class="table-light">
+                            <tr><th>Evento</th><th class="text-center">Fecha</th><th class="text-center">Faltan</th><th class="text-center">Recordatorio</th></tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($proximosEventos as $ev): $dias = (int) $ev->dias_restantes; ?>
+                                <tr>
+                                    <td>
+                                        <span class="d-inline-block rounded me-1" style="width:10px;height:10px;background:<?= htmlspecialchars($ev->color ?? '#c81015') ?>;"></span>
+                                        <?= htmlspecialchars($ev->titulo) ?>
+                                        <?php if (!empty($ev->ultimo_recordatorio)): ?>
+                                            <small class="text-muted d-block">Rec. enviado: <?= date('d/m/Y', strtotime($ev->ultimo_recordatorio)) ?></small>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td class="text-center small"><?= date('d/m/Y', strtotime($ev->fecha)) ?></td>
+                                    <td class="text-center">
+                                        <span class="badge bg-<?= $dias <= 3 ? 'danger' : 'warning' ?>">
+                                            <?= $dias == 0 ? '¡Hoy!' : $dias . ' día' . ($dias == 1 ? '' : 's') ?>
+                                        </span>
+                                    </td>
+                                    <td class="text-center">
+                                        <form method="POST" action="/evospace/secciones/eventos/eventos.php" class="d-inline" onsubmit="return confirm('¿Enviar recordatorio a los tutores?')">
+                                            <?= campoCSRF() ?>
+                                            <input type="hidden" name="accion" value="recordatorio_evento">
+                                            <input type="hidden" name="id_evento" value="<?= (int) $ev->id_evento ?>">
+                                            <button type="submit" class="btn btn-sm btn-outline-info" title="Enviar recordatorio a tutores"><i class="bi bi-bell-fill"></i> Enviar</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            <?php endif; ?>
         </div>
     </div>
 

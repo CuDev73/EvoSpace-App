@@ -12,8 +12,10 @@ $mensaje = '';
 $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['accion'] === 'guardar') {
+    verificarTokenCSRF();
     $id = $_POST['id'] ?? '';
     $nombre = trim($_POST['nombre']);
+    $categoria = trim($_POST['categoria'] ?? '');
     $precio_venta = (float) $_POST['precio_venta'];
     $precio_compra = (float) $_POST['precio_compra'];
     $cantidad = (int) $_POST['cantidad'];
@@ -23,7 +25,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['
         $error = "Nombre y precio de venta son obligatorios.";
     } else {
         try {
-            guardarProducto($pdo, $id, $nombre, $precio_venta, $precio_compra, $cantidad, $activo);
+            guardarProducto($pdo, $id, $nombre, $precio_venta, $precio_compra, $cantidad, $activo, $categoria);
             $mensaje = "Producto guardado correctamente.";
             header("Location: index.php?exito=1");
             exit;
@@ -33,9 +35,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['
     }
 }
 
-if (isset($_GET['eliminar'])) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['accion'] === 'eliminar') {
+    verificarTokenCSRF();
     try {
-        eliminarProducto($pdo, (int) $_GET['eliminar']);
+        eliminarProducto($pdo, (int) $_POST['id_producto']);
         $mensaje = "Producto eliminado correctamente.";
         header("Location: index.php?eliminado=1");
         exit;
@@ -50,6 +53,7 @@ include '../../../includes/header.php';
 include '../../../includes/navbar.php';
 
 $productos = obtenerProductosCompletos($pdo);
+$categoriasProductos = $pdo->query("SELECT DISTINCT categoria FROM productos WHERE categoria IS NOT NULL AND TRIM(categoria) <> '' ORDER BY categoria")->fetchAll(PDO::FETCH_COLUMN);
 $editProducto = null;
 if (isset($_GET['editar'])) {
     $stmt = $pdo->prepare("SELECT * FROM productos WHERE id_producto = ?");
@@ -82,6 +86,7 @@ if (isset($_GET['exito']) || isset($_GET['eliminado'])) {
                         <tr>
                             <th>ID</th>
                             <th>Nombre</th>
+                            <th>Categoría</th>
                             <th class="text-end">Precio Venta</th>
                             <th class="text-end">Precio Compra</th>
                             <th class="text-center">Stock</th>
@@ -91,19 +96,25 @@ if (isset($_GET['exito']) || isset($_GET['eliminado'])) {
                     </thead>
                     <tbody>
                         <?php if (empty($productos)): ?>
-                            <tr><td colspan="7" class="text-center">No hay productos.</td></tr>
+                            <tr><td colspan="8" class="text-center">No hay productos.</td></tr>
                         <?php else: ?>
                             <?php foreach ($productos as $p): ?>
                                 <tr>
                                     <td><?= $p->id_producto ?></td>
                                     <td><?= htmlspecialchars($p->nombre) ?></td>
+                                    <td><?= $p->categoria ? '<span class="badge bg-secondary">' . htmlspecialchars($p->categoria) . '</span>' : '<span class="text-muted">—</span>' ?></td>
                                     <td class="text-end"><?= number_format($p->precio, 0, ',', '.') ?></td>
                                     <td class="text-end"><?= number_format($p->precio_compra ?? 0, 0, ',', '.') ?></td>
                                     <td class="text-center"><?= $p->cantidad ?></td>
                                     <td><?= $p->activo ? '<span class="badge bg-success">Activo</span>' : '<span class="badge bg-secondary">Inactivo</span>' ?></td>
                                     <td>
                                         <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalProducto" onclick="editarProducto(<?= htmlspecialchars(json_encode($p)) ?>)"><i class="bi bi-pencil"></i></button>
-                                        <a href="?eliminar=<?= $p->id_producto ?>" class="btn btn-danger btn-sm" onclick="return confirm('¿Eliminar este producto?')"><i class="bi bi-trash"></i></a>
+                                        <form method="POST" class="d-inline" onsubmit="return confirm('¿Eliminar este producto?')">
+                                            <?= campoCSRF() ?>
+                                            <input type="hidden" name="accion" value="eliminar">
+                                            <input type="hidden" name="id_producto" value="<?= $p->id_producto ?>">
+                                            <button type="submit" class="btn btn-danger btn-sm"><i class="bi bi-trash"></i></button>
+                                        </form>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
@@ -125,6 +136,7 @@ if (isset($_GET['exito']) || isset($_GET['eliminado'])) {
             </div>
             <form method="POST">
                 <div class="modal-body">
+                    <?= campoCSRF() ?>
                     <input type="hidden" name="accion" value="guardar">
                     <input type="hidden" name="id" id="id_producto" value="0">
                     <div class="mb-3">
@@ -143,6 +155,15 @@ if (isset($_GET['exito']) || isset($_GET['eliminado'])) {
                         <div class="col-md-6">
                             <label class="form-label">Cantidad (Stock)</label>
                             <input type="number" name="cantidad" id="cantidad" class="form-control" value="0">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Categoría</label>
+                            <input type="text" name="categoria" id="categoria" class="form-control" list="listaCategorias" placeholder="Ej: Snacks, Bebidas">
+                            <datalist id="listaCategorias">
+                                <?php foreach ($categoriasProductos as $cat): ?>
+                                    <option value="<?= htmlspecialchars($cat) ?>"></option>
+                                <?php endforeach; ?>
+                            </datalist>
                         </div>
                     </div>
                     <div class="form-check mt-3">
@@ -164,6 +185,7 @@ function limpiarFormulario() {
     document.getElementById('modalTitulo').innerText = 'Nuevo Producto';
     document.getElementById('id_producto').value = '0';
     document.getElementById('nombre').value = '';
+    document.getElementById('categoria').value = '';
     document.getElementById('precio_venta').value = '';
     document.getElementById('precio_compra').value = '0';
     document.getElementById('cantidad').value = '0';
@@ -174,6 +196,7 @@ function editarProducto(p) {
     document.getElementById('modalTitulo').innerText = 'Editar Producto';
     document.getElementById('id_producto').value = p.id_producto;
     document.getElementById('nombre').value = p.nombre;
+    document.getElementById('categoria').value = p.categoria || '';
     document.getElementById('precio_venta').value = Math.round(p.precio);
     document.getElementById('precio_compra').value = Math.round(p.precio_compra || 0);
     document.getElementById('cantidad').value = p.cantidad || 0;

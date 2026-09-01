@@ -5,6 +5,7 @@ if (!isset($_SESSION['id_usuario'])) {
     exit;
 }
 include '../../includes/header.php';
+$mostrarVolver = true;
 include '../../includes/navbar.php';
 require_once '../../config/db.php';
 require_once __DIR__ . '/../../helpers/functions.php';
@@ -23,6 +24,7 @@ while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    verificarTokenCSRF();
     $campos = ['recibo_nombre', 'recibo_titulo', 'recibo_ruc', 'recibo_mensaje', 'recibo_pie'];
     foreach ($campos as $campo) {
         $valor = trim($_POST[$campo] ?? '');
@@ -69,6 +71,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
 
     <form method="POST" enctype="multipart/form-data" class="row g-4">
+        <?= campoCSRF() ?>
         <div class="col-md-8">
             <div class="card shadow-sm">
                 <div class="card-header bg-evo text-white py-2">
@@ -133,9 +136,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         <div class="col-12">
             <div class="d-flex gap-2">
-                <a href="configuracion.php" class="btn btn-secondary">
-                    <i class="bi bi-arrow-left"></i> Volver
-                </a>
                 <button type="submit" class="btn btn-evo">
                     <i class="bi bi-save"></i> Guardar configuración
                 </button>

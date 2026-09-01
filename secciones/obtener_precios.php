@@ -7,6 +7,11 @@ if (!isset($_SESSION['id_usuario'])) {
 
 require_once '../config/db.php';
 
+$rol = $_SESSION['rol'] ?? '';
+if (!in_array($rol, ['admin', 'auxiliar'], true)) {
+    denegarAcceso();
+}
+
 if (!isset($_GET['id_curso'])) {
     http_response_code(400);
     exit('Falta id_curso');
@@ -16,7 +21,7 @@ $id_curso = (int)$_GET['id_curso'];
 
 // Obtener porcentaje de beca
 $stmt = $pdo->query("SELECT valor FROM configuracion WHERE clave = 'porcentaje_beca'");
-$porcentaje_beca = (float)$stmt->fetchColumn() ?: 45.45;
+$porcentaje_beca = (float)$stmt->fetchColumn() ?: 50.0;
 
 $sql = "SELECT concepto, precio FROM precios WHERE id_curso = ?";
 $stmt = $pdo->prepare($sql);

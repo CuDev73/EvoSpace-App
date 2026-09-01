@@ -64,13 +64,6 @@ h1, h2, h3, h4, h5, h6 {
   transition: all var(--evo-transition);
   font-weight: 500;
 }
-.btn:hover {
-  transform: translateY(-1px);
-  box-shadow: var(--evo-shadow);
-}
-.btn:active {
-  transform: translateY(0);
-}
 .btn-sm {
   height: 34px;
   padding: 0.25rem 0.75rem;
@@ -92,8 +85,6 @@ h1, h2, h3, h4, h5, h6 {
 .btn-evo:hover {
   background-color: var(--evo-primary-dark);
   color: #fff;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 15px rgba(200,16,21,0.3);
 }
 
 /* ------------------------------------------------------------
@@ -105,9 +96,6 @@ h1, h2, h3, h4, h5, h6 {
   box-shadow: var(--evo-shadow);
   transition: all var(--evo-transition);
   overflow: hidden;
-}
-.card:hover {
-  box-shadow: var(--evo-shadow-lg);
 }
 .card-header {
   font-weight: 600;
@@ -346,6 +334,14 @@ h1, h2, h3, h4, h5, h6 {
 .stat-card:hover {
   transform: translateY(-4px);
   box-shadow: var(--evo-shadow-lg);
+}
+.stat-card:focus,
+.stat-card:focus-visible,
+.stat-card:focus-within,
+.stat-card *:focus,
+.stat-card *:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
 }
 .stat-card .stat-icon {
   width: 48px;

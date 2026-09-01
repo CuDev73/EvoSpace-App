@@ -69,6 +69,8 @@ CREATE TABLE `alumnos` (
   `telefono` varchar(20) DEFAULT NULL,
   `id_padre` int(11) DEFAULT NULL,
   `becado` tinyint(1) DEFAULT 0,
+  `dia_vencimiento` int(11) DEFAULT NULL,
+  `dias_gracia` int(11) DEFAULT NULL,
   `activo` tinyint(1) DEFAULT 1,
   `fecha_creacion` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -232,7 +234,7 @@ CREATE TABLE `configuracion` (
 INSERT INTO `configuracion` (`clave`, `valor`) VALUES
 ('dia_limite_pago', '10'),
 ('limite_horas_profesionales', '200'),
-('porcentaje_beca', '45.45'),
+('porcentaje_beca', '50'),
 ('recargo_por_dia', '1000'),
 ('recibo_logo', ''),
 ('recibo_mensaje', 'Gracias por confiar en EvoSpace'),
@@ -354,7 +356,8 @@ CREATE TABLE `eventos` (
   `enlace_ubicacion` varchar(255) DEFAULT NULL,
   `color` varchar(7) DEFAULT '#c81015',
   `fecha_creacion` timestamp NOT NULL DEFAULT current_timestamp(),
-  `imagen` varchar(255) DEFAULT NULL
+  `imagen` varchar(255) DEFAULT NULL,
+  `ultimo_recordatorio` date DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
@@ -507,6 +510,7 @@ INSERT INTO `notificaciones` (`id_notificacion`, `id_evento`, `id_usuario`, `tit
 CREATE TABLE `pagos` (
   `id_pago` int(11) NOT NULL,
   `id_alumno` int(11) NOT NULL,
+  `id_evento` int(11) DEFAULT NULL,
   `fecha` date NOT NULL,
   `concepto` varchar(200) NOT NULL,
   `cantidad` int(11) DEFAULT 1,
@@ -736,6 +740,7 @@ INSERT INTO `precios` (`id_precio`, `id_curso`, `concepto`, `precio`, `descuento
 CREATE TABLE `productos` (
   `id_producto` int(11) NOT NULL,
   `nombre` varchar(100) NOT NULL,
+  `categoria` varchar(100) DEFAULT NULL,
   `precio` decimal(10,2) NOT NULL,
   `activo` tinyint(1) DEFAULT 1,
   `fecha_creacion` timestamp NOT NULL DEFAULT current_timestamp(),
@@ -748,11 +753,11 @@ CREATE TABLE `productos` (
 -- Dumping data for table `productos`
 --
 
-INSERT INTO `productos` (`id_producto`, `nombre`, `precio`, `activo`, `fecha_creacion`, `precio_compra`, `cantidad`, `id_proveedor`) VALUES
-(1, 'Papas a la crema', 20000.00, 1, '2026-07-26 17:41:32', 15000.00, 0, 1),
-(2, 'Papas fritas', 123.00, 1, '2026-07-26 17:45:49', 0.00, 0, NULL),
-(3, 'Papas a la crema2', 3000.00, 1, '2026-07-28 21:29:57', 1300.00, 14, 1),
-(4, 'Bolsa de papas', 5000.00, 1, '2026-07-29 12:34:40', 3500.00, 49, 1);
+INSERT INTO `productos` (`id_producto`, `nombre`, `categoria`, `precio`, `activo`, `fecha_creacion`, `precio_compra`, `cantidad`, `id_proveedor`) VALUES
+(1, 'Papas a la crema', 'Snacks', 20000.00, 1, '2026-07-26 17:41:32', 15000.00, 0, 1),
+(2, 'Papas fritas', 'Snacks', 123.00, 1, '2026-07-26 17:45:49', 0.00, 0, NULL),
+(3, 'Papas a la crema2', 'Snacks', 3000.00, 1, '2026-07-28 21:29:57', 1300.00, 14, 1),
+(4, 'Bolsa de papas', 'Snacks', 5000.00, 1, '2026-07-29 12:34:40', 3500.00, 49, 1);
 
 -- --------------------------------------------------------
 
@@ -915,6 +920,7 @@ CREATE TABLE `ventas` (
   `id_venta` int(11) NOT NULL,
   `fecha` datetime DEFAULT current_timestamp(),
   `total` decimal(10,2) NOT NULL,
+  `monto_pagado` decimal(10,2) NOT NULL DEFAULT 0.00,
   `metodo_pago` enum('Efectivo','Transferencia','Fiado') NOT NULL,
   `tipo_comprador` enum('alumno','profesor','otro') DEFAULT 'otro',
   `nombre_comprador` varchar(150) DEFAULT NULL,
@@ -924,25 +930,43 @@ CREATE TABLE `ventas` (
   `estado_pago` enum('pagado','pendiente','parcial') DEFAULT 'pagado'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE `entradas_curso` (
+  `id_entrada_curso` int(11) NOT NULL,
+  `id_curso` int(11) NOT NULL,
+  `id_evento` int(11) DEFAULT NULL,
+  `cantidad` int(11) NOT NULL DEFAULT 0,
+  `precio` decimal(10,0) NOT NULL DEFAULT 0,
+  `fecha_asignacion` date NOT NULL,
+  `estado` enum('activa','cerrada') NOT NULL DEFAULT 'activa'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `entradas_alumno` (
+  `id_entrada_alumno` int(11) NOT NULL,
+  `id_entrada_curso` int(11) NOT NULL,
+  `id_alumno` int(11) NOT NULL,
+  `cantidad` int(11) NOT NULL DEFAULT 0,
+  `fecha_entrega` date NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 --
 -- Dumping data for table `ventas`
 --
 
-INSERT INTO `ventas` (`id_venta`, `fecha`, `total`, `metodo_pago`, `tipo_comprador`, `nombre_comprador`, `id_alumno`, `id_usuario`, `observaciones`, `estado_pago`) VALUES
-(1, '2026-07-26 14:45:04', 60000.00, 'Fiado', 'otro', NULL, NULL, NULL, '', 'pagado'),
-(2, '2026-07-27 00:00:00', 20000.00, 'Efectivo', 'alumno', 'Mariela Nuñez Esteche', 1, NULL, '', 'pagado'),
-(3, '2026-07-27 00:00:00', 20000.00, 'Efectivo', 'alumno', 'Mariela Nuñez Esteche', 1, NULL, '', 'pagado'),
-(4, '2026-07-27 00:00:00', 20000.00, 'Efectivo', 'alumno', 'Mariela Nuñez Esteche', 1, NULL, '', 'pagado'),
-(5, '2026-07-28 00:00:00', 60000.00, 'Fiado', 'alumno', 'Joaquín Romero', 18, NULL, '', 'pagado'),
-(7, '2026-07-28 00:00:00', 120000.00, 'Fiado', 'alumno', 'Mariela Nuñez Esteche', 1, NULL, '', 'pagado'),
-(8, '2026-07-28 00:00:00', 9000.00, 'Fiado', 'alumno', 'Emma Álvarez', 17, NULL, '', 'pagado'),
-(9, '2026-07-29 00:00:00', 12000.00, 'Efectivo', 'alumno', 'Brenda Córdoba', 66, NULL, '', 'pagado'),
-(10, '2026-07-29 00:00:00', 3000.00, 'Efectivo', 'alumno', 'Joaquín Romero', 18, NULL, '', 'pagado'),
-(11, '2026-07-29 00:00:00', 18000.00, 'Fiado', 'alumno', 'Thiago Cáceres', 32, NULL, '', 'pagado'),
-(12, '2026-07-30 00:00:00', 5000.00, 'Fiado', 'alumno', 'Mariela Nuñez Esteche', 1, NULL, '', 'pagado'),
-(13, '2026-07-30 00:00:00', 100000.00, 'Fiado', 'alumno', 'Joaquín Romero', 18, NULL, '', 'pagado'),
-(14, '2026-07-30 00:00:00', 153000.00, 'Efectivo', 'alumno', 'Tomás Escobar', 59, NULL, '', 'pagado'),
-(15, '2026-07-30 00:00:00', 3000.00, 'Fiado', 'alumno', 'Jessica Giménez', 4, NULL, '', 'pagado');
+INSERT INTO `ventas` (`id_venta`, `fecha`, `total`, `monto_pagado`, `metodo_pago`, `tipo_comprador`, `nombre_comprador`, `id_alumno`, `id_usuario`, `observaciones`, `estado_pago`) VALUES
+(1, '2026-07-26 14:45:04', 60000.00, 60000.00, 'Fiado', 'otro', NULL, NULL, NULL, '', 'pagado'),
+(2, '2026-07-27 00:00:00', 20000.00, 20000.00, 'Efectivo', 'alumno', 'Mariela Nuñez Esteche', 1, NULL, '', 'pagado'),
+(3, '2026-07-27 00:00:00', 20000.00, 20000.00, 'Efectivo', 'alumno', 'Mariela Nuñez Esteche', 1, NULL, '', 'pagado'),
+(4, '2026-07-27 00:00:00', 20000.00, 20000.00, 'Efectivo', 'alumno', 'Mariela Nuñez Esteche', 1, NULL, '', 'pagado'),
+(5, '2026-07-28 00:00:00', 60000.00, 60000.00, 'Fiado', 'alumno', 'Joaquín Romero', 18, NULL, '', 'pagado'),
+(7, '2026-07-28 00:00:00', 120000.00, 120000.00, 'Fiado', 'alumno', 'Mariela Nuñez Esteche', 1, NULL, '', 'pagado'),
+(8, '2026-07-28 00:00:00', 9000.00, 9000.00, 'Fiado', 'alumno', 'Emma Álvarez', 17, NULL, '', 'pagado'),
+(9, '2026-07-29 00:00:00', 12000.00, 12000.00, 'Efectivo', 'alumno', 'Brenda Córdoba', 66, NULL, '', 'pagado'),
+(10, '2026-07-29 00:00:00', 3000.00, 3000.00, 'Efectivo', 'alumno', 'Joaquín Romero', 18, NULL, '', 'pagado'),
+(11, '2026-07-29 00:00:00', 18000.00, 18000.00, 'Fiado', 'alumno', 'Thiago Cáceres', 32, NULL, '', 'pagado'),
+(12, '2026-07-30 00:00:00', 5000.00, 5000.00, 'Fiado', 'alumno', 'Mariela Nuñez Esteche', 1, NULL, '', 'pagado'),
+(13, '2026-07-30 00:00:00', 100000.00, 100000.00, 'Fiado', 'alumno', 'Joaquín Romero', 18, NULL, '', 'pagado'),
+(14, '2026-07-30 00:00:00', 153000.00, 153000.00, 'Efectivo', 'alumno', 'Tomás Escobar', 59, NULL, '', 'pagado'),
+(15, '2026-07-30 00:00:00', 3000.00, 3000.00, 'Fiado', 'alumno', 'Jessica Giménez', 4, NULL, '', 'pagado');
 
 --
 -- Indexes for dumped tables
@@ -1014,6 +1038,23 @@ ALTER TABLE `detalle_ventas`
   ADD KEY `id_producto` (`id_producto`);
 
 --
+-- Indexes for table `entradas_alumno`
+--
+ALTER TABLE `entradas_alumno`
+  ADD PRIMARY KEY (`id_entrada_alumno`),
+  ADD UNIQUE KEY `uq_entrada_alumno` (`id_entrada_curso`, `id_alumno`),
+  ADD KEY `id_entrada_curso` (`id_entrada_curso`),
+  ADD KEY `id_alumno` (`id_alumno`);
+
+--
+-- Indexes for table `entradas_curso`
+--
+ALTER TABLE `entradas_curso`
+  ADD PRIMARY KEY (`id_entrada_curso`),
+  ADD KEY `id_curso` (`id_curso`),
+  ADD KEY `id_evento` (`id_evento`);
+
+--
 -- Indexes for table `eventos`
 --
 ALTER TABLE `eventos`
@@ -1054,7 +1095,8 @@ ALTER TABLE `notificaciones`
 --
 ALTER TABLE `pagos`
   ADD PRIMARY KEY (`id_pago`),
-  ADD KEY `id_alumno` (`id_alumno`);
+  ADD KEY `id_alumno` (`id_alumno`),
+  ADD KEY `id_evento` (`id_evento`);
 
 --
 -- Indexes for table `pagos_alumnos_cantina`
@@ -1191,6 +1233,18 @@ ALTER TABLE `detalle_compra_proveedor`
 --
 ALTER TABLE `detalle_ventas`
   MODIFY `id_detalle` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=22;
+
+--
+-- AUTO_INCREMENT for table `entradas_alumno`
+--
+ALTER TABLE `entradas_alumno`
+  MODIFY `id_entrada_alumno` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `entradas_curso`
+--
+ALTER TABLE `entradas_curso`
+  MODIFY `id_entrada_curso` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `eventos`
@@ -1357,13 +1411,28 @@ ALTER TABLE `notificaciones`
 -- Constraints for table `pagos`
 --
 ALTER TABLE `pagos`
-  ADD CONSTRAINT `pagos_ibfk_1` FOREIGN KEY (`id_alumno`) REFERENCES `alumnos` (`id_alumno`) ON DELETE CASCADE;
+  ADD CONSTRAINT `pagos_ibfk_1` FOREIGN KEY (`id_alumno`) REFERENCES `alumnos` (`id_alumno`) ON DELETE CASCADE,
+  ADD CONSTRAINT `pagos_evento_fk` FOREIGN KEY (`id_evento`) REFERENCES `eventos` (`id_evento`) ON DELETE SET NULL;
 
 --
 -- Constraints for table `pagos_alumnos_cantina`
 --
 ALTER TABLE `pagos_alumnos_cantina`
   ADD CONSTRAINT `pagos_alumnos_cantina_ibfk_1` FOREIGN KEY (`id_alumno`) REFERENCES `alumnos` (`id_alumno`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `entradas_alumno`
+--
+ALTER TABLE `entradas_alumno`
+  ADD CONSTRAINT `entradas_alumno_alumno_fk` FOREIGN KEY (`id_alumno`) REFERENCES `alumnos` (`id_alumno`) ON DELETE CASCADE,
+  ADD CONSTRAINT `entradas_alumno_curso_fk` FOREIGN KEY (`id_entrada_curso`) REFERENCES `entradas_curso` (`id_entrada_curso`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `entradas_curso`
+--
+ALTER TABLE `entradas_curso`
+  ADD CONSTRAINT `entradas_curso_curso_fk` FOREIGN KEY (`id_curso`) REFERENCES `cursos` (`id_curso`) ON DELETE CASCADE,
+  ADD CONSTRAINT `entradas_curso_evento_fk` FOREIGN KEY (`id_evento`) REFERENCES `eventos` (`id_evento`) ON DELETE SET NULL;
 
 --
 -- Constraints for table `pagos_proveedores`

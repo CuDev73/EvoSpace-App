@@ -8,7 +8,13 @@ require_once '../../../config/db.php';
 require_once '../funciones.php';
 verificarPermiso('cantina');
 
-$id_venta = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    header('Location: index.php');
+    exit;
+}
+verificarTokenCSRF();
+
+$id_venta = isset($_POST['id_venta']) ? (int)$_POST['id_venta'] : 0;
 if ($id_venta) {
     try {
         eliminarVenta($pdo, $id_venta);

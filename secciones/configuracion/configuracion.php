@@ -9,6 +9,7 @@ require_once __DIR__ . '/../../config/db.php';
 
 $limiteHoras = $pdo->query("SELECT valor FROM configuracion WHERE clave = 'limite_horas_profesionales'")->fetchColumn() ?: 200;
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['limite_horas'])) {
+    verificarTokenCSRF();
     $nuevo = (float)$_POST['limite_horas'];
     if ($nuevo > 0) {
         $stmt = $pdo->prepare("UPDATE configuracion SET valor = ? WHERE clave = 'limite_horas_profesionales'");
@@ -33,7 +34,7 @@ verificarPermiso('configuracion');
 
     <div class="row g-4">
         <!-- Tarjeta: Configurar Pagos -->
-        <div class="col-md-4">
+        <div class="col-md-6 col-xl-3">
             <div class="card shadow-hover h-100 text-center">
                 <div class="card-body d-flex flex-column align-items-center justify-content-center">
                     <i class="bi bi-coin fs-1 text-danger"></i>
@@ -47,7 +48,7 @@ verificarPermiso('configuracion');
         </div>
 
         <!-- Tarjeta: Configurar Recibo -->
-        <div class="col-md-4">
+        <div class="col-md-6 col-xl-3">
             <div class="card shadow-hover h-100 text-center">
                 <div class="card-body d-flex flex-column align-items-center justify-content-center">
                     <i class="bi bi-receipt fs-1 text-success"></i>
@@ -61,13 +62,43 @@ verificarPermiso('configuracion');
         </div>
 
         <!-- Tarjeta: Horas Profesionales -->
-        <div class="col-md-4">
+        <div class="col-md-6 col-xl-3">
             <div class="card shadow-hover h-100 text-center">
                 <div class="card-body d-flex flex-column align-items-center justify-content-center">
                     <i class="bi bi-clock-history fs-1 text-info"></i>
                     <h5 class="card-title mt-3">Horas Profesionales</h5>
                     <p class="card-text text-muted small">Límite de horas para nivel Superior</p>
                     <a href="#" class="btn btn-evo mt-2" data-bs-toggle="modal" data-bs-target="#modalHoras">
+                        <i class="bi bi-arrow-right-circle"></i> Configurar
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tarjeta: Correo de Eventos -->
+        <div class="col-md-6 col-xl-3">
+            <div class="card shadow-hover h-100 text-center">
+                <div class="card-body d-flex flex-column align-items-center justify-content-center">
+                    <i class="bi bi-envelope-fill fs-1 text-primary"></i>
+                    <h5 class="card-title mt-3">Correo de Eventos</h5>
+                    <p class="card-text text-muted small">Saludo, mensaje, firma y remitente</p>
+                    <a href="configurar_correo.php" class="btn btn-evo mt-2">
+                        <i class="bi bi-arrow-right-circle"></i> Configurar
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mt-1">
+        <!-- Tarjeta: Recordatorio de Deudas -->
+        <div class="col-md-6 col-xl-3">
+            <div class="card shadow-hover h-100 text-center">
+                <div class="card-body d-flex flex-column align-items-center justify-content-center">
+                    <i class="bi bi-bell-fill fs-1 text-warning"></i>
+                    <h5 class="card-title mt-3">Recordatorio de Deudas</h5>
+                    <p class="card-text text-muted small">Correo mensual a tutores con deudas</p>
+                    <a href="configurar_recordatorio.php" class="btn btn-evo mt-2">
                         <i class="bi bi-arrow-right-circle"></i> Configurar
                     </a>
                 </div>
@@ -88,6 +119,7 @@ verificarPermiso('configuracion');
             </div>
             <form method="POST">
                 <div class="modal-body">
+                    <?= campoCSRF() ?>
                     <label class="form-label">Horas requeridas para completar el nivel Superior</label>
                     <input type="number" step="1" name="limite_horas" class="form-control"
                            value="<?= (int)$limiteHoras ?>" min="1" required>

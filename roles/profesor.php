@@ -8,6 +8,7 @@ if (!isset($_SESSION['id_usuario']) || ($_SESSION['rol'] !== 'profesor' && $_SES
 
 require_once '../config/db.php';
 require_once '../helpers/functions.php';
+require_once '../helpers/asistencia.php';
 
 // ============================================================
 // AJAX: listar alumnos + asistencia del día
@@ -18,27 +19,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'alumnos') {
     $fecha = $_GET['fecha'] ?? date('Y-m-d');
     if (!$id_curso) { echo json_encode([]); exit; }
 
-    $alumnos = $pdo->prepare("SELECT id_alumno, nombre, apellido FROM alumnos WHERE id_curso = ? AND activo = 1 ORDER BY apellido, nombre");
-    $alumnos->execute([$id_curso]);
-    $alumnos = $alumnos->fetchAll(PDO::FETCH_ASSOC);
-
-    $asistencias = [];
-    if (!empty($alumnos)) {
-        $ids = array_column($alumnos, 'id_alumno');
-        $ph = implode(',', array_fill(0, count($ids), '?'));
-        $stmt = $pdo->prepare("SELECT id_alumno, presente, observaciones FROM asistencia WHERE id_curso = ? AND fecha = ? AND id_alumno IN ($ph)");
-        $stmt->execute(array_merge([$id_curso, $fecha], $ids));
-        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $a) {
-            $asistencias[$a['id_alumno']] = $a;
-        }
-    }
-
-    foreach ($alumnos as &$a) {
-        $a['presente'] = isset($asistencias[$a['id_alumno']]) ? (int)$asistencias[$a['id_alumno']]['presente'] : 1;
-        $a['observaciones'] = $asistencias[$a['id_alumno']]['observaciones'] ?? '';
-    }
-
-    echo json_encode(['fecha' => $fecha, 'alumnos' => $alumnos]);
+    echo json_encode(obtenerAlumnosConAsistencia($pdo, $id_curso, $fecha));
     exit;
 }
 
@@ -46,6 +27,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'alumnos') {
 // AJAX: guardar asistencia
 // ============================================================
 if (isset($_POST['ajax']) && $_POST['ajax'] === 'guardar_asistencia') {
+    verificarTokenCSRF();
     header('Content-Type: application/json');
     $id_curso = (int)($_POST['id_curso'] ?? 0);
     $fecha = $_POST['fecha'] ?? date('Y-m-d');
@@ -53,24 +35,19 @@ if (isset($_POST['ajax']) && $_POST['ajax'] === 'guardar_asistencia') {
 
     if (!$id_curso) { echo json_encode(['ok' => false, 'error' => 'Falta curso']); exit; }
 
+    $prof = $pdo->prepare("SELECT id_profesor FROM profesores WHERE id_usuario = ?");
+    $prof->execute([(int)$_SESSION['id_usuario']]);
+    $id_profesor = (int)$prof->fetchColumn();
+
+    if (!$id_profesor || !cursoPerteneceAProfesor($pdo, $id_curso, $id_profesor)) {
+        echo json_encode(['ok' => false, 'error' => 'No tenés permiso para este curso']);
+        exit;
+    }
+
     try {
-        $pdo->beginTransaction();
-        $alumnos = $pdo->prepare("SELECT id_alumno FROM alumnos WHERE id_curso = ? AND activo = 1");
-        $alumnos->execute([$id_curso]);
-        $ids = $alumnos->fetchAll(PDO::FETCH_COLUMN);
-
-        $pdo->prepare("DELETE FROM asistencia WHERE id_curso = ? AND fecha = ?")->execute([$id_curso, $fecha]);
-
-        $stmt = $pdo->prepare("INSERT INTO asistencia (id_alumno, id_curso, fecha, presente, observaciones) VALUES (?, ?, ?, ?, ?)");
-        foreach ($ids as $id_alumno) {
-            $presente = !empty($estados[$id_alumno]['presente']) ? 1 : 0;
-            $obs = trim($estados[$id_alumno]['observaciones'] ?? '');
-            $stmt->execute([$id_alumno, $id_curso, $fecha, $presente, $obs]);
-        }
-        $pdo->commit();
+        guardarAsistenciaDiaria($pdo, $id_curso, $fecha, $estados, $id_profesor);
         echo json_encode(['ok' => true]);
     } catch (Exception $e) {
-        $pdo->rollBack();
         echo json_encode(['ok' => false, 'error' => $e->getMessage()]);
     }
     exit;
@@ -118,6 +95,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === 'mensual') {
 // AJAX: guardar asistencia mensual
 // ============================================================
 if (isset($_POST['ajax']) && $_POST['ajax'] === 'guardar_mensual') {
+    verificarTokenCSRF();
     header('Content-Type: application/json');
     $id_curso = (int)($_POST['id_curso'] ?? 0);
     $mes = (int)($_POST['mes'] ?? date('m'));
@@ -126,21 +104,19 @@ if (isset($_POST['ajax']) && $_POST['ajax'] === 'guardar_mensual') {
 
     if (!$id_curso) { echo json_encode(['ok' => false, 'error' => 'Falta curso']); exit; }
 
-    try {
-        $pdo->beginTransaction();
-        $pdo->prepare("DELETE FROM asistencia WHERE id_curso = ? AND MONTH(fecha) = ? AND YEAR(fecha) = ?")->execute([$id_curso, $mes, $anio]);
+    $prof = $pdo->prepare("SELECT id_profesor FROM profesores WHERE id_usuario = ?");
+    $prof->execute([(int)$_SESSION['id_usuario']]);
+    $id_profesor = (int)$prof->fetchColumn();
 
-        $stmt = $pdo->prepare("INSERT INTO asistencia (id_alumno, id_curso, fecha, presente) VALUES (?, ?, ?, ?)");
-        foreach ($estados as $id_alumno => $dias) {
-            foreach ($dias as $dia => $presente) {
-                $fecha = sprintf('%04d-%02d-%02d', $anio, $mes, $dia);
-                $stmt->execute([$id_alumno, $id_curso, $fecha, (int)$presente]);
-            }
-        }
-        $pdo->commit();
+    if (!$id_profesor || !cursoPerteneceAProfesor($pdo, $id_curso, $id_profesor)) {
+        echo json_encode(['ok' => false, 'error' => 'No tenés permiso para este curso']);
+        exit;
+    }
+
+    try {
+        guardarAsistenciaMensual($pdo, $id_curso, $mes, $anio, $estados, $id_profesor);
         echo json_encode(['ok' => true]);
     } catch (Exception $e) {
-        $pdo->rollBack();
         echo json_encode(['ok' => false, 'error' => $e->getMessage()]);
     }
     exit;
@@ -174,7 +150,8 @@ $hoy = date('Y-m-d');
 $tipos = array_unique(array_column($cursos, 'tipo'));
 $totalAlumnos = array_sum(array_column($cursos, 'total_alumnos'));
 ?>
-<div class="container mt-3">
+<div class="container mt-3 d-flex flex-column">
+    <div class="order-2 order-md-0">
     <div class="dashboard-greeting">
         <div>
             <h4 class="fw-bold mb-0"><i class="bi bi-person-badge me-2"></i><?= $saludo ?>, <?= htmlspecialchars($_SESSION['nombre_completo'] ?? $_SESSION['usuario'] ?? '') ?></h4>
@@ -216,6 +193,7 @@ $totalAlumnos = array_sum(array_column($cursos, 'total_alumnos'));
             </div>
         </div>
     </div>
+    </div><!-- /order saludo+kpis -->
 
     <!-- ========================================================== -->
     <!-- MIS PAGOS                                                   -->
@@ -304,6 +282,7 @@ $totalAlumnos = array_sum(array_column($cursos, 'total_alumnos'));
 </div>
 <?php endif; ?>
 
+    <div class="order-1 order-md-1">
     <?php if (count($tipos) > 1): ?>
         <div class="mb-3 p-3 bg-light rounded border">
             <strong class="small"><i class="bi bi-list-ul"></i> Ir a:</strong>
@@ -354,7 +333,7 @@ $totalAlumnos = array_sum(array_column($cursos, 'total_alumnos'));
                                 </span>
                             </p>
                         <?php else: ?>
-                            <p class="small text-muted mb-2">Sin registro hoy <i class="bi bi-dot"></i> <a href="/evospace/secciones/asistencia/registrar.php?id_curso=<?= $curso['id_curso'] ?>" class="text-danger">Registrar</a></p>
+                            <p class="small text-muted mb-2">Sin registro hoy</p>
                         <?php endif; ?>
                         <div class="d-flex gap-1 mt-auto flex-wrap">
                             <button class="btn btn-success btn-sm flex-fill" onclick="abrirAsistencia(<?= $curso['id_curso'] ?>, '<?= htmlspecialchars($curso['nombre'], ENT_QUOTES) ?>')">
@@ -370,6 +349,7 @@ $totalAlumnos = array_sum(array_column($cursos, 'total_alumnos'));
         <?php endforeach; ?>
         </div>
     <?php endif; ?>
+    </div><!-- /order cuesos -->
 </div>
 
 <!-- ========================================================== -->
@@ -379,6 +359,7 @@ $totalAlumnos = array_sum(array_column($cursos, 'total_alumnos'));
     <div class="modal-dialog modal-lg modal-dialog-scrollable">
         <div class="modal-content">
             <form id="formAsistencia" onsubmit="guardarAsistencia(event)">
+                <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(generarTokenCSRF()) ?>">
                 <div class="modal-header bg-success text-white">
                     <h5 class="modal-title"><i class="bi bi-clipboard-check"></i> <span id="asistenciaTitulo"></span></h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
@@ -403,6 +384,7 @@ $totalAlumnos = array_sum(array_column($cursos, 'total_alumnos'));
     <div class="modal-dialog modal-xl modal-dialog-scrollable">
         <div class="modal-content">
             <form id="formMensual" onsubmit="guardarMensual(event)">
+                <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(generarTokenCSRF()) ?>">
                 <div class="modal-header bg-danger text-white">
                     <h5 class="modal-title"><i class="bi bi-calendar-month"></i> <span id="mensualTitulo"></span></h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>

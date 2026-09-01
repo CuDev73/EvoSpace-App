@@ -14,63 +14,144 @@ class NotificacionModel
      * Ahora evita duplicados: un padre recibe un solo correo y una sola notificación en BD,
      * aunque tenga hijos en varios cursos seleccionados.
      */
-    public function enviarNotificacionEvento($eventoId, $titulo, $descripcion, $fecha, $hora, $lugar, $enlace, $cursosIds, $color = '#c81015')
+    public function contarPadresNotificados($cursosIds): int
     {
-        // 1. Obtener padres únicos (DISTINCT) con sus IDs y emails
+        if (empty($cursosIds)) return 0;
         $placeholders = implode(',', array_fill(0, count($cursosIds), '?'));
-        $sql = "SELECT DISTINCT u.id_usuario, u.email, u.nombre_completo 
+        $sql = "SELECT COUNT(DISTINCT u.id_usuario)
                 FROM alumnos a
                 INNER JOIN usuarios u ON a.id_padre = u.id_usuario
                 WHERE a.id_curso IN ($placeholders) AND u.activo = 1 AND a.activo = 1";
         $stmt = $this->db->prepare($sql);
         $stmt->execute($cursosIds);
-        $padres = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return (int) $stmt->fetchColumn();
+    }
 
-        // 2. Si hay padres, enviar correo (uno por padre)
-        if (!empty($padres)) {
-            $fechaFormateada = date('d/m/Y', strtotime($fecha));
-            $horaFormateada = $hora ? date('H:i', strtotime($hora)) : 'Sin horario';
-            $lugarTexto = $lugar ?: 'No especificado';
-            $descripcionTexto = $descripcion ?: '';
-            $enlaceTexto = $enlace ?: '';
+    public function enviarNotificacionEvento($eventoId, $titulo, $descripcion, $fecha, $hora, $lugar, $enlace, $cursosIds, $color = '#c81015')
+    {
+        if (empty($cursosIds)) return;
 
-            $asunto = $titulo;
-            $mensajeHTML = "
-                <html>
-                <head>
-                    <style>
-                        body { font-family: Arial, sans-serif; }
-                        .evento { background: #f8f9fa; padding: 20px; border-radius: 8px; border-left: 5px solid $color; }
-                        .detalle { margin: 8px 0; }
-                        .map-link { display: inline-block; margin-top: 10px; padding: 8px 16px; background: $color; color: #fff !important; text-decoration: none; border-radius: 5px; }
-                        .map-link:hover { opacity: 0.85; }
-                    </style>
-                </head>
-                <body>
-                    <div class='evento'>
-                        <h2 style='margin-top:0;color:$color;'>$titulo</h2>
-                        <p><strong>Fecha:</strong> $fechaFormateada</p>
-                        <p><strong>Hora:</strong> $horaFormateada</p>
-                        <p><strong>Lugar:</strong> $lugarTexto</p>
-                        " . ($enlaceTexto ? "<p><a href='$enlaceTexto' target='_blank' class='map-link'>Ver en mapa</a></p>" : "") . "
-                        " . ($descripcionTexto ? "<p><strong>Descripción:</strong><br>" . nl2br($descripcionTexto) . "</p>" : "") . "
-                    </div>
-                    <p style='margin-top: 20px;'>Por favor, revisa el panel de EvoSpace para más detalles.</p>
-                    <p style='color: #6c757d; font-size: 0.9rem;'>Este correo es automático, no respondas a esta dirección.</p>
-                </body>
-                </html>
-            ";
+        // 1. Padres únicos con el curso (el primero de su hijo en los cursos seleccionados)
+        $placeholders = implode(',', array_fill(0, count($cursosIds), '?'));
+        $sql = "SELECT u.id_usuario, u.email, u.nombre_completo, cu.nombre AS curso_nombre, cu.tipo AS curso_tipo
+                FROM alumnos a
+                INNER JOIN usuarios u ON a.id_padre = u.id_usuario
+                INNER JOIN cursos cu ON a.id_curso = cu.id_curso
+                WHERE a.id_curso IN ($placeholders) AND u.activo = 1 AND a.activo = 1
+                ORDER BY u.id_usuario, cu.id_curso";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($cursosIds);
 
-            foreach ($padres as $padre) {
-                enviarCorreo($padre['email'], $asunto, $mensajeHTML);
+        $padres = [];
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $fila) {
+            if (!isset($padres[$fila['id_usuario']])) {
+                $padres[$fila['id_usuario']] = $fila;
+            }
+        }
+        $padres = array_values($padres);
+        if (empty($padres)) return;
+
+        // 2. Flyer / imagen del evento (si existe en disco, se embebe como adjunto)
+        $imagenRuta = '';
+        $stmtImg = $this->db->prepare("SELECT imagen FROM eventos WHERE id_evento = ?");
+        $stmtImg->execute([$eventoId]);
+        $imagen = (string) $stmtImg->fetchColumn();
+        if ($imagen) {
+            $rutaAbs = realpath(__DIR__ . '/../../../' . ltrim($imagen, '/'));
+            if ($rutaAbs && is_file($rutaAbs)) {
+                $imagenRuta = $rutaAbs;
             }
         }
 
-        // 3. Guardar notificaciones en la base de datos (una por padre, no por curso)
+        // 3. Textos del correo configurables (Configuración → Correo de Eventos)
+        $configCorreo = $this->db->query("SELECT clave, valor FROM configuracion WHERE clave IN ('correo_saludo','correo_mensaje','correo_firma','correo_remitente')")->fetchAll(PDO::FETCH_KEY_PAIR);
+        $saludoBase = $configCorreo['correo_saludo'] ?? 'Apreciado/a {tutor}:';
+        $mensajeBase = $configCorreo['correo_mensaje'] ?? 'Queremos invitarte a nuestro próximo evento. ¡Te esperamos!';
+        $firmaBase = $configCorreo['correo_firma'] ?? 'Equipo Instituto EvolucionArte';
+        $remitente = trim($configCorreo['correo_remitente'] ?? '');
+
+        $fechaFormateada = date('d/m/Y', strtotime($fecha));
+        $horaFormateada = $hora ? date('H:i', strtotime($hora)) : 'Sin horario';
+        $lugarSeguro = htmlspecialchars($lugar ?: 'No especificado', ENT_QUOTES, 'UTF-8');
+        $descripcionSegura = nl2br(htmlspecialchars($descripcion ?: '', ENT_QUOTES, 'UTF-8'));
+        $enlaceSeguro = htmlspecialchars($enlace ?: '', ENT_QUOTES, 'UTF-8');
+        $tituloSeguro = htmlspecialchars($titulo, ENT_QUOTES, 'UTF-8');
+        $colorSeguro = (is_string($color) && preg_match('/^#[0-9a-fA-F]{6}$/', $color)) ? $color : '#c81015';
+        $asunto = $titulo;
+
+        foreach ($padres as $padre) {
+            $cursoLabel = htmlspecialchars((($padre['curso_tipo'] ?? '') ? $padre['curso_tipo'] . ' - ' : '') . ($padre['curso_nombre'] ?? 'Curso'), ENT_QUOTES, 'UTF-8');
+            $primerNombre = trim((preg_split('/\s+/', trim($padre['nombre_completo'] ?? ''))[0] ?? ''));
+            $saludoSeguro = htmlspecialchars(str_replace('{tutor}', $primerNombre, $saludoBase), ENT_QUOTES, 'UTF-8');
+            $mensajeSeguro = htmlspecialchars(str_replace('{tutor}', $primerNombre, $mensajeBase), ENT_QUOTES, 'UTF-8');
+            $firmaSeguro = htmlspecialchars(str_replace('{tutor}', $primerNombre, $firmaBase), ENT_QUOTES, 'UTF-8');
+
+            $mensajeHTML = "
+            <table role='presentation' width='100%' cellpadding='0' cellspacing='0' style='background-color:#f2f2f2; padding:24px 0;'>
+              <tr>
+                <td align='center'>
+                  <table role='presentation' width='600' cellpadding='0' cellspacing='0' style='background-color:#ffffff; border-radius:8px; overflow:hidden; font-family:Arial, Helvetica, sans-serif;'>
+
+                    <tr>
+                      <td style='background-color:#C81015; padding:16px 24px;' align='left'>
+                        <table role='presentation' cellpadding='0' cellspacing='0'>
+                          <tr>
+                            <td style='width:32px; height:32px; background-color:rgba(255,255,255,0.15); border-radius:6px; text-align:center; vertical-align:middle; color:#ffffff; font-size:13px; font-weight:bold;'>EA</td>
+                            <td style='padding-left:10px; color:#ffffff; font-size:15px; font-weight:bold;'>Instituto EvolucionArte</td>
+                          </tr>
+                        </table>
+                      </td>
+                    </tr>
+
+                    " . ($imagenRuta ? "<tr><td><img src='cid:flyer' width='600' alt='$tituloSeguro' style='display:block; width:100%; max-width:600px; height:auto;'></td></tr>" : "") . "
+
+                    <tr>
+                      <td style='padding:24px;'>
+                        <p style='margin:0 0 4px; font-size:12px; color:#888888; text-transform:uppercase; letter-spacing:0.5px;'>Curso: $cursoLabel</p>
+                        <h1 style='margin:0 0 18px; font-size:22px; color:$colorSeguro;'>$tituloSeguro</h1>
+                        <p style='margin:0 0 16px; font-size:14px; color:#555555; line-height:1.6;'>$saludoSeguro</p>
+                        <p style='margin:0 0 18px; font-size:14px; color:#555555; line-height:1.6;'>$mensajeSeguro</p>
+
+                        <table role='presentation' cellpadding='0' cellspacing='0' style='margin-bottom:20px;'>
+                          <tr>
+                            <td style='padding:4px 0; font-size:14px; color:#333333;'>📅 <strong>Fecha:</strong> $fechaFormateada</td>
+                          </tr>
+                          <tr>
+                            <td style='padding:4px 0; font-size:14px; color:#333333;'>🕒 <strong>Hora:</strong> $horaFormateada</td>
+                          </tr>
+                          <tr>
+                            <td style='padding:4px 0; font-size:14px; color:#333333;'>📍 <strong>Lugar:</strong> $lugarSeguro</td>
+                          </tr>
+                        </table>
+
+                        " . ($enlaceSeguro ? "<table role='presentation' cellpadding='0' cellspacing='0' style='margin-bottom:22px;'><tr><td style='background-color:$colorSeguro; border-radius:4px;'><a href='$enlaceSeguro' target='_blank' style='display:inline-block; padding:10px 20px; font-size:14px; color:#ffffff; text-decoration:none; font-family:Arial, sans-serif;'>Ver ubicación en el mapa</a></td></tr></table>" : "") . "
+
+                        " . ($descripcionSegura ? "<table role='presentation' width='100%' cellpadding='0' cellspacing='0' style='border-top:1px solid #eeeeee; padding-top:14px;'><tr><td><p style='margin:0 0 4px; font-size:12px; color:#888888; text-transform:uppercase; letter-spacing:0.5px;'>Descripción</p><p style='margin:0; font-size:14px; color:#555555; line-height:1.6;'>$descripcionSegura</p></td></tr></table>" : "") . "
+                        " . ($firmaSeguro ? "<p style='margin:18px 0 0; font-size:14px; color:#333333; font-style:italic;'>$firmaSeguro</p>" : "") . "
+                      </td>
+                    </tr>
+
+                    <tr>
+                      <td style='background-color:#f7f7f7; padding:14px 24px; text-align:center;'>
+                        <p style='margin:0 0 4px; font-size:12px; color:#999999;'>Este correo fue enviado automáticamente por EvoSpace.</p>
+                        <p style='margin:0; font-size:12px; color:#999999;'>Instituto EvolucionArte · Ingresá a tu panel de tutor/a para más detalles.</p>
+                      </td>
+                    </tr>
+
+                  </table>
+                </td>
+              </tr>
+            </table>
+            ";
+
+            enviarCorreo($padre['email'], $asunto, $mensajeHTML, '', $imagenRuta, $remitente);
+        }
+
+        // 4. Guardar notificaciones en la base de datos (una por padre, no por curso)
         $sqlInsert = "INSERT INTO notificaciones (id_evento, id_usuario, titulo, mensaje, tipo) VALUES (?, ?, ?, ?, 'evento')";
         $stmtInsert = $this->db->prepare($sqlInsert);
         foreach ($padres as $padre) {
-            $stmtInsert->execute([$eventoId, $padre['id_usuario'], $titulo, $descripcionTexto]);
+            $stmtInsert->execute([$eventoId, $padre['id_usuario'], $titulo, $descripcion ?: '']);
         }
     }
 

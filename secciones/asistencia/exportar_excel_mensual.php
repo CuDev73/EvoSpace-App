@@ -1,6 +1,4 @@
 <?php
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
 session_start();
 
 if (!isset($_SESSION['id_usuario'])) {
@@ -93,9 +91,13 @@ foreach ($alumnos as $alumno) {
     $sheet->setCellValue(Coordinate::stringFromColumnIndex($col++) . $row, $alumno['apellido'] . ' ' . $alumno['nombre']);
     $presentes = 0;
     foreach ($dias as $dia) {
-        $estado = $asistencias[$alumno['id_alumno']][$dia] ?? 0;
-        $sheet->setCellValue(Coordinate::stringFromColumnIndex($col++) . $row, $estado ? 'P' : 'A');
-        if ($estado) $presentes++;
+        $presente = $asistencias[$alumno['id_alumno']][$dia] ?? null;
+        if ($presente === null) {
+            $sheet->setCellValue(Coordinate::stringFromColumnIndex($col++) . $row, 'N/A');
+        } else {
+            $sheet->setCellValue(Coordinate::stringFromColumnIndex($col++) . $row, $presente ? 'P' : 'A');
+            if ($presente) $presentes++;
+        }
     }
     $totalDias = count($dias);
     $ausencias = $totalDias - $presentes;

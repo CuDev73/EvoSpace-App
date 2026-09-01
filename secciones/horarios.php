@@ -19,6 +19,7 @@ $tipoMensaje = 'info';
 $dias = [1 => 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    verificarTokenCSRF();
     $accion = $_POST['accion'] ?? '';
 
     if ($accion === 'guardar') {
@@ -110,6 +111,7 @@ $total_alumnos_por_curso = $pdo->query("SELECT id_curso, COUNT(*) AS total FROM 
                         <div class="card-header bg-evo text-white d-flex justify-content-between align-items-center">
                             <span class="fw-bold"><?= htmlspecialchars($curso['nombre']) ?></span>
                             <form method="POST" class="d-inline-flex align-items-center gap-1">
+                                <?= campoCSRF() ?>
                                 <input type="hidden" name="accion" value="cupo">
                                 <input type="hidden" name="id_curso" value="<?= $id ?>">
                                 <input type="number" name="cupo_maximo" value="<?= $cupo ?? '' ?>" placeholder="sin límite" class="form-control form-control-sm" style="width:80px" title="Cupo máximo (dejar vacío = sin límite)" onchange="this.form.submit()">
@@ -137,6 +139,7 @@ $total_alumnos_por_curso = $pdo->query("SELECT id_curso, COUNT(*) AS total FROM 
                                                 <?php endif; ?>
                                             </span>
                                             <form method="POST" class="d-inline" onsubmit="return confirm('¿Eliminar este horario?')">
+                                                <?= campoCSRF() ?>
                                                 <input type="hidden" name="accion" value="eliminar">
                                                 <input type="hidden" name="id_horario" value="<?= $h['id_horario'] ?>">
                                                 <button class="btn btn-sm btn-outline-danger py-0 px-1"><i class="bi bi-x"></i></button>
@@ -165,6 +168,7 @@ $total_alumnos_por_curso = $pdo->query("SELECT id_curso, COUNT(*) AS total FROM 
                 </div>
                 <form method="POST">
                     <div class="modal-body">
+                        <?= campoCSRF() ?>
                         <input type="hidden" name="accion" value="guardar">
                         <input type="hidden" name="id_horario" id="id_horario" value="0">
                         <input type="hidden" name="id_curso" id="id_curso" value="">

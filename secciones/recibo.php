@@ -29,6 +29,10 @@ if (!$pago) {
     exit('Pago no encontrado');
 }
 
+if (!verificarAccesoAlumno($pdo, (int)$pago['id_alumno'])) {
+    denegarAcceso();
+}
+
 $alumno = $pago['nombre'] . ' ' . $pago['apellido'];
 $curso = $pago['curso_tipo'] . ' - ' . $pago['curso_nombre'];
 

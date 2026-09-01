@@ -6,6 +6,7 @@ if (!isset($_SESSION['id_usuario'])) {
 }
 
 require_once '../../config/db.php';
+require_once '../../helpers/asistencia.php';
 verificarPermiso('asistencia');
 
 $id_curso = isset($_GET['id_curso']) ? (int)$_GET['id_curso'] : 0;
@@ -17,30 +18,28 @@ if ($id_curso == 0) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    verificarTokenCSRF();
     $presentes = $_POST['presente'] ?? [];
     $observaciones = $_POST['observacion'] ?? [];
+    $estados = [];
+    $alumnoIds = array_unique(array_merge(array_keys($presentes), array_keys($observaciones)));
+    foreach ($alumnoIds as $id_alumno) {
+        $estados[(int)$id_alumno] = [
+            'presente' => !empty($presentes[$id_alumno]) ? 1 : 0,
+            'observaciones' => trim($observaciones[$id_alumno] ?? ''),
+        ];
+    }
     try {
-        $pdo->beginTransaction();
-        $stmtAlumnos = $pdo->prepare("SELECT id_alumno FROM alumnos WHERE id_curso = ? AND activo = 1");
-        $stmtAlumnos->execute([$id_curso]);
-        $alumnosCurso = $stmtAlumnos->fetchAll(PDO::FETCH_COLUMN);
-        $stmtDel = $pdo->prepare("DELETE FROM asistencia WHERE id_curso = ? AND fecha = ?");
-        $stmtDel->execute([$id_curso, $fecha]);
-        $stmtIns = $pdo->prepare("INSERT INTO asistencia (id_alumno, id_curso, fecha, presente, observaciones) VALUES (?, ?, ?, ?, ?)");
-        foreach ($alumnosCurso as $id_alumno) {
-            $presente = isset($presentes[$id_alumno]) ? 1 : 0;
-            $obs = trim($observaciones[$id_alumno] ?? '');
-            $stmtIns->execute([$id_alumno, $id_curso, $fecha, $presente, $obs]);
-        }
-        $pdo->commit();
+        guardarAsistenciaDiaria($pdo, $id_curso, $fecha, $estados);
         header('Location: registrar.php?id_curso=' . $id_curso . '&fecha=' . $fecha . '&guardado=1');
         exit;
     } catch (Exception $e) {
-        $pdo->rollBack();
         $mensaje = '<div class="alert alert-danger"><i class="bi bi-exclamation-triangle-fill"></i> Error: ' . $e->getMessage() . '</div>';
     }
 }
 
+$mostrarVolver = true;
+$volverUrl = 'index.php';
 include '../../includes/header.php';
 include '../../includes/navbar.php';
 
@@ -52,18 +51,9 @@ if (!$curso) {
     exit;
 }
 
-$stmt = $pdo->prepare("SELECT id_alumno, nombre, apellido FROM alumnos WHERE id_curso = ? AND activo = 1 ORDER BY apellido, nombre");
-$stmt->execute([$id_curso]);
-$alumnos = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-$asistenciasExistentes = [];
-if (!empty($alumnos)) {
-    $ids = array_column($alumnos, 'id_alumno');
-    $placeholders = implode(',', array_fill(0, count($ids), '?'));
-    $stmt = $pdo->prepare("SELECT id_alumno, presente, observaciones FROM asistencia WHERE id_curso = ? AND fecha = ? AND id_alumno IN ($placeholders)");
-    $stmt->execute(array_merge([$id_curso, $fecha], $ids));
-    $asistenciasExistentes = $stmt->fetchAll(PDO::FETCH_ASSOC | PDO::FETCH_GROUP);
-}
+$dataAsistencia = obtenerAlumnosConAsistencia($pdo, $id_curso, $fecha);
+$alumnos = $dataAsistencia['alumnos'];
+$asistenciasExistentes = $dataAsistencia['asistencias'];
 
 $mensaje = $mensaje ?? '';
 if (isset($_GET['guardado']) && $_GET['guardado'] == 1) {
@@ -97,6 +87,7 @@ if (isset($_GET['guardado']) && $_GET['guardado'] == 1) {
         </div>
         <div class="card-body">
             <form method="POST" id="formAsistencia">
+                <?= campoCSRF() ?>
                 <div class="table-responsive">
                     <table class="table table-hover table-sm align-middle">
                         <thead class="table-light">
@@ -112,7 +103,7 @@ if (isset($_GET['guardado']) && $_GET['guardado'] == 1) {
                                 <tr><td colspan="4" class="text-center">No hay alumnos en este curso.</td></tr>
                             <?php else: ?>
                                 <?php foreach ($alumnos as $index => $alumno):
-                                    $asistencia = $asistenciasExistentes[$alumno['id_alumno']][0] ?? null;
+                                    $asistencia = $asistenciasExistentes[$alumno['id_alumno']] ?? null;
                                     $presente = $asistencia ? $asistencia['presente'] : 1;
                                     $obs = $asistencia ? $asistencia['observaciones'] : '';
                                 ?>
@@ -140,9 +131,6 @@ if (isset($_GET['guardado']) && $_GET['guardado'] == 1) {
                     <button type="submit" class="btn btn-danger">
                         <i class="bi bi-save"></i> Guardar asistencia
                     </button>
-                    <a href="index.php" class="btn btn-secondary">
-                        <i class="bi bi-arrow-left"></i> Volver
-                    </a>
                     <a href="mensual.php?id_curso=<?= $id_curso ?>" class="btn btn-outline-danger">
                         <i class="bi bi-calendar-month"></i> Vista mensual
                     </a>
@@ -166,7 +154,7 @@ if (isset($_GET['guardado']) && $_GET['guardado'] == 1) {
                     <button type="submit" class="btn btn-primary">Ver esta fecha</button>
                 </div>
                 <div class="col-md-4 d-flex align-items-end justify-content-end">
-                    <a href="registrar.php?id_curso=<?= $id_curso ?>" class="btn btn-outline-secondary">Volver a hoy</a>
+                    <a href="registrar.php?id_curso=<?= $id_curso ?>" class="btn btn-outline-secondary">Hoy</a>
                 </div>
             </form>
         </div>

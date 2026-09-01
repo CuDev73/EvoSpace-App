@@ -1,6 +1,4 @@
 <?php
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
 
 session_start();
 if (!isset($_SESSION['id_usuario'])) {
@@ -10,6 +8,7 @@ if (!isset($_SESSION['id_usuario'])) {
 
 
 include '../../includes/header.php';
+$mostrarVolver = true;
 include '../../includes/navbar.php';
 require_once '../../config/db.php';
 
@@ -20,12 +19,15 @@ if (!function_exists('obtenerPorcentajeBeca')) {
     function obtenerPorcentajeBeca($pdo) {
         $stmt = $pdo->query("SELECT valor FROM configuracion WHERE clave = 'porcentaje_beca'");
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
-        return $result ? (float)$result['valor'] : 45.45;
+        return $result ? (float)$result['valor'] : 50.0;
     }
 }
 
 $mensaje = '';
 $porcentaje_beca = obtenerPorcentajeBeca($pdo);
+$recargo_por_dia = (float)($pdo->query("SELECT valor FROM configuracion WHERE clave = 'recargo_por_dia'")->fetchColumn() ?: 1000);
+$dia_limite = (int)($pdo->query("SELECT valor FROM configuracion WHERE clave = 'dia_limite_pago'")->fetchColumn() ?: 10);
+$dias_gracia = (int)($pdo->query("SELECT valor FROM configuracion WHERE clave = 'dias_gracia_pago'")->fetchColumn() ?: 10);
 
 // ==========================================================
 // 1. Asegurar conceptos según el tipo de curso
@@ -60,6 +62,7 @@ foreach ($todosCursos as $curso) {
 // 2. Procesar actualización de precios y porcentaje de beca
 // ==========================================================
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    verificarTokenCSRF();
     $accion = $_POST['accion'] ?? '';
 
     if ($accion === 'actualizar_precios') {
@@ -67,6 +70,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errores = 0;
         foreach ($precios as $id_precio => $precio) {
             $precio = (float)$precio;
+            $id_precio = (int)$id_precio;
             $sql = "UPDATE precios SET precio = ? WHERE id_precio = ?";
             $stmt = $pdo->prepare($sql);
             if (!$stmt->execute([$precio, $id_precio])) {
@@ -93,6 +97,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         } else {
             $mensaje = '<div class="alert alert-danger"><i class="bi bi-exclamation-triangle-fill"></i> El porcentaje debe estar entre 0 y 100.</div>';
+        }
+    }
+
+    if ($accion === 'actualizar_recargo') {
+        $nuevo_recargo = (float)$_POST['recargo_por_dia'];
+        $nuevo_dia_limite = (int)$_POST['dia_limite_pago'];
+        $nuevo_dias_gracia = (int)$_POST['dias_gracia_pago'];
+        if ($nuevo_recargo >= 0 && $nuevo_dia_limite >= 1 && $nuevo_dia_limite <= 31 && $nuevo_dias_gracia >= 0 && $nuevo_dias_gracia <= 31) {
+            $sql = "INSERT INTO configuracion (clave, valor) VALUES ('recargo_por_dia', ?) ON DUPLICATE KEY UPDATE valor = VALUES(valor)";
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute([$nuevo_recargo]);
+            $sql = "INSERT INTO configuracion (clave, valor) VALUES ('dia_limite_pago', ?) ON DUPLICATE KEY UPDATE valor = VALUES(valor)";
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute([$nuevo_dia_limite]);
+            $sql = "INSERT INTO configuracion (clave, valor) VALUES ('dias_gracia_pago', ?) ON DUPLICATE KEY UPDATE valor = VALUES(valor)";
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute([$nuevo_dias_gracia]);
+            $recargo_por_dia = $nuevo_recargo;
+            $dia_limite = $nuevo_dia_limite;
+            $dias_gracia = $nuevo_dias_gracia;
+            $mensaje = '<div class="alert alert-success"><i class="bi bi-check-circle-fill"></i> Vencimiento y recargo actualizados correctamente.</div>';
+        } else {
+            $mensaje = '<div class="alert alert-danger"><i class="bi bi-exclamation-triangle-fill"></i> Valores inválidos para vencimiento o recargo.</div>';
         }
     }
 }
@@ -140,6 +167,7 @@ $iconos = [
         </div>
         <div class="card-body py-2">
             <form method="POST" class="row g-2 align-items-end">
+                <?= campoCSRF() ?>
                 <input type="hidden" name="accion" value="actualizar_beca">
                 <div class="col-md-4">
                     <label class="form-label small mb-0">Porcentaje a pagar (%)</label>
@@ -163,8 +191,50 @@ $iconos = [
         </div>
     </div>
 
+    <!-- SECCIÓN: Vencimiento y recargo -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-evo text-white py-2">
+            <i class="bi bi-calendar-event"></i> Vencimiento y recargo
+        </div>
+        <div class="card-body py-2">
+            <form method="POST" class="row g-2 align-items-end">
+                <?= campoCSRF() ?>
+                <input type="hidden" name="accion" value="actualizar_recargo">
+                <div class="col-md-4">
+                    <label class="form-label small mb-0">Días de gracia</label>
+                    <input type="number" name="dias_gracia_pago" class="form-control form-control-sm"
+                        value="<?= $dias_gracia ?>" min="0" max="31" required>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small mb-0">Recargo por día (Gs)</label>
+                    <input type="number" step="100" name="recargo_por_dia" class="form-control form-control-sm"
+                        value="<?= (int)$recargo_por_dia ?>" min="0" required>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small mb-0">Día límite (base)</label>
+                    <input type="number" name="dia_limite_pago" class="form-control form-control-sm"
+                        value="<?= (int)$dia_limite ?>" min="1" max="31" required>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-warning btn-sm w-100">
+                        <i class="bi bi-save"></i> Actualizar
+                    </button>
+                </div>
+                <div class="col-12">
+                    <small class="text-muted">
+                        <i class="bi bi-info-circle me-1"></i>
+                        La cuota vence el día de cobro del tutor/a <?= $dias_gracia > 0 ? 'más ' . $dias_gracia . ' días de gracia' : '' ?>
+                        (día <?= $dia_limite ?> base). Pasado ese día se cobra Gs <?= number_format($recargo_por_dia, 0, ',', '.') ?> por día de atraso.
+                        Ej: cobra el 15 → vence el día <?= 15 + $dias_gracia ?>.
+                    </small>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- SECCIÓN: Precios por curso (agrupados por tipo con divisores) -->
     <form method="POST" id="formPrecios">
+        <?= campoCSRF() ?>
         <input type="hidden" name="accion" value="actualizar_precios">
 
         <?php 
@@ -224,9 +294,6 @@ $iconos = [
         <?php endforeach; ?>
 
         <div class="d-flex gap-2 mt-4 pb-3">
-            <a href="configuracion.php" class="btn btn-secondary flex-fill">
-                <i class="bi bi-arrow-left"></i> Volver
-            </a>
             <button type="button" class="btn btn-danger flex-fill" data-bs-toggle="modal" data-bs-target="#modalConfirmar">
                 <i class="bi bi-save"></i> Guardar todos los precios
             </button>

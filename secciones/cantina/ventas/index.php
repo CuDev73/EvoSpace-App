@@ -25,17 +25,30 @@ if (isset($_GET['nombre_comprador']) && $_GET['nombre_comprador']) {
     $filtros['nombre_comprador'] = $_GET['nombre_comprador'];
 }
 
-// Marcar como pagado inline
+// Cobrar venta (total o parcial)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['marcar_pagado'])) {
-    $id = (int)$_POST['id_venta'];
-    $stmt = $pdo->prepare("UPDATE ventas SET estado_pago = 'pagado' WHERE id_venta = ?");
+    verificarTokenCSRF();
+    $id = (int) $_POST['id_venta'];
+    $stmt = $pdo->prepare("SELECT total, monto_pagado FROM ventas WHERE id_venta = ?");
     $stmt->execute([$id]);
+    $venta = $stmt->fetch(PDO::FETCH_OBJ);
+    if ($venta) {
+        $total = (float) $venta->total;
+        $pagado = (float) $venta->monto_pagado;
+        $restante = $total - $pagado;
+        $monto = (isset($_POST['monto']) && $_POST['monto'] !== '') ? (float) $_POST['monto'] : $restante;
+        $monto = max(0, min($monto, $restante));
+        $nuevoPagado = $pagado + $monto;
+        $nuevoEstado = $nuevoPagado >= $total ? 'pagado' : 'parcial';
+        $stmt = $pdo->prepare("UPDATE ventas SET monto_pagado = ?, estado_pago = ? WHERE id_venta = ?");
+        $stmt->execute([$nuevoPagado, $nuevoEstado, $id]);
+    }
     header('Location: index.php');
     exit;
 }
 
 $ventas = obtenerVentas($pdo, $filtros);
-$total_ventas = array_sum(array_column($ventas, 'total'));
+$total_ventas = array_sum(array_map(fn($v) => (float) $v->monto_pagado, $ventas));
 
 $mostrarVolver = true;
 $volverUrl = '../index.php';
@@ -71,17 +84,18 @@ include '../../../includes/navbar.php';
                         <option value="">Todos</option>
                         <option value="alumno" <?= ($_GET['tipo_comprador'] ?? '') == 'alumno' ? 'selected' : '' ?>>Alumno</option>
                         <option value="profesor" <?= ($_GET['tipo_comprador'] ?? '') == 'profesor' ? 'selected' : '' ?>>Profesor</option>
-                        <option value="padre" <?= ($_GET['tipo_comprador'] ?? '') == 'padre' ? 'selected' : '' ?>>Padre</option>
+                        <option value="padre" <?= ($_GET['tipo_comprador'] ?? '') == 'padre' ? 'selected' : '' ?>>Tutor/a</option>
                         <option value="otro" <?= ($_GET['tipo_comprador'] ?? '') == 'otro' ? 'selected' : '' ?>>Otro</option>
                     </select>
                 </div>
                 <div class="col-md-1">
                     <label class="form-label small">Estado</label>
-                    <select name="estado_pago" class="form-select form-select-sm">
-                        <option value="">Todos</option>
-                        <option value="pagado" <?= ($_GET['estado_pago'] ?? '') == 'pagado' ? 'selected' : '' ?>>Pagado</option>
-                        <option value="pendiente" <?= ($_GET['estado_pago'] ?? '') == 'pendiente' ? 'selected' : '' ?>>Pendiente</option>
-                    </select>
+<select name="estado_pago" class="form-select form-select-sm">
+                            <option value="">Todos</option>
+                            <option value="pagado" <?= ($_GET['estado_pago'] ?? '') == 'pagado' ? 'selected' : '' ?>>Pagado</option>
+                            <option value="pendiente" <?= ($_GET['estado_pago'] ?? '') == 'pendiente' ? 'selected' : '' ?>>Pendiente</option>
+                            <option value="parcial" <?= ($_GET['estado_pago'] ?? '') == 'parcial' ? 'selected' : '' ?>>Parcial</option>
+                        </select>
                 </div>
                 <div class="col-md-1">
                     <button type="submit" class="btn btn-danger btn-sm w-100">Filtrar</button>
@@ -95,7 +109,7 @@ include '../../../includes/navbar.php';
 
     <!-- Total -->
     <div class="alert alert-info">
-        <strong>Total recaudado:</strong> Gs <?= number_format($total_ventas, 0, ',', '.') ?>
+        <strong>Total cobrado:</strong> Gs <?= number_format($total_ventas, 0, ',', '.') ?>
         <span class="ms-3"><strong>Ventas:</strong> <?= count($ventas) ?></span>
     </div>
 
@@ -129,15 +143,28 @@ include '../../../includes/navbar.php';
                                     <td><span class="badge bg-<?= $v->tipo_comprador == 'alumno' ? 'primary' : ($v->tipo_comprador == 'profesor' ? 'info' : 'secondary') ?>"><?= ucfirst($v->tipo_comprador ?? 'otro') ?></span></td>
                                     <td class="text-end"><?= number_format($v->total, 0, ',', '.') ?></td>
                                     <td><span class="badge bg-<?= $v->metodo_pago == 'Efectivo' ? 'success' : ($v->metodo_pago == 'Transferencia' ? 'info' : 'warning') ?>"><?= $v->metodo_pago ?></span></td>
-                                    <td><span class="badge bg-<?= $v->estado_pago == 'pagado' ? 'success' : ($v->estado_pago == 'pendiente' ? 'danger' : 'warning') ?>"><?= ucfirst($v->estado_pago ?? 'pagado') ?></span></td>
+                                    <td>
+                                        <?php if ($v->estado_pago == 'pagado'): ?>
+                                            <span class="badge bg-success">Pagado</span>
+                                        <?php elseif ($v->estado_pago == 'parcial'): ?>
+                                            <span class="badge bg-warning">Parcial</span>
+                                            <small class="d-block text-muted">Pág. <?= number_format($v->monto_pagado, 0, ',', '.') ?> / <?= number_format($v->total, 0, ',', '.') ?></small>
+                                        <?php else: ?>
+                                            <span class="badge bg-danger">Pendiente</span>
+                                        <?php endif; ?>
+                                    </td>
                                     <td class="text-center"><?= $v->total_items ?></td>
                                     <td>
                                         <?php if ($v->estado_pago == 'pendiente' || $v->estado_pago == 'parcial'): ?>
-                                            <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#pagarModal" data-id="<?= $v->id_venta ?>" data-comprador="<?= htmlspecialchars($v->nombre_comprador ?? 'Anónimo', ENT_QUOTES) ?>" data-total="<?= number_format($v->total, 0, ',', '.') ?>"><i class="bi bi-check-circle"></i></button>
+                                            <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#pagarModal" data-id="<?= $v->id_venta ?>" data-comprador="<?= htmlspecialchars($v->nombre_comprador ?? 'Anónimo', ENT_QUOTES) ?>" data-total="<?= number_format($v->total, 0, ',', '.') ?>" data-restante="<?= (float) $v->total - (float) $v->monto_pagado ?>"><i class="bi bi-check-circle"></i></button>
                                         <?php else: ?>
                                             <span class="text-success"><i class="bi bi-check-circle-fill"></i></span>
                                         <?php endif; ?>
-                                        <a href="eliminar.php?id=<?= $v->id_venta ?>" class="btn btn-danger btn-sm" onclick="return confirm('¿Eliminar esta venta?')"><i class="bi bi-trash"></i></a>
+                                        <form method="POST" action="eliminar.php" class="d-inline" onsubmit="return confirm('¿Eliminar esta venta?')">
+                                            <?= campoCSRF() ?>
+                                            <input type="hidden" name="id_venta" value="<?= $v->id_venta ?>">
+                                            <button type="submit" class="btn btn-danger btn-sm"><i class="bi bi-trash"></i></button>
+                                        </form>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
@@ -154,6 +181,7 @@ include '../../../includes/navbar.php';
     <div class="modal-dialog modal-sm modal-dialog-centered">
         <div class="modal-content">
             <form method="POST">
+                <?= campoCSRF() ?>
                 <input type="hidden" name="id_venta" id="modalIdVenta">
                 <div class="modal-header bg-success text-white">
                     <h6 class="modal-title"><i class="bi bi-check-circle"></i> Confirmar pago</h6>
@@ -166,7 +194,7 @@ include '../../../includes/navbar.php';
                 </div>
                 <div class="modal-footer justify-content-center">
                     <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" name="marcar_pagado" class="btn btn-success btn-sm"><i class="bi bi-check-circle"></i> Confirmar pago</button>
+                    <button type="submit" name="marcar_pagado" class="btn btn-success btn-sm"><i class="bi bi-check-circle"></i> Cobrar</button>
                 </div>
             </form>
         </div>
@@ -180,6 +208,10 @@ document.getElementById('pagarModal').addEventListener('show.bs.modal', function
     document.getElementById('modalIdText').textContent = '#' + btn.dataset.id;
     document.getElementById('modalComprador').textContent = btn.dataset.comprador;
     document.getElementById('modalTotal').textContent = 'Gs ' + btn.dataset.total;
+    document.getElementById('modalRestante').textContent = 'Saldo pendiente: Gs ' + Number(btn.dataset.restante).toLocaleString('es-PY').replace(/,/g, '.');
+    const inp = document.getElementById('montoPago');
+    inp.value = btn.dataset.restante;
+    inp.max = btn.dataset.restante;
 });
 </script>
 

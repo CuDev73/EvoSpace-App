@@ -51,6 +51,11 @@ $statsHoy = $pdo->prepare("
         </div>
     <?php endif; ?>
 
+    <div class="input-group mb-3" style="max-width:420px;">
+        <span class="input-group-text"><i class="bi bi-search"></i></span>
+        <input type="text" id="buscarCursoAsistencia" class="form-control" placeholder="Buscar curso...">
+    </div>
+
     <?php if (empty($cursos)): ?>
         <div class="alert alert-warning">No hay cursos con alumnos asignados.</div>
     <?php else: ?>
@@ -70,7 +75,7 @@ $statsHoy = $pdo->prepare("
                 $grupo_actual = $curso['tipo'];
             endif;
         ?>
-            <div class="col-md-4 col-lg-3">
+            <div class="col-md-4 col-lg-3" data-tipo="<?= htmlspecialchars($curso['tipo']) ?>" data-nombre="<?= htmlspecialchars($curso['nombre']) ?>">
                 <div class="card shadow h-100 text-center">
                     <div class="card-body d-flex flex-column align-items-center justify-content-center">
                         <i class="bi bi-book fs-1 text-danger"></i>
@@ -91,5 +96,19 @@ $statsHoy = $pdo->prepare("
         </div>
     <?php endif; ?>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const bus = document.getElementById('buscarCursoAsistencia');
+    if (!bus) return;
+    bus.addEventListener('input', function() {
+        const q = this.value.toLowerCase().trim();
+        document.querySelectorAll('[data-nombre]').forEach(col => {
+            const texto = ((col.dataset.nombre || '') + ' ' + (col.dataset.tipo || '')).toLowerCase();
+            col.style.display = (!q || texto.includes(q)) ? '' : 'none';
+        });
+    });
+});
+</script>
 
 <?php include '../../includes/footer.php'; ?>

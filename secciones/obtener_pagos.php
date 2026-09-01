@@ -27,10 +27,25 @@ if (!$alumno) {
     exit('Alumno no encontrado');
 }
 
-$sql = "SELECT * FROM pagos WHERE id_alumno = ? ORDER BY fecha DESC";
+if (!verificarAccesoAlumno($pdo, $id_alumno)) {
+    denegarAcceso();
+}
+
+$sql = "SELECT p.*, e.titulo AS evento_titulo
+        FROM pagos p
+        LEFT JOIN eventos e ON p.id_evento = e.id_evento
+        WHERE p.id_alumno = ? ORDER BY p.fecha DESC";
 $stmt = $pdo->prepare($sql);
 $stmt->execute([$id_alumno]);
 $pagos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+$anioActual = (int)date('Y');
+$matriculaPagada = false;
+foreach ($pagos as $pago) {
+    if (stripos($pago['concepto'], 'matrícula') !== false && (int)date('Y', strtotime($pago['fecha'])) === $anioActual) {
+        $matriculaPagada = true;
+    }
+}
 
 // Separar cuotas de otros conceptos
 $cuotas = [];
@@ -59,6 +74,11 @@ $sumaOtros = array_sum(array_column($otros, 'total'));
     <p><strong>Curso:</strong> <?= htmlspecialchars($alumno['curso_tipo'] . ' - ' . $alumno['curso_nombre']) ?></p>
     <?php if ($alumno['becado']): ?>
         <p><span class="badge bg-warning text-dark">Descuento aplicado</span></p>
+    <?php endif; ?>
+    <?php if ($matriculaPagada): ?>
+        <p><span class="badge bg-success"><i class="bi bi-check-circle-fill"></i> Matrícula <?= $anioActual ?> pagada</span></p>
+    <?php else: ?>
+        <p><span class="badge bg-danger"><i class="bi bi-exclamation-triangle-fill"></i> Matrícula <?= $anioActual ?> pendiente</span></p>
     <?php endif; ?>
 
     <?php if (empty($pagos)): ?>
@@ -105,7 +125,14 @@ $sumaOtros = array_sum(array_column($otros, 'total'));
                                 <?php foreach ($cuotas as $pago): ?>
                                     <tr>
                                         <td><?= date('d/m/Y', strtotime($pago['fecha'])) ?></td>
-                                        <td><?= htmlspecialchars($pago['concepto']) ?></td>
+                                        <td>
+                                            <div class="d-flex align-items-center gap-2">
+                                                <span><?= htmlspecialchars($pago['concepto']) ?></span>
+                                                <?php if (!empty($pago['evento_titulo'])): ?>
+                                                    <span class="badge bg-light text-dark border" title="Evento asociado"><i class="bi bi-calendar-event me-1"></i><?= htmlspecialchars($pago['evento_titulo']) ?></span>
+                                                <?php endif; ?>
+                                            </div>
+                                        </td>
                                         <td><?= $pago['cantidad'] ?></td>
                                         <td><?= number_format($pago['monto'], 0, ',', '.') ?> Gs</td>
                                         <td><?= number_format($pago['descuento'], 2) ?>%</td>
@@ -175,7 +202,14 @@ $sumaOtros = array_sum(array_column($otros, 'total'));
                                 <?php foreach ($otros as $pago): ?>
                                     <tr>
                                         <td><?= date('d/m/Y', strtotime($pago['fecha'])) ?></td>
-                                        <td><?= htmlspecialchars($pago['concepto']) ?></td>
+                                        <td>
+                                            <div class="d-flex align-items-center gap-2">
+                                                <span><?= htmlspecialchars($pago['concepto']) ?></span>
+                                                <?php if (!empty($pago['evento_titulo'])): ?>
+                                                    <span class="badge bg-light text-dark border" title="Evento asociado"><i class="bi bi-calendar-event me-1"></i><?= htmlspecialchars($pago['evento_titulo']) ?></span>
+                                                <?php endif; ?>
+                                            </div>
+                                        </td>
                                         <td><?= $pago['cantidad'] ?></td>
                                         <td><?= number_format($pago['monto'], 0, ',', '.') ?> Gs</td>
                                         <td><?= number_format($pago['descuento'], 2) ?>%</td>

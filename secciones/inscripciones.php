@@ -4,6 +4,9 @@ if (!isset($_SESSION['id_usuario'])) {
     header('Location: /evospace/index.php');
     exit;
 }
+if (!empty($_POST['ajax'])) {
+    ob_start();
+}
 include '../includes/header.php';
 include '../includes/navbar.php';
 require_once '../config/db.php';
@@ -23,18 +26,35 @@ $cursos = $pdo->query("
     FROM cursos c WHERE c.activo = 1 ORDER BY c.tipo, c.orden
 ")->fetchAll(PDO::FETCH_ASSOC);
 
-$padres = $pdo->query("SELECT id_usuario, usuario FROM usuarios WHERE id_rol = (SELECT id_rol FROM roles WHERE nombre = 'padre') ORDER BY usuario")->fetchAll(PDO::FETCH_ASSOC);
+$padres = $pdo->query("SELECT id_usuario, usuario, nombre_completo, cedula FROM usuarios WHERE id_rol = (SELECT id_rol FROM roles WHERE nombre = 'padre') ORDER BY nombre_completo")->fetchAll(PDO::FETCH_ASSOC);
+
+function responderJson($ok, $mensaje, $extra = []) {
+    if (ob_get_level()) {
+        ob_end_clean();
+    }
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode(array_merge(['ok' => $ok, 'mensaje' => $mensaje], $extra));
+    exit;
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $_POST['accion'] === 'crear_padre') {
+    verificarTokenCSRF();
+    $esAjax = !empty($_POST['ajax']);
     $nombre = trim($_POST['nombre_padre']);
     $usuario = trim($_POST['usuario_padre']);
     $email = trim($_POST['email_padre']);
     $cedula = trim($_POST['cedula_padre']);
     $password = $_POST['password_padre'];
+    $dia_cobro = isset($_POST['dia_cobro_padre']) && $_POST['dia_cobro_padre'] !== '' ? (int)$_POST['dia_cobro_padre'] : null;
+    if ($dia_cobro !== null && ($dia_cobro < 1 || $dia_cobro > 31)) {
+        $dia_cobro = null;
+    }
     if (empty($nombre) || empty($usuario) || empty($email) || empty($cedula) || empty($password)) {
+        if ($esAjax) responderJson(false, 'Todos los campos son obligatorios.');
         $mensaje = 'Todos los campos son obligatorios.';
         $tipoMensaje = 'danger';
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        if ($esAjax) responderJson(false, 'Email inválido.');
         $mensaje = 'Email inválido.';
         $tipoMensaje = 'danger';
     } else {
@@ -42,21 +62,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $_POST['accion'] === 'crear_padre')
         $stmt->execute([$email, $usuario, $cedula]);
         $existente = $stmt->fetch();
         if ($existente) {
+            if ($esAjax) responderJson(false, 'Ya existe un usuario con ese email, usuario o cédula.');
             $mensaje = 'Ya existe un usuario con ese email, usuario o cédula.';
             $tipoMensaje = 'danger';
         } else {
             $hash = password_hash($password, PASSWORD_DEFAULT);
-            $stmt = $pdo->prepare("INSERT INTO usuarios (usuario, nombre_completo, email, cedula, password_hash, id_rol, activo) VALUES (?, ?, ?, ?, ?, 3, 1)");
-            $stmt->execute([$usuario, $nombre, $email, $cedula, $hash]);
+            $stmt = $pdo->prepare("INSERT INTO usuarios (usuario, nombre_completo, email, cedula, password_hash, id_rol, activo, dia_cobro) VALUES (?, ?, ?, ?, ?, 3, 1, ?)");
+            $stmt->execute([$usuario, $nombre, $email, $cedula, $hash, $dia_cobro]);
             $nuevoId = $pdo->lastInsertId();
-            $mensaje = 'Padre creado correctamente. Ya podés seleccionarlo.';
+            if ($esAjax) responderJson(true, 'Tutor/a creado correctamente y seleccionado.', ['id' => (int) $nuevoId, 'nombre' => $nombre, 'cedula' => $cedula]);
+            $mensaje = 'Tutor/a creado correctamente y seleccionado en el formulario.';
             $tipoMensaje = 'success';
-$padres = $pdo->query("SELECT id_usuario, usuario, nombre_completo, cedula FROM usuarios WHERE id_rol = (SELECT id_rol FROM roles WHERE nombre = 'padre') ORDER BY nombre_completo")->fetchAll(PDO::FETCH_ASSOC);
+            $padres = $pdo->query("SELECT id_usuario, usuario, nombre_completo, cedula FROM usuarios WHERE id_rol = (SELECT id_rol FROM roles WHERE nombre = 'padre') ORDER BY nombre_completo")->fetchAll(PDO::FETCH_ASSOC);
         }
     }
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $_POST['accion'] === 'inscribir') {
+    verificarTokenCSRF();
     $nombre = trim($_POST['nombre']);
     $apellido = trim($_POST['apellido']);
     $ci = trim($_POST['ci']);
@@ -118,12 +141,21 @@ foreach ($horarios_por_curso as $h) {
     <?php endif; ?>
 
     <div class="row g-4 mt-2">
-        <div class="col-md-5">
+        <div class="col-md-8 mx-auto">
             <div class="card shadow">
                 <div class="card-header bg-evo text-white"><i class="bi bi-person-fill"></i> Datos del alumno</div>
                 <div class="card-body">
                     <form method="POST" id="formInscripcion">
+                        <?= campoCSRF() ?>
                         <input type="hidden" name="accion" value="inscribir">
+                        <input type="hidden" name="id_curso" id="id_curso_inscripcion" value="">
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Curso *</label>
+                            <button type="button" class="btn btn-outline-danger w-100 d-flex justify-content-between align-items-center py-2 border-2" id="btnCursoInscripcion" onclick="cursoPickerAbrir('id_curso_inscripcion','lblCursoInscripcion')">
+                                <span id="lblCursoInscripcion"><i class="bi bi-book me-1"></i> Seleccionar curso...</span>
+                                <i class="bi bi-chevron-down"></i>
+                            </button>
+                        </div>
                         <div class="mb-2">
                             <label class="form-label small">Nombre *</label>
                             <input type="text" name="nombre" class="form-control form-control-sm" required>
@@ -145,7 +177,7 @@ foreach ($horarios_por_curso as $h) {
                             <input type="number" name="anio_ingreso" class="form-control form-control-sm" value="<?= date('Y') ?>" required min="2000">
                         </div>
                         <div class="mb-2">
-                            <label class="form-label small">Padre/Madre</label>
+                            <label class="form-label small">Tutor/a</label>
                             <div class="d-flex gap-1">
                                 <select name="id_padre" id="selectPadre" class="form-select form-select-sm flex-fill">
                                     <option value="">Sin asignar</option>
@@ -153,8 +185,9 @@ foreach ($horarios_por_curso as $h) {
                                         <option value="<?= $p['id_usuario'] ?>"><?= htmlspecialchars($p['nombre_completo'] . ' (' . $p['cedula'] . ')') ?></option>
                                     <?php endforeach; ?>
                                 </select>
-                                <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalCrearPadre" title="Crear nuevo padre"><i class="bi bi-plus-lg"></i></button>
+                                <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalCrearPadre" title="Crear nuevo tutor/a"><i class="bi bi-plus-lg"></i></button>
                             </div>
+                            <div id="alertaCrearPadre" class="small mt-1 d-none"></div>
                         </div>
                     <div class="mb-3">
                             <div class="form-check">
@@ -167,42 +200,6 @@ foreach ($horarios_por_curso as $h) {
                 </div>
             </div>
         </div>
-        <div class="col-md-7">
-            <h5 class="text-secondary"><i class="bi bi-book"></i> Seleccionar curso</h5>
-            <div class="row g-2" id="listaCursos">
-                <?php foreach ($cursos as $curso):
-                    $cupo_completo = $curso['cupo_maximo'] && $curso['inscriptos'] >= $curso['cupo_maximo'];
-                    $horarios = $horarios_agrupados[$curso['id_curso']] ?? [];
-                ?>
-                    <div class="col-6 col-lg-4">
-                        <div class="card curso-card h-100 <?= $cupo_completo ? 'border-danger opacity-50' : '' ?>" data-id="<?= $curso['id_curso'] ?>" data-nombre="<?= htmlspecialchars($curso['nombre'] . ' (' . $curso['tipo'] . ')') ?>" onclick="seleccionarCurso(this)">
-                            <div class="card-body p-2 text-center">
-                                <h6 class="card-title mb-1 small"><?= htmlspecialchars($curso['nombre']) ?></h6>
-                                <span class="badge bg-secondary"><?= $curso['tipo'] ?></span>
-                                <?php if ($curso['cupo_maximo']): ?>
-                                    <span class="badge bg-<?= $cupo_completo ? 'danger' : 'success' ?> ms-1">
-                                        <?= $curso['inscriptos'] ?>/<?= $curso['cupo_maximo'] ?>
-                                    </span>
-                                <?php else: ?>
-                                    <span class="badge bg-info ms-1"><?= $curso['inscriptos'] ?> insc.</span>
-                                <?php endif; ?>
-                                <?php if (!empty($horarios)): ?>
-                                    <div class="mt-1 small text-muted">
-                                                        <?php foreach ($horarios as $h): 
-                                                            $diasArr = explode(',', $h['dia_semana']); ?>
-                                                            <div><?php foreach ($diasArr as $d): ?><span class="badge bg-secondary me-1" style="font-size:0.6rem;"><?= $dias[(int)trim($d)] ?? '?' ?></span><?php endforeach; ?> <?= substr($h['hora_inicio'], 0, 5) ?>-<?= substr($h['hora_fin'], 0, 5) ?></div>
-                                                        <?php endforeach; ?>
-                                    </div>
-                                <?php endif; ?>
-                                <?php if ($cupo_completo): ?>
-                                    <div class="text-danger small mt-1"><i class="bi bi-exclamation-triangle-fill"></i> Cupo lleno</div>
-                                <?php endif; ?>
-                            </div>
-                        </div>
-                    </div>
-                <?php endforeach; ?>
-            </div>
-        </div>
     </div>
 </div>
 
@@ -211,11 +208,12 @@ foreach ($horarios_por_curso as $h) {
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header bg-evo text-white">
-                <h5 class="modal-title"><i class="bi bi-person-plus-fill"></i> Nuevo Padre/Madre</h5>
+                <h5 class="modal-title"><i class="bi bi-person-plus-fill"></i> Nuevo Tutor/a</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <form method="POST">
+            <form method="POST" id="formCrearPadre">
                 <div class="modal-body">
+                    <?= campoCSRF() ?>
                     <input type="hidden" name="accion" value="crear_padre">
                     <div class="mb-3">
                         <label class="form-label">Nombre completo *</label>
@@ -237,10 +235,16 @@ foreach ($horarios_por_curso as $h) {
                         <label class="form-label">Contraseña *</label>
                         <input type="password" name="password_padre" class="form-control" required>
                     </div>
+                    <div class="mb-3">
+                        <label class="form-label">Día de cobro (cuota mensual)</label>
+                        <input type="number" name="dia_cobro_padre" class="form-control" min="1" max="31" placeholder="Ej: 10">
+                        <small class="text-muted">Día del mes en que este tutor/a paga la cuota de sus hijos.</small>
+                    </div>
+                    <div id="alertaCrearPadre" class="small d-none"></div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-danger">Crear padre</button>
+                    <button type="submit" class="btn btn-danger">Crear tutor/a</button>
                 </div>
             </form>
         </div>
@@ -253,36 +257,56 @@ document.addEventListener('DOMContentLoaded', function() {
     sel.value = '<?= $nuevoId ?? '' ?>';
 });
 <?php endif; ?>
+
+(function() {
+    const form = document.getElementById('formCrearPadre');
+    if (!form) return;
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const btn = form.querySelector('button[type="submit"]');
+        const aviso = document.getElementById('alertaCrearPadre');
+        btn.disabled = true;
+        const datos = new FormData(form);
+        datos.set('ajax', '1');
+        try {
+            const resp = await fetch(location.pathname, { method: 'POST', body: datos });
+            const data = await resp.json();
+            if (data.ok) {
+                const sel = document.getElementById('selectPadre');
+                const opt = new Option(data.nombre + ' (' + data.cedula + ')', data.id, true, true);
+                sel.appendChild(opt);
+                aviso.className = 'small text-success mt-1';
+                aviso.textContent = 'Tutor/a creado: ' + data.nombre + ' — ya quedó seleccionado.';
+                form.reset();
+                const modal = bootstrap.Modal.getInstance(document.getElementById('modalCrearPadre'));
+                if (modal) modal.hide();
+                setTimeout(() => { aviso.className = 'small mt-1 d-none'; aviso.textContent = ''; }, 5000);
+            } else {
+                aviso.className = 'small text-danger mt-1';
+                aviso.textContent = data.mensaje || 'Error al crear el tutor/a.';
+            }
+        } catch (err) {
+            aviso.className = 'small text-danger mt-1';
+            aviso.textContent = 'Error de conexión al crear el tutor/a.';
+        } finally {
+            btn.disabled = false;
+        }
+    });
+})();
 </script>
 
 <style>
-.curso-card { cursor: pointer; transition: all .15s; border: 2px solid transparent; }
-.curso-card:hover { border-color: var(--evo-red, #c81015); }
-.curso-card.selected { border-color: var(--evo-red, #c81015); background: #fef2f2; }
 </style>
 
 <script>
-let cursoSeleccionado = null;
-
-function seleccionarCurso(el) {
-    document.querySelectorAll('.curso-card').forEach(c => c.classList.remove('selected'));
-    el.classList.add('selected');
-    cursoSeleccionado = el.dataset.id;
-    document.getElementById('btnInscribir').textContent = 'Inscribir en ' + el.dataset.nombre;
-}
-
 document.getElementById('formInscripcion').addEventListener('submit', function(e) {
-    if (!cursoSeleccionado) {
+    const idCurso = document.getElementById('id_curso_inscripcion');
+    if (!idCurso || !idCurso.value) {
         e.preventDefault();
         alert('Seleccioná un curso primero.');
-        return;
     }
-    const input = document.createElement('input');
-    input.type = 'hidden';
-    input.name = 'id_curso';
-    input.value = cursoSeleccionado;
-    this.appendChild(input);
 });
 </script>
 
+<?php include '../includes/curso_picker.php'; ?>
 <?php include '../includes/footer.php'; ?>

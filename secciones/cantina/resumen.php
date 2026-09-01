@@ -20,9 +20,16 @@ $fecha_fin = $_GET['fecha_fin'] ?? date('Y-m-d');
 
 $ganancias = obtenerGanancias($pdo, $fecha_inicio, $fecha_fin);
 $productos_ganancias = obtenerGananciasPorProducto($pdo, $fecha_inicio, $fecha_fin);
-$total_ventas = $pdo->query("SELECT COUNT(*) FROM ventas WHERE estado_pago = 'pagado' AND fecha BETWEEN '$fecha_inicio' AND '$fecha_fin'")->fetchColumn();
-$total_pendientes = $pdo->query("SELECT COUNT(*) FROM ventas WHERE estado_pago = 'pendiente' AND fecha BETWEEN '$fecha_inicio' AND '$fecha_fin'")->fetchColumn();
-$total_compras_fiado = $pdo->query("SELECT COALESCE(SUM(total), 0) FROM ventas WHERE estado_pago IN ('pendiente','parcial')")->fetchColumn();
+
+$stmtCant = $pdo->prepare("SELECT COUNT(*) FROM ventas WHERE estado_pago = ? AND fecha BETWEEN ? AND ?");
+$stmtCant->execute(['pagado', $fecha_inicio, $fecha_fin]);
+$total_ventas = $stmtCant->fetchColumn();
+$stmtCant->execute(['pendiente', $fecha_inicio, $fecha_fin]);
+$total_pendientes = $stmtCant->fetchColumn();
+
+$stmtFiado = $pdo->prepare("SELECT COALESCE(SUM(total), 0) FROM ventas WHERE estado_pago IN ('pendiente','parcial')");
+$stmtFiado->execute();
+$total_compras_fiado = $stmtFiado->fetchColumn();
 
 // --- EXPORTAR A EXCEL (PHPSpreadsheet) ---
 if (isset($_GET['exportar_excel'])) {

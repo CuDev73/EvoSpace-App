@@ -23,6 +23,13 @@ if (!$abono) {
     exit('Pago no encontrado');
 }
 
+$rol = $_SESSION['rol'] ?? '';
+if (!in_array($rol, ['admin', 'auxiliar'], true)) {
+    if ($rol !== 'profesor' || $abono['profesor'] !== ($_SESSION['usuario'] ?? '')) {
+        denegarAcceso();
+    }
+}
+
 $config = [];
 $stmtConfig = $pdo->query("SELECT clave, valor FROM configuracion");
 while ($row = $stmtConfig->fetch(PDO::FETCH_ASSOC)) {

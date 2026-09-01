@@ -5,6 +5,7 @@ if (!isset($_SESSION['id_usuario'])) {
     exit;
 }
 require_once '../../../config/db.php';
+verificarPermiso('cantina');
 
 $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 if (!$id) { echo json_encode([]); exit; }

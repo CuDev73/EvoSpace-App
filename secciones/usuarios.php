@@ -17,6 +17,7 @@ $tipoMensaje = 'info';
 // PROCESAR ACCIONES POST
 // ==========================================================
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    verificarTokenCSRF();
     $accion = $_POST['accion'] ?? '';
 
     // ELIMINAR USUARIO
@@ -47,6 +48,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $id_rol = (int)$_POST['id_rol'];
         $password = $_POST['password'];
         $activo = isset($_POST['activo']) ? 1 : 0;
+        $dia_cobro = isset($_POST['dia_cobro']) && $_POST['dia_cobro'] !== '' ? (int)$_POST['dia_cobro'] : null;
+        if ($dia_cobro !== null && ($dia_cobro < 1 || $dia_cobro > 31)) $dia_cobro = null;
 
         if (empty($usuario) || empty($email) || empty($cedula)) {
             $mensaje = '<i class="bi bi-exclamation-triangle-fill text-danger"></i> Usuario, email y cédula son obligatorios.';
@@ -71,13 +74,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     // EDITAR
                     if (!empty($password)) {
                         $hash = password_hash($password, PASSWORD_DEFAULT);
-                        $sql = "UPDATE usuarios SET usuario=?, nombre_completo=?, email=?, cedula=?, password_hash=?, id_rol=?, activo=? WHERE id_usuario=?";
+                        $sql = "UPDATE usuarios SET usuario=?, nombre_completo=?, email=?, cedula=?, password_hash=?, id_rol=?, activo=?, dia_cobro=? WHERE id_usuario=?";
                         $stmt = $pdo->prepare($sql);
-                        $stmt->execute([$usuario, $nombre_completo, $email, $cedula, $hash, $id_rol, $activo, $id_usuario]);
+                        $stmt->execute([$usuario, $nombre_completo, $email, $cedula, $hash, $id_rol, $activo, $dia_cobro, $id_usuario]);
                     } else {
-                        $sql = "UPDATE usuarios SET usuario=?, nombre_completo=?, email=?, cedula=?, id_rol=?, activo=? WHERE id_usuario=?";
+                        $sql = "UPDATE usuarios SET usuario=?, nombre_completo=?, email=?, cedula=?, id_rol=?, activo=?, dia_cobro=? WHERE id_usuario=?";
                         $stmt = $pdo->prepare($sql);
-                        $stmt->execute([$usuario, $nombre_completo, $email, $cedula, $id_rol, $activo, $id_usuario]);
+                        $stmt->execute([$usuario, $nombre_completo, $email, $cedula, $id_rol, $activo, $dia_cobro, $id_usuario]);
                     }
                     // Actualizar permisos
                     $permisosSeleccionados = isset($_POST['permisos']) ? array_map('trim', $_POST['permisos']) : [];
@@ -105,9 +108,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $tipoMensaje = 'danger';
                     } else {
                         $hash = password_hash($password, PASSWORD_DEFAULT);
-                        $sql = "INSERT INTO usuarios (usuario, nombre_completo, email, cedula, password_hash, id_rol, activo) VALUES (?, ?, ?, ?, ?, ?, ?)";
+                        $sql = "INSERT INTO usuarios (usuario, nombre_completo, email, cedula, password_hash, id_rol, activo, dia_cobro) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
                         $stmt = $pdo->prepare($sql);
-                        $stmt->execute([$usuario, $nombre_completo, $email, $cedula, $hash, $id_rol, $activo]);
+                        $stmt->execute([$usuario, $nombre_completo, $email, $cedula, $hash, $id_rol, $activo, $dia_cobro]);
                         $id_usuario = $pdo->lastInsertId();
                         // Guardar permisos
                         $permisosSeleccionados = isset($_POST['permisos']) ? array_map('trim', $_POST['permisos']) : [];
@@ -235,6 +238,68 @@ $permisosPorDefecto = [
     4 => ['asistencia', 'alumnos', 'pagos', 'cantina'], // auxiliar
 ];
 
+// Mapeo permiso → sección visible en el menú (para mostrar qué ve cada rol)
+$seccionesPermiso = [
+    'alumnos' => 'Alumnos',
+    'asistencia' => 'Asistencia',
+    'horarios' => 'Horarios',
+    'profesores' => 'Profesores',
+    'cantina' => 'Cantina',
+    'eventos' => 'Eventos / Rifas',
+    'pagos' => 'Pagos',
+    'configuracion' => 'Configuración',
+    'usuarios' => 'Usuarios',
+    'gestionar_usuarios' => 'Gestionar usuarios',
+];
+
+// Icono y color por rol
+$iconosRol = [
+    'admin' => 'bi-shield-lock-fill',
+    'profesor' => 'bi-person-badge-fill',
+    'padre' => 'bi-people-fill',
+    'auxiliar' => 'bi-person-gear-fill',
+];
+$colorRol = [
+    'admin' => 'danger',
+    'profesor' => 'info',
+    'padre' => 'success',
+    'auxiliar' => 'warning',
+];
+
+// Secciones (menú) que ve cada rol según sus permisos
+$visibilidadRol = [];
+foreach ($roles as $r) {
+    if ($r['nombre'] === 'admin') {
+        $visibilidadRol['admin'] = array_keys($seccionesPermiso);
+    } else {
+        $visibilidadRol[$r['nombre']] = $permisosPorDefecto[$r['id_rol']] ?? [];
+    }
+}
+
+// Agrupar usuarios por rol
+$usuariosPorRol = [];
+foreach ($usuarios as $u) {
+    $rolKey = $u['rol_nombre'] ?? 'sin_rol';
+    if (!isset($usuariosPorRol[$rolKey])) {
+        $usuariosPorRol[$rolKey] = [
+            'nombre' => $rolKey === 'padre' ? 'Tutor/a' : ucfirst($rolKey),
+            'usuarios' => [],
+        ];
+    }
+    $usuariosPorRol[$rolKey]['usuarios'][] = $u;
+}
+
+// Orden: admin, profesor, padrino, auxiliar, resto
+$ordenRoles = ['admin', 'profesor', 'padre', 'auxiliar'];
+uksort($usuariosPorRol, function ($a, $b) use ($ordenRoles) {
+    $ia = array_search($a, $ordenRoles, true);
+    $ib = array_search($b, $ordenRoles, true);
+    if ($ia === false && $ib === false) return strcmp($a, $b);
+    if ($ia === false) return 1;
+    if ($ib === false) return -1;
+    return $ia <=> $ib;
+});
+
 // Obtener alumnos para el modal de hijos
 $alumnos_todos = $pdo->query("
     SELECT a.id_alumno, CONCAT(a.nombre, ' ', a.apellido) AS nombre_completo, 
@@ -292,76 +357,79 @@ $alumnos_todos = $pdo->query("
         </div>
     </div>
 
-    <!-- Tabla de usuarios -->
-    <div class="card shadow">
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-hover table-sm mb-0" id="tablaUsuarios">
-                    <thead class="text-center" style="background: var(--evo-bg-alt);">
-                        <tr>
-                            <th>ID</th>
-                            <th>Usuario</th>
-                            <th>Email</th>
-                            <th>Cédula</th>
-                            <th>Rol</th>
-                            <th>Hijos</th>
-                            <th>Estado</th>
-                            <th>Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php if (empty($usuarios)): ?>
-                            <tr><td colspan="8" class="text-center">No hay usuarios registrados.</td></tr>
-                        <?php else: ?>
-                            <?php foreach ($usuarios as $u): ?>
-                                <tr class="text-center align-middle">
-                                    <td><?= $u['id_usuario'] ?></td>
-                                    <td class="text-start"><i class="bi bi-person-fill me-2 text-secondary"></i><?= htmlspecialchars($u['usuario']) ?></td>
-                                    <td><?= htmlspecialchars($u['email']) ?></td>
-                                    <td><?= htmlspecialchars($u['cedula']) ?></td>
-                                    <td>
-                                        <?php 
-                                        $rolNombre = $u['rol_nombre'] ?? 'Sin rol';
-                                        $badgeColor = $rolNombre === 'admin' ? 'danger' : ($rolNombre === 'profesor' ? 'info' : 'success');
-                                        ?>
-                                        <span class="badge bg-<?= $badgeColor ?>"><?= ucfirst($rolNombre) ?></span>
+    <!-- Cards por rol -->
+    <?php if (empty($usuariosPorRol)): ?>
+        <div class="alert alert-info">No hay usuarios registrados.</div>
+    <?php else: ?>
+        <?php foreach ($usuariosPorRol as $rolKey => $rolData):
+            $iconoRol = $iconosRol[$rolKey] ?? 'bi-person-fill';
+            $color = $colorRol[$rolKey] ?? 'secondary';
+            $seccionesRol = $visibilidadRol[$rolKey] ?? [];
+        ?>
+        <div class="card shadow mb-4">
+            <div class="card-header bg-<?= $color ?> text-white d-flex justify-content-between align-items-center flex-wrap gap-2 py-2">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi <?= $iconoRol ?> fs-5"></i>
+                    <h6 class="mb-0"><?= htmlspecialchars($rolData['nombre']) ?></h6>
+                    <span class="badge bg-light text-dark"><?= count($rolData['usuarios']) ?></span>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover table-sm mb-0 tabla-rol">
+                        <tbody>
+                            <?php foreach ($rolData['usuarios'] as $u): ?>
+                                <tr class="align-middle">
+                                    <td class="ps-3" style="width:5%"><?= $u['id_usuario'] ?></td>
+                                    <td class="text-start" style="width:22%">
+                                        <i class="bi bi-person-fill me-2 text-secondary"></i><?= htmlspecialchars($u['usuario']) ?>
+                                        <?php if ($u['id_usuario'] == $_SESSION['id_usuario']): ?>
+                                            <span class="badge bg-secondary ms-1">Tú</span>
+                                        <?php endif; ?>
                                     </td>
-                                    <td>
-                                        <?php if ($rolNombre === 'padre'): ?>
-                                            <span class="badge bg-primary"><?= $u['total_hijos'] ?></span>
+                                    <td style="width:20%"><?= htmlspecialchars($u['email']) ?></td>
+                                    <td style="width:12%"><?= htmlspecialchars($u['cedula']) ?></td>
+                                    <td class="text-center" style="width:10%">
+                                        <?php if ($rolKey === 'padre'): ?>
+                                            <span class="text-muted">—</span>
                                             <button class="btn btn-outline-primary btn-sm ms-1" data-bs-toggle="modal" data-bs-target="#modalHijos"
-                                                    onclick="cargarHijos(<?= $u['id_usuario'] ?>, '<?= htmlspecialchars($u['usuario']) ?>')">
+                                                    onclick="cargarHijos(<?= $u['id_usuario'] ?>, '<?= htmlspecialchars($u['usuario']) ?>')" title="Asignar hijos">
                                                 <i class="bi bi-pencil-fill"></i>
                                             </button>
+                                            <?php if (($u['dia_cobro'] ?? null)): ?>
+                                                <span class="badge bg-secondary ms-1">Día <?= (int)$u['dia_cobro'] ?></span>
+                                            <?php endif; ?>
                                         <?php else: ?>
                                             <span class="text-muted">—</span>
                                         <?php endif; ?>
                                     </td>
-                                    <td>
+                                    <td class="text-center" style="width:10%">
                                         <?php if ($u['activo']): ?>
                                             <span class="badge bg-success"><i class="bi bi-check-circle-fill me-1"></i>Activo</span>
                                         <?php else: ?>
                                             <span class="badge bg-danger"><i class="bi bi-x-circle-fill me-1"></i>Inactivo</span>
                                         <?php endif; ?>
                                     </td>
-                                    <td>
+                                    <td class="text-center" style="width:21%">
                                         <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalUsuario"
                                                 onclick="editarUsuario(<?= htmlspecialchars(json_encode($u)) ?>)">
                                             <i class="bi bi-pencil-fill"></i>
                                         </button>
                                         <?php if ($u['id_usuario'] != $_SESSION['id_usuario']): ?>
                                             <form method="POST" style="display:inline-block;">
+                                                <?= campoCSRF() ?>
                                                 <input type="hidden" name="accion" value="toggle_activo">
                                                 <input type="hidden" name="id_usuario" value="<?= $u['id_usuario'] ?>">
                                                 <input type="hidden" name="nuevo_estado" value="<?= $u['activo'] ? 0 : 1 ?>">
-                                                <button type="submit" class="btn btn-<?= $u['activo'] ? 'warning' : 'success' ?> btn-sm">
+                                                <button type="submit" class="btn btn-<?= $u['activo'] ? 'warning' : 'success' ?> btn-sm" title="<?= $u['activo'] ? 'Desactivar' : 'Activar' ?>">
                                                     <i class="bi bi-<?= $u['activo'] ? 'pause-circle-fill' : 'play-circle-fill' ?>"></i>
                                                 </button>
                                             </form>
                                             <form method="POST" style="display:inline-block;" onsubmit="return confirm('¿Seguro que deseas eliminar este usuario?');">
+                                                <?= campoCSRF() ?>
                                                 <input type="hidden" name="accion" value="eliminar">
                                                 <input type="hidden" name="id_usuario" value="<?= $u['id_usuario'] ?>">
-                                                <button type="submit" class="btn btn-danger btn-sm">
+                                                <button type="submit" class="btn btn-danger btn-sm" title="Eliminar">
                                                     <i class="bi bi-trash-fill"></i>
                                                 </button>
                                             </form>
@@ -369,12 +437,13 @@ $alumnos_todos = $pdo->query("
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
-                        <?php endif; ?>
-                    </tbody>
-                </table>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
-    </div>
+        <?php endforeach; ?>
+    <?php endif; ?>
 </div>
 
 <!-- ========================================================== -->
@@ -389,6 +458,7 @@ $alumnos_todos = $pdo->query("
             </div>
             <form method="POST" id="formUsuario">
                 <div class="modal-body">
+                    <?= campoCSRF() ?>
                     <input type="hidden" name="accion" value="guardar">
                     <input type="hidden" name="id_usuario" id="id_usuario" value="0">
                     <div class="mb-3">
@@ -423,6 +493,11 @@ $alumnos_todos = $pdo->query("
                     <div class="mb-3 form-check">
                         <input type="checkbox" name="activo" id="activo" class="form-check-input" checked>
                         <label class="form-check-label" for="activo">Activo</label>
+                    </div>
+                    <div class="mb-3" id="campoDiaCobro" style="display:none;">
+                        <label class="form-label">Día de cobro (cuota de sus hijos)</label>
+                        <input type="number" name="dia_cobro" id="dia_cobro" class="form-control" min="1" max="31" placeholder="Ej: 10">
+                        <small class="text-muted">Día del mes en que este tutor/a paga. Se usa como vencimiento de cuota de sus hijos cuando el alumno no tiene uno propio.</small>
                     </div>
 
                     <!-- ===== SELECCIÓN DE PERMISOS ===== -->
@@ -463,6 +538,7 @@ $alumnos_todos = $pdo->query("
             </div>
             <form method="POST" id="formHijos">
                 <div class="modal-body">
+                    <?= campoCSRF() ?>
                     <input type="hidden" name="accion" value="guardar_hijos">
                     <input type="hidden" name="id_padre" id="id_padre_modal" value="0">
 
@@ -509,6 +585,7 @@ $alumnos_todos = $pdo->query("
         document.getElementById('modalTituloUsuario').innerHTML = '<i class="bi bi-person-fill me-2"></i>Nuevo Usuario';
         document.getElementById('id_usuario').value = '0';
         document.getElementById('usuario').value = '';
+        document.getElementById('nombre_completo').value = '';
         document.getElementById('email').value = '';
         document.getElementById('cedula').value = '';
         document.getElementById('password').value = '';
@@ -516,7 +593,14 @@ $alumnos_todos = $pdo->query("
         document.getElementById('password').required = true;
         document.getElementById('id_rol').value = '<?= $roles[0]['id_rol'] ?? 3 ?>';
         document.getElementById('activo').checked = true;
+        document.getElementById('dia_cobro').value = '';
+        actualizarCampoCobro();
         preseleccionarPermisos();
+    }
+
+    function actualizarCampoCobro() {
+        const esPadre = document.getElementById('id_rol').value == '3';
+        document.getElementById('campoDiaCobro').style.display = esPadre ? 'block' : 'none';
     }
 
     function preseleccionarPermisos() {
@@ -535,6 +619,7 @@ $alumnos_todos = $pdo->query("
         const rolSelect = document.getElementById('id_rol');
         if (rolSelect) {
             rolSelect.addEventListener('change', function() {
+                actualizarCampoCobro();
                 const algunaSeleccionada = Array.from(document.querySelectorAll('.permiso-checkbox')).some(cb => cb.checked);
                 if (!algunaSeleccionada) preseleccionarPermisos();
             });
@@ -553,6 +638,8 @@ $alumnos_todos = $pdo->query("
         document.getElementById('password').required = false;
         document.getElementById('id_rol').value = usuario.id_rol;
         document.getElementById('activo').checked = (usuario.activo == 1);
+        document.getElementById('dia_cobro').value = usuario.dia_cobro || '';
+        actualizarCampoCobro();
         // Marcar permisos
         const permisosArray = usuario.permisos_array || [];
         document.querySelectorAll('.permiso-checkbox').forEach(cb => {
@@ -591,13 +678,13 @@ $alumnos_todos = $pdo->query("
         }
     });
 
-    // Buscador en tabla de usuarios
+    // Buscador en cards de usuarios por rol
     document.addEventListener('DOMContentLoaded', function() {
         const input = document.getElementById('buscadorUsuario');
         if (input) {
             input.addEventListener('keyup', function() {
                 const term = this.value.toLowerCase().trim();
-                document.querySelectorAll('#tablaUsuarios tbody tr').forEach(row => {
+                document.querySelectorAll('.tabla-rol tbody tr').forEach(row => {
                     const texto = row.textContent.toLowerCase();
                     row.style.display = texto.includes(term) ? '' : 'none';
                 });

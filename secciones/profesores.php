@@ -18,10 +18,11 @@ $mensaje_abono = '';
 // ============================================================
 // PROCESAR ACTUALIZACIÓN DE SALARIO
 // ============================================================
-if (isset($_REQUEST['guardar_salario'])) {
-    $id_usuario = (int)$_REQUEST['id_usuario'];
-    $salario_base = floatval($_REQUEST['salario_base']);
-    $activo = isset($_REQUEST['activo']) ? 1 : 0;
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['guardar_salario'])) {
+    verificarTokenCSRF();
+    $id_usuario = (int)$_POST['id_usuario'];
+    $salario_base = floatval($_POST['salario_base']);
+    $activo = isset($_POST['activo']) ? 1 : 0;
 
     if (guardarSalarioProfesor($pdo, $id_usuario, $salario_base, $activo)) {
         header("Location: profesores.php?success=1");
@@ -34,8 +35,9 @@ if (isset($_REQUEST['guardar_salario'])) {
 // ============================================================
 // PROCESAR ABONOS
 // ============================================================
-if (isset($_REQUEST['idBorrarAbono'])) {
-    $id = (int)$_REQUEST['idBorrarAbono'];
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['accion'] ?? '') === 'borrar_abono') {
+    verificarTokenCSRF();
+    $id = (int)$_POST['id_abono'];
     $abono = obtenerAbonoPorId($pdo, $id);
     if ($abono && $abono['imagen']) {
         $imgPath = __DIR__ . '/../' . $abono['imagen'];
@@ -232,6 +234,7 @@ if (isset($_GET['success_abono'])) $mensaje_abono = "Abono registrado correctame
             </div>
             <form method="POST">
                 <div class="modal-body">
+                    <?= campoCSRF() ?>
                     <input type="hidden" name="id_usuario" id="salario_id_usuario">
                     <div class="mb-3">
                         <label class="form-label">Profesor</label>
@@ -335,6 +338,7 @@ if (isset($_GET['success_abono'])) $mensaje_abono = "Abono registrado correctame
 
 <script>
 const abonosData = <?= json_encode($todosAbonos) ?>;
+const CSRF_TOKEN = "<?= htmlspecialchars($_SESSION['csrf_token'] ?? '', ENT_QUOTES) ?>";
 const profesoresData = <?= json_encode($profesores) ?>;
 
 function cargarPagos(idUsuario) {
@@ -370,7 +374,12 @@ function cargarPagos(idUsuario) {
                 <td>${a.descripcion ? escHtml(a.descripcion) : '-'}</td>
                 <td>${a.imagen ? '<a href="/evospace/' + a.imagen + '" target="_blank" class="btn btn-sm btn-outline-primary"><i class="bi bi-image"></i></a>' : '-'}</td>
                 <td><a href="recibo_profesor.php?id_abono=${a.id_abono}" target="_blank" class="btn btn-sm btn-outline-success"><i class="bi bi-file-pdf"></i></a></td>
-                <td><a href="profesores.php?idBorrarAbono=${a.id_abono}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Eliminar este pago?')"><i class="bi bi-trash"></i></a></td>
+                <td><form method="POST" class="d-inline" onsubmit="return confirm('Eliminar este pago?')">
+                    <input type="hidden" name="csrf_token" value="${CSRF_TOKEN}">
+                    <input type="hidden" name="accion" value="borrar_abono">
+                    <input type="hidden" name="id_abono" value="${a.id_abono}">
+                    <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                </form></td>
             `;
             tbody.appendChild(tr);
         });

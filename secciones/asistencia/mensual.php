@@ -7,6 +7,7 @@ if (!isset($_SESSION['id_usuario'])) {
 }
 
 require_once '../../config/db.php';
+require_once '../../helpers/asistencia.php';
 verificarPermiso('asistencia');
 
 $id_curso = isset($_GET['id_curso']) ? (int)$_GET['id_curso'] : 0;
@@ -58,30 +59,17 @@ if (isset($_GET['guardado'])) {
     $mensaje = '<div class="alert alert-success"><i class="bi bi-check-circle-fill"></i> Asistencia mensual guardada correctamente.</div>';
 }
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['guardar'])) {
+    verificarTokenCSRF();
     $id_curso_post = (int)$_POST['id_curso'];
     $mes_post = (int)$_POST['mes'];
     $anio_post = (int)$_POST['anio'];
     $estados = $_POST['estado'] ?? [];
 
     try {
-        $pdo->beginTransaction();
-        // Eliminar asistencias del mes para este curso
-        $stmt = $pdo->prepare("DELETE FROM asistencia WHERE id_curso = ? AND MONTH(fecha) = ? AND YEAR(fecha) = ?");
-        $stmt->execute([$id_curso_post, $mes_post, $anio_post]);
-
-        // Insertar nuevos registros
-        $stmtInsert = $pdo->prepare("INSERT INTO asistencia (id_alumno, id_curso, fecha, presente) VALUES (?, ?, ?, ?)");
-        foreach ($estados as $id_alumno => $dias) {
-            foreach ($dias as $dia => $presente) {
-                $fecha = sprintf('%04d-%02d-%02d', $anio_post, $mes_post, $dia);
-                $stmtInsert->execute([$id_alumno, $id_curso_post, $fecha, $presente]);
-            }
-        }
-        $pdo->commit();
+        guardarAsistenciaMensual($pdo, $id_curso_post, $mes_post, $anio_post, $estados);
         header('Location: mensual.php?id_curso=' . $id_curso_post . '&mes=' . $mes_post . '&anio=' . $anio_post . '&guardado=1');
         exit;
     } catch (Exception $e) {
-        $pdo->rollBack();
         $mensaje = '<div class="alert alert-danger"><i class="bi bi-exclamation-triangle-fill"></i> Error al guardar: ' . $e->getMessage() . '</div>';
     }
 }
@@ -93,6 +81,7 @@ for ($m=1; $m<=12; $m++) {
 }
 $anios = range(date('Y')-2, date('Y')+1);
 ?>
+    <?php $mostrarVolver = true; $volverUrl = 'index.php'; ?>
     <?php include '../../includes/header.php'; ?>
     <?php include '../../includes/navbar.php'; ?>
 
@@ -143,6 +132,7 @@ $anios = range(date('Y')-2, date('Y')+1);
             </div>
             <div class="card-body p-0" style="overflow-x: auto;">
                 <form method="POST">
+                    <?= campoCSRF() ?>
                     <input type="hidden" name="id_curso" value="<?= $id_curso ?>">
                     <input type="hidden" name="mes" value="<?= $mes ?>">
                     <input type="hidden" name="anio" value="<?= $anio ?>">
@@ -186,9 +176,6 @@ $anios = range(date('Y')-2, date('Y')+1);
                             <button type="submit" name="guardar" class="btn btn-danger">
                                 <i class="bi bi-save"></i> Guardar mes
                             </button>
-                            <a href="index.php" class="btn btn-secondary">
-                                <i class="bi bi-arrow-left"></i> Volver
-                            </a>
                             <a href="exportar_excel_mensual.php?id_curso=<?= $id_curso ?>&mes=<?= $mes ?>&anio=<?= $anio ?>" class="btn btn-success">
                                 <i class="bi bi-file-earmark-excel"></i> Exportar Excel
                             </a>

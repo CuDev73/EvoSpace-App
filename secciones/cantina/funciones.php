@@ -17,15 +17,16 @@ function obtenerProductosCompletos($pdo, $activo = null) {
     return $stmt->fetchAll(PDO::FETCH_OBJ);
 }
 
-function guardarProducto($pdo, $id, $nombre, $precio_venta, $precio_compra, $cantidad, $activo = 1) {
+function guardarProducto($pdo, $id, $nombre, $precio_venta, $precio_compra, $cantidad, $activo = 1, $categoria = null) {
+    $categoria = $categoria !== '' ? $categoria : null;
     if ($id) {
-        $sql = "UPDATE productos SET nombre=?, precio=?, precio_compra=?, cantidad=?, activo=? WHERE id_producto=?";
+        $sql = "UPDATE productos SET nombre=?, categoria=?, precio=?, precio_compra=?, cantidad=?, activo=? WHERE id_producto=?";
         $stmt = $pdo->prepare($sql);
-        return $stmt->execute([$nombre, $precio_venta, $precio_compra, $cantidad, $activo, $id]);
+        return $stmt->execute([$nombre, $categoria, $precio_venta, $precio_compra, $cantidad, $activo, $id]);
     } else {
-        $sql = "INSERT INTO productos (nombre, precio, precio_compra, cantidad, activo) VALUES (?, ?, ?, ?, ?)";
+        $sql = "INSERT INTO productos (nombre, categoria, precio, precio_compra, cantidad, activo) VALUES (?, ?, ?, ?, ?, ?)";
         $stmt = $pdo->prepare($sql);
-        return $stmt->execute([$nombre, $precio_venta, $precio_compra, $cantidad, $activo]);
+        return $stmt->execute([$nombre, $categoria, $precio_venta, $precio_compra, $cantidad, $activo]);
     }
 }
 
@@ -48,11 +49,12 @@ function actualizarStock($pdo, $id_producto, $cantidad) {
 function registrarVenta($pdo, $fecha, $productos, $total, $metodo_pago, $tipo_comprador, $nombre_comprador, $id_alumno = null, $id_usuario = null, $observaciones = '', $estado_pago = 'pagado') {
     try {
         $pdo->beginTransaction();
-        
-        $sql = "INSERT INTO ventas (fecha, total, metodo_pago, tipo_comprador, nombre_comprador, id_alumno, id_usuario, observaciones, estado_pago)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        $monto_pagado = $estado_pago === 'pagado' ? $total : 0;
+
+        $sql = "INSERT INTO ventas (fecha, total, monto_pagado, metodo_pago, tipo_comprador, nombre_comprador, id_alumno, id_usuario, observaciones, estado_pago)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         $stmt = $pdo->prepare($sql);
-        $stmt->execute([$fecha, $total, $metodo_pago, $tipo_comprador, $nombre_comprador, $id_alumno, $id_usuario, $observaciones, $estado_pago]);
+        $stmt->execute([$fecha, $total, $monto_pagado, $metodo_pago, $tipo_comprador, $nombre_comprador, $id_alumno, $id_usuario, $observaciones, $estado_pago]);
         $id_venta = $pdo->lastInsertId();
 
         $sqlDetalle = "INSERT INTO detalle_ventas (id_venta, id_producto, cantidad, precio_unitario, subtotal) VALUES (?, ?, ?, ?, ?)";
@@ -262,14 +264,14 @@ function buscarCompradores($pdo, $termino, $tipo = null) {
 // ============================================================
 
 function obtenerDeudaAlumnoCantina($pdo, $id_alumno) {
-    $sql = "SELECT COALESCE(SUM(total), 0) FROM ventas WHERE id_alumno = ? AND estado_pago IN ('pendiente','parcial')";
+    $sql = "SELECT COALESCE(SUM(total - monto_pagado), 0) FROM ventas WHERE id_alumno = ? AND estado_pago IN ('pendiente','parcial')";
     $stmt = $pdo->prepare($sql);
     $stmt->execute([$id_alumno]);
     return (float) $stmt->fetchColumn();
 }
 
 function obtenerDeudaTotalCantina($pdo) {
-    $sql = "SELECT COALESCE(SUM(total), 0) FROM ventas WHERE estado_pago IN ('pendiente','parcial')";
+    $sql = "SELECT COALESCE(SUM(total - monto_pagado), 0) FROM ventas WHERE estado_pago IN ('pendiente','parcial')";
     $stmt = $pdo->query($sql);
     return (float) $stmt->fetchColumn();
 }

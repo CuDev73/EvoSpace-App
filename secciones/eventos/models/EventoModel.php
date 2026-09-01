@@ -109,6 +109,41 @@ class EventoModel
         }
     }
 
+    public function enviarRecordatorio(int $id): int
+    {
+        $evento = $this->obtenerEvento($id);
+        if (!$evento) throw new InvalidArgumentException('Evento no encontrado.');
+
+        if (empty($evento['ramas'])) {
+            throw new InvalidArgumentException('El evento no tiene cursos asociados.');
+        }
+
+        $cursosIds = array_map(fn($r) => (int) $r['id_curso'], $evento['ramas']);
+        $titulo = 'Recordatorio: ' . $evento['titulo'];
+        $descripcion = 'Este es un recordatorio del evento "' . $evento['titulo'] . '".' .
+            ($evento['descripcion'] ? ' Detalle: ' . $evento['descripcion'] : '') .
+            ' Queda poco tiempo, ¡no te lo pierdas!';
+
+        $notificaciones = $this->notificacionModel->contarPadresNotificados($cursosIds);
+
+        $this->notificacionModel->enviarNotificacionEvento(
+            $id,
+            $titulo,
+            $descripcion,
+            $evento['fecha'],
+            $evento['hora'] ?? null,
+            $evento['lugar'] ?? null,
+            $evento['enlace_ubicacion'] ?? null,
+            $cursosIds,
+            $evento['color'] ?? '#c81015'
+        );
+
+        $stmt = $this->db->prepare("UPDATE eventos SET ultimo_recordatorio = CURDATE() WHERE id_evento = ?");
+        $stmt->execute([$id]);
+
+        return $notificaciones;
+    }
+
     public function eliminarEvento(int $id): bool
     {
         $this->db->beginTransaction();

@@ -29,7 +29,8 @@ class NotificacionModel
 
     public function enviarNotificacionEvento($eventoId, $titulo, $descripcion, $fecha, $hora, $lugar, $enlace, $cursosIds, $color = '#c81015')
     {
-        if (empty($cursosIds)) return;
+        $resultado = ['total' => 0, 'enviados' => 0, 'invalidos' => 0, 'errores' => 0];
+        if (empty($cursosIds)) return $resultado;
 
         // 1. Padres únicos con el curso (el primero de su hijo en los cursos seleccionados)
         $placeholders = implode(',', array_fill(0, count($cursosIds), '?'));
@@ -49,7 +50,8 @@ class NotificacionModel
             }
         }
         $padres = array_values($padres);
-        if (empty($padres)) return;
+        if (empty($padres)) return $resultado;
+        $resultado['total'] = count($padres);
 
         // 2. Flyer / imagen del evento (si existe en disco, se embebe como adjunto)
         $imagenRuta = '';
@@ -80,6 +82,11 @@ class NotificacionModel
         $asunto = $titulo;
 
         foreach ($padres as $padre) {
+            $email = trim($padre['email'] ?? '');
+            if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                $resultado['invalidos']++;
+                continue;
+            }
             $cursoLabel = htmlspecialchars((($padre['curso_tipo'] ?? '') ? $padre['curso_tipo'] . ' - ' : '') . ($padre['curso_nombre'] ?? 'Curso'), ENT_QUOTES, 'UTF-8');
             $primerNombre = trim((preg_split('/\s+/', trim($padre['nombre_completo'] ?? ''))[0] ?? ''));
             $saludoSeguro = htmlspecialchars(str_replace('{tutor}', $primerNombre, $saludoBase), ENT_QUOTES, 'UTF-8');
@@ -144,7 +151,11 @@ class NotificacionModel
             </table>
             ";
 
-            enviarCorreo($padre['email'], $asunto, $mensajeHTML, '', $imagenRuta, $remitente);
+            if (enviarCorreo($email, $asunto, $mensajeHTML, '', $imagenRuta, $remitente)) {
+                $resultado['enviados']++;
+            } else {
+                $resultado['errores']++;
+            }
         }
 
         // 4. Guardar notificaciones en la base de datos (una por padre, no por curso)
@@ -153,6 +164,8 @@ class NotificacionModel
         foreach ($padres as $padre) {
             $stmtInsert->execute([$eventoId, $padre['id_usuario'], $titulo, $descripcion ?: '']);
         }
+
+        return $resultado;
     }
 
     /**

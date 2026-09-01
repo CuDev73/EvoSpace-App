@@ -35,7 +35,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['
 
     try {
         $eventoModel->crearEvento($datos);
+        $notif = $eventoModel->obtenerResultadoNotificacion();
         $mensaje = '<i class="bi bi-check-circle-fill text-success"></i> Evento registrado correctamente.';
+        $mensaje .= ' ' . resumenNotificacion($notif);
     } catch (Exception $e) {
         $mensaje = '<i class="bi bi-exclamation-triangle-fill text-danger"></i> Error: ' . $e->getMessage();
     }
@@ -60,7 +62,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['
 
     try {
         $eventoModel->actualizarEvento($id_evento, $datos);
+        $notif = $eventoModel->obtenerResultadoNotificacion();
         $mensaje = '<i class="bi bi-check-circle-fill text-success"></i> Evento actualizado correctamente.';
+        $mensaje .= ' ' . resumenNotificacion($notif);
     } catch (Exception $e) {
         $mensaje = '<i class="bi bi-exclamation-triangle-fill text-danger"></i> Error: ' . $e->getMessage();
     }

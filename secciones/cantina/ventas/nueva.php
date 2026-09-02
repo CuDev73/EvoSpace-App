@@ -168,7 +168,7 @@ $productosJson = json_encode(array_map(function ($p) {
                 <span id="badgeTotalItems" class="badge bg-light text-danger">0</span>
             </div>
             <div class="card-body p-0">
-                <div id="listaCarrito" style="max-height:320px; overflow-y:auto;"></div>
+                <div id="listaCarrito" style="max-height:320px; overflow-y:auto; padding:.75rem .5rem;"></div>
                 <div id="carritoVacio" class="text-muted text-center small py-3">
                     El carrito está vacío<br>Añadí productos con el botón <strong>Agregar</strong>
                 </div>
@@ -198,7 +198,7 @@ $productosJson = json_encode(array_map(function ($p) {
     </div>
     <div class="offcanvas-body">
         <div id="listaCarritoMovil"></div>
-        <div class="d-flex justify-content-between fw-bold my-3">
+        <div class="d-flex justify-content-between fw-bold my-3 px-2">
             <span>Total</span>
             <span id="lblTotalMovil2">Gs 0</span>
         </div>
@@ -354,7 +354,7 @@ function lineaCarrito(p) {
     const cant = carrito[p.id] || 0;
     if (cant <= 0) return '';
     return `
-        <div class="d-flex justify-content-between align-items-center border-bottom py-2 gap-2">
+        <div class="d-flex justify-content-between align-items-center border-bottom py-2 px-2 px-sm-3 gap-2">
             <div class="flex-grow-1 pe-2">
                 <div class="small fw-bold">${esc(p.nombre)}</div>
                 <div class="text-muted small">${fmtGs(p.precio)} c/u</div>

@@ -45,34 +45,60 @@ try {
         aplicada_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )");
 
-    $migraciones = [
-        // fase13_dia_cobro.sql
-        'fase13_dia_cobro' => "SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'usuarios' AND COLUMN_NAME = 'dia_cobro'",
-        // fase5_recargos.sql
-        'fase5_recargo_por_dia' => "SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'configuracion' AND COLUMN_NAME = 'recargo_por_dia'",
-        // fase12_config_correo.sql
-        'fase12_config_correo' => "SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'configuracion' AND COLUMN_NAME = 'smtp_host'",
+    // Columnas que páginas clave necesitan y podrían faltar en BD viejas.
+    $columnasNecesarias = [
+        ['usuarios', 'dia_cobro', 'TINYINT(4) DEFAULT NULL'],
+        ['alumnos', 'becado', 'TINYINT(1) DEFAULT 0'],
+        ['alumnos', 'dia_vencimiento', 'INT(11) DEFAULT NULL'],
+        ['alumnos', 'dias_gracia', 'INT(11) DEFAULT NULL'],
+        ['alumnos', 'horas_profesionales', 'DECIMAL(6,2) DEFAULT 0.00'],
+        ['entradas_alumno', 'cantidad_total', 'INT(11) NOT NULL DEFAULT 0'],
+        ['pagos', 'id_evento', 'INT(11) DEFAULT NULL'],
+        ['pagos', 'concepto', 'VARCHAR(200) DEFAULT NULL'],
+    ];
+
+    // Tablas que algunas vistas usan y podrían no existir en BD viejas.
+    $tablasNecesarias = [
+        'horas_profesionales_log' => "CREATE TABLE IF NOT EXISTS horas_profesionales_log (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            id_alumno INT NOT NULL,
+            fecha DATE NOT NULL,
+            horas DECIMAL(6,2) NOT NULL DEFAULT 0,
+            detalle VARCHAR(255) DEFAULT NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
     ];
 
     $hechas = $pdo->query("SELECT nombre FROM migraciones_aplicadas")->fetchAll(PDO::FETCH_COLUMN);
 
-    $acciones = [
-        'fase13_dia_cobro'   => "ALTER TABLE usuarios ADD COLUMN dia_cobro TINYINT(4) DEFAULT NULL AFTER activo",
-        'fase5_recargo_por_dia'   => "INSERT INTO configuracion (clave, valor) SELECT 'recargo_por_dia', '1000' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM configuracion WHERE clave = 'recargo_por_dia')",
-        'fase12_config_correo'   => "INSERT INTO configuracion (clave, valor) SELECT 'smtp_host', '' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM configuracion WHERE clave = 'smtp_host')",
-    ];
-
-    foreach ($migraciones as $nombre => $checkSQL) {
+    foreach ($columnasNecesarias as [$tabla, $columna, $tipo]) {
+        $nombre = "col_{$tabla}_{$columna}";
         if (in_array($nombre, $hechas, true)) {
             continue;
         }
-        $falta = (int)$pdo->query($checkSQL)->fetchColumn() === 0;
-        if ($falta) {
+        try {
             try {
-                $pdo->exec($acciones[$nombre]);
+                $existe = $pdo->prepare("SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?");
+                $existe->execute([$tabla, $columna]);
+                if ((int)$existe->fetchColumn() === 0) {
+                    $pdo->exec("ALTER TABLE `$tabla` ADD COLUMN `$columna` $tipo");
+                }
             } catch (PDOException $e) {
-                // Ignorar si ya existía o la acción no aplica
+                // La tabla base puede no existir aún; se ignora.
             }
+        } catch (PDOException $e) {
+            // Ignorar errores de permisos u otros.
+        }
+        $pdo->prepare("INSERT IGNORE INTO migraciones_aplicadas (nombre) VALUES (?)")->execute([$nombre]);
+    }
+
+    foreach ($tablasNecesarias as $nombre => $sql) {
+        if (in_array($nombre, $hechas, true)) {
+            continue;
+        }
+        try {
+            $pdo->exec($sql);
+        } catch (PDOException $e) {
+            // Ignorar errores de permisos u otros.
         }
         $pdo->prepare("INSERT IGNORE INTO migraciones_aplicadas (nombre) VALUES (?)")->execute([$nombre]);
     }

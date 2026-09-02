@@ -304,45 +304,49 @@ $siguiente_curso = $siguiente_curso->fetch(PDO::FETCH_ASSOC);
         <div class="card-header bg-evo text-white d-flex justify-content-between align-items-center flex-wrap gap-2">
             <h5 class="mb-0"><i class="bi bi-person-fill me-2"></i><?= htmlspecialchars($alumno['nombre'] . ' ' . $alumno['apellido']) ?></h5>
             <div class="d-flex align-items-center gap-2">
+                <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#modalNuevoPago"><i class="bi bi-cash-coin me-1"></i>Registrar pago</button>
                 <button type="button" class="btn btn-light btn-sm" onclick="editarAlumnoFicha()"><i class="bi bi-pencil-square me-1"></i>Editar</button>
-                <button type="button" class="btn btn-warning btn-sm text-dark" data-bs-toggle="modal" data-bs-target="#modalRecordatorio"><i class="bi bi-bell-fill me-1"></i>Recordatorio</button>
+                <button type="button" class="btn btn-warning btn-sm text-dark fw-semibold btn-recordatorio" data-bs-toggle="modal" data-bs-target="#modalRecordatorio"><i class="bi bi-bell-fill me-1"></i>Recordatorio</button>
                 <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#modalEliminar"><i class="bi bi-trash-fill me-1"></i>Eliminar</button>
                 <?php if ($alumno['becado']): ?><span class="badge bg-warning text-dark me-1" title="Descuento sobre la cuota">Descuento</span><?php endif; ?>
             </div>
         </div>
         <div class="card-body">
             <div class="row g-3">
-                <div class="col-md-3">
-                    <small class="text-muted">Curso</small>
-                    <p class="fw-bold mb-0"><?= htmlspecialchars($alumno['curso_tipo'] . ' - ' . $alumno['curso_nombre']) ?></p>
-                    <div class="d-flex justify-content-between align-items-center gap-2 mt-1">
-                        <?php if ($siguiente_curso): ?>
-                            <form method="POST" class="mb-0" onsubmit="return confirm('¿Avanzar a <?= htmlspecialchars($siguiente_curso['nombre']) ?>?')">
-                                <?= campoCSRF() ?>
-                                <input type="hidden" name="accion" value="avanzar">
-                                <button class="btn btn-sm btn-outline-success py-0"><i class="bi bi-arrow-right-circle"></i> Avanzar a <?= htmlspecialchars($siguiente_curso['nombre']) ?></button>
-                            </form>
-                        <?php else: ?>
-                            <span class="badge bg-secondary">Último curso</span>
-                        <?php endif; ?>
-                        <button class="btn btn-sm btn-danger py-0" data-bs-toggle="modal" data-bs-target="#modalNuevoPago"><i class="bi bi-cash-coin me-1"></i> Registrar pago</button>
+                <div class="col-12">
+                    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
+                        <div class="flex-fill" style="min-width:0;">
+                            <small class="text-muted">Curso</small>
+                            <p class="fw-bold mb-0" style="overflow-wrap:anywhere;"><?= htmlspecialchars($alumno['curso_tipo'] . ' - ' . $alumno['curso_nombre']) ?></p>
+                        </div>
+                        <div class="d-flex flex-wrap align-items-center gap-2">
+                            <?php if ($siguiente_curso): ?>
+                                <form method="POST" class="mb-0" onsubmit="return confirm('¿Avanzar a <?= htmlspecialchars($siguiente_curso['nombre']) ?>?')">
+                                    <?= campoCSRF() ?>
+                                    <input type="hidden" name="accion" value="avanzar">
+                                    <button class="btn btn-sm btn-outline-success py-0"><i class="bi bi-arrow-right-circle"></i> Avanzar a <?= htmlspecialchars($siguiente_curso['nombre']) ?></button>
+                                </form>
+                            <?php else: ?>
+                                <span class="badge bg-secondary">Último curso</span>
+                            <?php endif; ?>
+                        </div>
                     </div>
                 </div>
-                <div class="col-md-2">
+                <div class="col-6 col-md-3">
                     <small class="text-muted">Cédula</small>
                     <p class="mb-0"><?= htmlspecialchars($alumno['ci']) ?></p>
                 </div>
-                <div class="col-md-2">
+                <div class="col-6 col-md-3">
                     <small class="text-muted">Teléfono</small>
                     <p class="mb-0"><?= htmlspecialchars($alumno['telefono'] ?: '—') ?></p>
                 </div>
-                <div class="col-md-2">
+                <div class="col-6 col-md-3">
                     <small class="text-muted">Año ingreso</small>
                     <p class="mb-0"><?= $alumno['anio_ingreso'] ?></p>
                 </div>
-                <div class="col-md-3">
+                <div class="col-6 col-md-3">
                     <small class="text-muted">Tutor/a</small>
-                    <p class="mb-0"><?= htmlspecialchars($alumno['padre_nombre'] ?: '—') ?>
+                    <p class="mb-0" style="overflow-wrap:anywhere;"><?= htmlspecialchars($alumno['padre_nombre'] ?: '—') ?>
                         <?php if ($alumno['padre_dia_cobro']): ?>
                             <span class="badge bg-light text-dark border ms-1" title="Día de cobro de la cuota">Cobra día <?= (int)$alumno['padre_dia_cobro'] ?></span>
                         <?php endif; ?>

@@ -33,6 +33,21 @@ function guardarSalarioProfesor($pdo, $id_usuario, $salario_base, $activo) {
     return $stmt->execute(['id_usuario' => $id_usuario, 'salario_base' => $salario_base, 'activo' => $activo]);
 }
 
+function asegurarPerfilProfesor($pdo, $id_usuario, $id_rol) {
+    // Solo interesa si el rol es profesor (id_rol = 2)
+    $stmt = $pdo->prepare("SELECT id_rol FROM roles WHERE id_rol = ? AND nombre = 'profesor'");
+    $stmt->execute([(int)$id_rol]);
+    if (!$stmt->fetchColumn()) return;
+
+    // Crear la fila en profesores si no existe (así aparece en horarios y profesores)
+    $stmt = $pdo->prepare("SELECT id_profesor FROM profesores WHERE id_usuario = ?");
+    $stmt->execute([(int)$id_usuario]);
+    if (!$stmt->fetchColumn()) {
+        $stmt = $pdo->prepare("INSERT INTO profesores (id_usuario, salario_base, activo) VALUES (?, 0, 1)");
+        $stmt->execute([(int)$id_usuario]);
+    }
+}
+
 // ============================================================
 // FUNCIONES DE ABONOS (usando PDO)
 // ============================================================

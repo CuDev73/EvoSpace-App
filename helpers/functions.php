@@ -401,6 +401,8 @@ function enviarCorreo($destinatario, $asunto, $mensajeHTML, $nombreDestinatario 
         
         // Configuración del servidor SMTP
         $mail->isSMTP();
+        $mail->CharSet   = 'UTF-8';
+        $mail->Encoding  = 'base64';
         $mail->Host       = SMTP_HOST;
         $mail->SMTPAuth   = true;
         $mail->Username   = SMTP_USER;

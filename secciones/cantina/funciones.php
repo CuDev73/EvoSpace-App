@@ -99,8 +99,13 @@ function obtenerVentas($pdo, $filtros = []) {
         $params[] = $filtros['tipo_comprador'];
     }
     if (isset($filtros['estado_pago'])) {
-        $sql .= " AND v.estado_pago = ?";
-        $params[] = $filtros['estado_pago'];
+        if ($filtros['estado_pago'] === 'pendiente') {
+            // "Pendiente (deben)" incluye pagos parciales antiguos que aún deben saldo
+            $sql .= " AND v.estado_pago IN ('pendiente','parcial')";
+        } else {
+            $sql .= " AND v.estado_pago = ?";
+            $params[] = $filtros['estado_pago'];
+        }
     }
     if (isset($filtros['nombre_comprador'])) {
         $sql .= " AND v.nombre_comprador LIKE ?";

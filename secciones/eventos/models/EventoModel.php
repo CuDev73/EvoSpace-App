@@ -27,12 +27,13 @@ class EventoModel
 
         $this->db->beginTransaction();
         try {
-            $sql = "INSERT INTO eventos (titulo, descripcion, fecha, hora, lugar, enlace_ubicacion, color, imagen) 
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+            $sql = "INSERT INTO eventos (titulo, descripcion, mensaje_bienvenida, fecha, hora, lugar, enlace_ubicacion, color, imagen) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
             $stmt = $this->db->prepare($sql);
             $stmt->execute([
                 $data['titulo'],
                 $data['descripcion'] ?? null,
+                $data['mensaje_bienvenida'] ?? null,
                 $data['fecha'],
                 $data['hora'] ?? null,
                 $data['lugar'] ?? null,
@@ -60,7 +61,8 @@ class EventoModel
             $data['lugar'] ?? null,
             $data['enlace_ubicacion'] ?? null,
             $data['ramas'],
-            $data['color'] ?? '#c81015'
+            $data['color'] ?? '#c81015',
+            $data['mensaje_bienvenida'] ?? null
         );
 
         return $eventoId;
@@ -75,13 +77,14 @@ class EventoModel
         $this->db->beginTransaction();
         try {
             $sql = "UPDATE eventos SET 
-                        titulo = ?, descripcion = ?, fecha = ?, hora = ?, 
+                        titulo = ?, descripcion = ?, mensaje_bienvenida = ?, fecha = ?, hora = ?, 
                         lugar = ?, enlace_ubicacion = ?, color = ?, imagen = COALESCE(?, imagen)
                     WHERE id_evento = ?";
             $stmt = $this->db->prepare($sql);
             $stmt->execute([
                 $data['titulo'],
                 $data['descripcion'] ?? null,
+                $data['mensaje_bienvenida'] ?? null,
                 $data['fecha'],
                 $data['hora'] ?? null,
                 $data['lugar'] ?? null,
@@ -111,7 +114,8 @@ class EventoModel
             $data['lugar'] ?? null,
             $data['enlace_ubicacion'] ?? null,
             $data['ramas'],
-            $data['color'] ?? '#c81015'
+            $data['color'] ?? '#c81015',
+            $data['mensaje_bienvenida'] ?? null
         );
 
         return true;
@@ -143,7 +147,8 @@ class EventoModel
             $evento['lugar'] ?? null,
             $evento['enlace_ubicacion'] ?? null,
             $cursosIds,
-            $evento['color'] ?? '#c81015'
+            $evento['color'] ?? '#c81015',
+            $evento['mensaje_bienvenida'] ?? null
         );
 
         $stmt = $this->db->prepare("UPDATE eventos SET ultimo_recordatorio = CURDATE() WHERE id_evento = ?");

@@ -109,7 +109,7 @@ if (isset($_GET['exito']) || isset($_GET['eliminado'])) {
                                     <td><?= $p->activo ? '<span class="badge bg-success">Activo</span>' : '<span class="badge bg-secondary">Inactivo</span>' ?></td>
                                     <td>
                                         <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalProducto" onclick="editarProducto(<?= htmlspecialchars(json_encode($p)) ?>)"><i class="bi bi-pencil"></i></button>
-                                        <form method="POST" class="d-inline" onsubmit="return confirm('¿Eliminar este producto?')">
+                                        <form method="POST" class="d-inline" onsubmit="return confirmarEliminar(this, '¿Eliminar este producto?')">
                                             <?= campoCSRF() ?>
                                             <input type="hidden" name="accion" value="eliminar">
                                             <input type="hidden" name="id_producto" value="<?= $p->id_producto ?>">

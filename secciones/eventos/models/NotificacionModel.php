@@ -27,7 +27,7 @@ class NotificacionModel
         return (int) $stmt->fetchColumn();
     }
 
-    public function enviarNotificacionEvento($eventoId, $titulo, $descripcion, $fecha, $hora, $lugar, $enlace, $cursosIds, $color = '#c81015')
+    public function enviarNotificacionEvento($eventoId, $titulo, $descripcion, $fecha, $hora, $lugar, $enlace, $cursosIds, $color = '#c81015', $mensajeBienvenida = null)
     {
         $resultado = ['total' => 0, 'enviados' => 0, 'invalidos' => 0, 'errores' => 0];
         if (empty($cursosIds)) return $resultado;
@@ -66,10 +66,10 @@ class NotificacionModel
         }
 
         // 3. Textos del correo configurables (Configuración → Correo de Eventos)
-        $configCorreo = $this->db->query("SELECT clave, valor FROM configuracion WHERE clave IN ('correo_saludo','correo_mensaje','correo_firma','correo_remitente')")->fetchAll(PDO::FETCH_KEY_PAIR);
-        $saludoBase = $configCorreo['correo_saludo'] ?? 'Apreciado/a {tutor}:';
-        $mensajeBase = $configCorreo['correo_mensaje'] ?? 'Queremos invitarte a nuestro próximo evento. ¡Te esperamos!';
+        $configCorreo = $this->db->query("SELECT clave, valor FROM configuracion WHERE clave IN ('correo_firma','correo_pie','correo_pie2','correo_remitente')")->fetchAll(PDO::FETCH_KEY_PAIR);
         $firmaBase = $configCorreo['correo_firma'] ?? 'Equipo Instituto EvolucionArte';
+        $pieBase = $configCorreo['correo_pie'] ?? 'Este correo fue enviado automáticamente por EvoSpace.';
+        $pie2Base = $configCorreo['correo_pie2'] ?? 'Instituto EvolucionArte · Ingresá a tu panel de tutor/a para más detalles.';
         $remitente = trim($configCorreo['correo_remitente'] ?? '');
 
         $fechaFormateada = date('d/m/Y', strtotime($fecha));
@@ -79,6 +79,10 @@ class NotificacionModel
         $enlaceSeguro = htmlspecialchars($enlace ?: '', ENT_QUOTES, 'UTF-8');
         $tituloSeguro = htmlspecialchars($titulo, ENT_QUOTES, 'UTF-8');
         $colorSeguro = (is_string($color) && preg_match('/^#[0-9a-fA-F]{6}$/', $color)) ? $color : '#c81015';
+        $bienvenidaBase = trim($mensajeBienvenida ?? '');
+        if ($bienvenidaBase === '') {
+            $bienvenidaBase = 'Queremos invitarte a nuestro próximo evento. ¡Te esperamos!';
+        }
         $asunto = $titulo;
 
         foreach ($padres as $padre) {
@@ -89,18 +93,19 @@ class NotificacionModel
             }
             $cursoLabel = htmlspecialchars((($padre['curso_tipo'] ?? '') ? $padre['curso_tipo'] . ' - ' : '') . ($padre['curso_nombre'] ?? 'Curso'), ENT_QUOTES, 'UTF-8');
             $primerNombre = trim((preg_split('/\s+/', trim($padre['nombre_completo'] ?? ''))[0] ?? ''));
-            $saludoSeguro = htmlspecialchars(str_replace('{tutor}', $primerNombre, $saludoBase), ENT_QUOTES, 'UTF-8');
-            $mensajeSeguro = htmlspecialchars(str_replace('{tutor}', $primerNombre, $mensajeBase), ENT_QUOTES, 'UTF-8');
-            $firmaSeguro = htmlspecialchars(str_replace('{tutor}', $primerNombre, $firmaBase), ENT_QUOTES, 'UTF-8');
+            $bienvenidaSeguro = nl2br(htmlspecialchars($bienvenidaBase, ENT_QUOTES, 'UTF-8'));
+            $firmaSeguro = htmlspecialchars($firmaBase, ENT_QUOTES, 'UTF-8');
+            $pieSeguro = htmlspecialchars($pieBase, ENT_QUOTES, 'UTF-8');
+            $pie2Seguro = htmlspecialchars($pie2Base, ENT_QUOTES, 'UTF-8');
 
             $mensajeHTML = "
             <table role='presentation' width='100%' cellpadding='0' cellspacing='0' style='background-color:#f2f2f2; padding:24px 0;'>
               <tr>
                 <td align='center'>
-                  <table role='presentation' width='600' cellpadding='0' cellspacing='0' style='background-color:#ffffff; border-radius:8px; overflow:hidden; font-family:Arial, Helvetica, sans-serif;'>
+                  <table role='presentation' width='600' cellpadding='0' cellspacing='0' style='background-color:transparent; font-family:Arial, Helvetica, sans-serif;'>
 
                     <tr>
-                      <td style='background-color:#C81015; padding:16px 24px;' align='left'>
+                      <td style='background-color:$colorSeguro; padding:16px 24px; border-radius:8px 8px 0 0;' align='left'>
                         <table role='presentation' cellpadding='0' cellspacing='0'>
                           <tr>
                             <td style='width:32px; height:32px; background-color:rgba(255,255,255,0.15); border-radius:6px; text-align:center; vertical-align:middle; color:#ffffff; font-size:13px; font-weight:bold;'>EA</td>
@@ -110,16 +115,16 @@ class NotificacionModel
                       </td>
                     </tr>
 
-                    " . ($imagenRuta ? "<tr><td><img src='cid:flyer' width='600' alt='$tituloSeguro' style='display:block; width:100%; max-width:600px; height:auto;'></td></tr>" : "") . "
+                    " . ($imagenRuta ? "<tr><td style='background-color:#ffffff; padding:16px 24px 0;'><img src='cid:flyer' width='552' alt='$tituloSeguro' style='display:block; width:100%; max-width:552px; height:auto; border-radius:6px;'></td></tr>" : "") . "
 
                     <tr>
-                      <td style='padding:24px;'>
-                        <p style='margin:0 0 4px; font-size:12px; color:#888888; text-transform:uppercase; letter-spacing:0.5px;'>Curso: $cursoLabel</p>
+                      <td style='background-color:#ffffff; padding:24px;'>
                         <h1 style='margin:0 0 18px; font-size:22px; color:$colorSeguro;'>$tituloSeguro</h1>
-                        <p style='margin:0 0 16px; font-size:14px; color:#555555; line-height:1.6;'>$saludoSeguro</p>
-                        <p style='margin:0 0 18px; font-size:14px; color:#555555; line-height:1.6;'>$mensajeSeguro</p>
+                        <p style='margin:0 0 18px; font-size:14px; color:#555555; line-height:1.6;'>$bienvenidaSeguro</p>
 
-                        <table role='presentation' cellpadding='0' cellspacing='0' style='margin-bottom:20px;'>
+                        " . ($descripcionSegura ? "<p style='margin:0 0 18px; font-size:14px; color:#555555; line-height:1.6;'>$descripcionSegura</p>" : "") . "
+
+                        <table role='presentation' cellpadding='0' cellspacing='0' style='margin:0 0 20px;'>
                           <tr>
                             <td style='padding:4px 0; font-size:14px; color:#333333;'>📅 <strong>Fecha:</strong> $fechaFormateada</td>
                           </tr>
@@ -131,17 +136,15 @@ class NotificacionModel
                           </tr>
                         </table>
 
-                        " . ($enlaceSeguro ? "<table role='presentation' cellpadding='0' cellspacing='0' style='margin-bottom:22px;'><tr><td style='background-color:$colorSeguro; border-radius:4px;'><a href='$enlaceSeguro' target='_blank' style='display:inline-block; padding:10px 20px; font-size:14px; color:#ffffff; text-decoration:none; font-family:Arial, sans-serif;'>Ver ubicación en el mapa</a></td></tr></table>" : "") . "
-
-                        " . ($descripcionSegura ? "<table role='presentation' width='100%' cellpadding='0' cellspacing='0' style='border-top:1px solid #eeeeee; padding-top:14px;'><tr><td><p style='margin:0 0 4px; font-size:12px; color:#888888; text-transform:uppercase; letter-spacing:0.5px;'>Descripción</p><p style='margin:0; font-size:14px; color:#555555; line-height:1.6;'>$descripcionSegura</p></td></tr></table>" : "") . "
+                        " . ($enlaceSeguro ? "<table role='presentation' cellpadding='0' cellspacing='0' style='margin:0 auto 22px;'><tr><td style='text-align:center; background-color:$colorSeguro; border-radius:4px;'><a href='$enlaceSeguro' target='_blank' style='display:inline-block; padding:10px 20px; font-size:14px; color:#ffffff; text-decoration:none; font-family:Arial, sans-serif;'>Ver ubicación en el mapa</a></td></tr></table>" : "") . "
                         " . ($firmaSeguro ? "<p style='margin:18px 0 0; font-size:14px; color:#333333; font-style:italic;'>$firmaSeguro</p>" : "") . "
                       </td>
                     </tr>
 
                     <tr>
-                      <td style='background-color:#f7f7f7; padding:14px 24px; text-align:center;'>
-                        <p style='margin:0 0 4px; font-size:12px; color:#999999;'>Este correo fue enviado automáticamente por EvoSpace.</p>
-                        <p style='margin:0; font-size:12px; color:#999999;'>Instituto EvolucionArte · Ingresá a tu panel de tutor/a para más detalles.</p>
+                      <td style='background-color:#f7f7f7; padding:14px 24px; text-align:center; border-radius:0 0 8px 8px;'>
+                        <p style='margin:0 0 4px; font-size:12px; color:#999999;'>$pieSeguro</p>
+                        <p style='margin:0; font-size:12px; color:#999999;'>$pie2Seguro</p>
                       </td>
                     </tr>
 

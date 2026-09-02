@@ -7,6 +7,7 @@ if (!isset($_SESSION['id_usuario'])) {
 include '../includes/header.php';   // ← primero carga functions.php
 include '../includes/navbar.php';
 require_once '../config/db.php';
+require_once 'funciones.php';   // incluye asegurarPerfilProfesor
 
 verificarPermiso('usuarios'); 
 
@@ -92,15 +93,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $stmt = $pdo->prepare($sql);
                         $stmt->execute([$usuario, $nombre_completo, $email, $cedula, $id_rol, $activo, $dia_cobro, $id_usuario]);
                     }
-                    // Actualizar permisos
+                    // Actualizar permisos (solo los marcados a mano)
                     $permisosSeleccionados = isset($_POST['permisos']) ? array_map('trim', $_POST['permisos']) : [];
-                    // Si es profesor y no eligió permisos, asignar por defecto
-                    if (empty($permisosSeleccionados)) {
-                        $id_rol_usuario = $id_rol; // el rol seleccionado en el form
-                        if (isset($permisosPorDefecto[$id_rol_usuario])) {
-                            $permisosSeleccionados = $permisosPorDefecto[$id_rol_usuario];
-                        }
-                    }
                     $stmt = $pdo->prepare("DELETE FROM usuarios_permisos WHERE id_usuario = ?");
                     $stmt->execute([$id_usuario]);
                     if (!empty($permisosSeleccionados)) {
@@ -109,6 +103,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             $stmt->execute([$id_usuario, $permiso]);
                         }
                     }
+                    // Si el usuario tiene rol profesor, asegurar su fila en la tabla profesores
+                    asegurarPerfilProfesor($pdo, $id_usuario, $id_rol);
                     $mensaje = '<i class="bi bi-check-circle-fill text-success"></i> Usuario actualizado correctamente.';
                     $tipoMensaje = 'success';
                 } else {
@@ -122,21 +118,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $stmt = $pdo->prepare($sql);
                         $stmt->execute([$usuario, $nombre_completo, $email, $cedula, $hash, $id_rol, $activo, $dia_cobro]);
                         $id_usuario = $pdo->lastInsertId();
-                        // Guardar permisos
+                        // Guardar permisos (solo los marcados a mano)
                         $permisosSeleccionados = isset($_POST['permisos']) ? array_map('trim', $_POST['permisos']) : [];
-                        // Si es profesor y no eligió permisos, asignar por defecto
-                        if (empty($permisosSeleccionados)) {
-                            $id_rol_usuario = $id_rol;
-                            if (isset($permisosPorDefecto[$id_rol_usuario])) {
-                                $permisosSeleccionados = $permisosPorDefecto[$id_rol_usuario];
-                            }
-                        }
                         if (!empty($permisosSeleccionados)) {
                             $stmt = $pdo->prepare("INSERT INTO usuarios_permisos (id_usuario, permiso) VALUES (?, ?)");
                             foreach ($permisosSeleccionados as $permiso) {
                                 $stmt->execute([$id_usuario, $permiso]);
                             }
                         }
+                        // Si el usuario tiene rol profesor, asegurar su fila en la tabla profesores
+                        asegurarPerfilProfesor($pdo, $id_usuario, $id_rol);
                         $mensaje = '<i class="bi bi-check-circle-fill text-success"></i> Usuario creado correctamente.';
                         $tipoMensaje = 'success';
                     }
@@ -239,13 +230,14 @@ $etiquetasPermisos = [
     'configuracion' => 'Configuración',
     'usuarios' => 'Usuarios',
     'gestionar_usuarios' => 'Gestionar Usuarios',
+    'horarios' => 'Horarios',
 ];
 
-// Permisos por defecto según rol
+// Permisos por defecto según rol (ya no se aplican automáticamente; el admin elige a mano)
 $permisosPorDefecto = [
-    2 => ['asistencia', 'alumnos', 'pagos', 'eventos'], // profesor
-    3 => ['pagos'], // padre
-    4 => ['asistencia', 'alumnos', 'pagos', 'cantina'], // auxiliar
+    2 => [], // profesor
+    3 => [], // padre
+    4 => [], // auxiliar
 ];
 
 // Mapeo permiso → sección visible en el menú (para mostrar qué ve cada rol)
@@ -446,7 +438,7 @@ $alumnos_todos = $pdo->query("
                                                     <i class="bi bi-<?= $u['activo'] ? 'pause-circle-fill' : 'play-circle-fill' ?>"></i>
                                                 </button>
                                             </form>
-                                            <form method="POST" style="display:inline-block;" onsubmit="return confirm('¿Seguro que deseas eliminar este usuario?');">
+                                            <form method="POST" style="display:inline-block;" onsubmit="return confirmarEliminar(this, '¿Seguro que deseas eliminar este usuario?');">
                                                 <?= campoCSRF() ?>
                                                 <input type="hidden" name="accion" value="eliminar">
                                                 <input type="hidden" name="id_usuario" value="<?= $u['id_usuario'] ?>">
@@ -535,7 +527,7 @@ $alumnos_todos = $pdo->query("
                                 </div>
                             <?php endforeach; ?>
                         </div>
-                        <small class="text-muted">Selecciona los permisos que tendrá este usuario. Si es admin, tendrá todos automáticamente.</small>
+                        <small class="text-muted">Marca los permisos que tendrá este usuario. Nada viene preseleccionado por defecto; si es admin tendrá todos automáticamente.</small>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -625,14 +617,9 @@ $alumnos_todos = $pdo->query("
     }
 
     function preseleccionarPermisos() {
-        const rol = document.getElementById('id_rol').value;
-        const defaults = {
-            2: ['asistencia', 'alumnos', 'pagos', 'eventos'],
-            3: ['pagos'],
-            4: ['asistencia', 'alumnos', 'pagos', 'cantina']
-        };
+        // No preseleccionar nada por defecto: el admin elige los permisos a mano
         document.querySelectorAll('.permiso-checkbox').forEach(cb => {
-            cb.checked = defaults[rol]?.includes(cb.value) || false;
+            cb.checked = false;
         });
     }
 
@@ -641,8 +628,6 @@ $alumnos_todos = $pdo->query("
         if (rolSelect) {
             rolSelect.addEventListener('change', function() {
                 actualizarCampoCobro();
-                const algunaSeleccionada = Array.from(document.querySelectorAll('.permiso-checkbox')).some(cb => cb.checked);
-                if (!algunaSeleccionada) preseleccionarPermisos();
             });
         }
     });

@@ -66,16 +66,25 @@ if (isset($_POST['guardarAbono'])) {
     } else {
         $imagen = null;
         if (!empty($_FILES['imagen_abono']['name'])) {
-            $ext = strtolower(pathinfo($_FILES['imagen_abono']['name'], PATHINFO_EXTENSION));
-            if (!in_array($ext, ['jpg','jpeg','png','gif','webp'])) {
-                $error = "Formato de imagen no válido.";
+            if ($_FILES['imagen_abono']['error'] !== UPLOAD_ERR_OK) {
+                $mapaError = [1=>'el archivo supera el límite de tamaño del servidor',2=>'el archivo supera el límite establecido',3=>'la subida se interrumpió',4=>'no se envió ningún archivo',6=>'no se encontró la carpeta temporal',7=>'no se pudo escribir el archivo en disco',8=>'la extensión PHP detuvo la subida'];
+                $error = "Error al subir la imagen: " . ($mapaError[$_FILES['imagen_abono']['error']] ?? 'código ' . $_FILES['imagen_abono']['error']) . ".";
             } else {
-                $nombre = 'abono_' . uniqid() . '.' . $ext;
-                $destino = 'uploads/abonos/' . $nombre;
-                if (move_uploaded_file($_FILES['imagen_abono']['tmp_name'], __DIR__ . '/../' . $destino)) {
-                    $imagen = $destino;
+                $ext = strtolower(pathinfo($_FILES['imagen_abono']['name'], PATHINFO_EXTENSION));
+                if (!in_array($ext, ['jpg','jpeg','png','gif','webp'])) {
+                    $error = "Formato de imagen no válido.";
                 } else {
-                    $error = "Error al subir la imagen.";
+                    $dirSubida = __DIR__ . '/../uploads/abonos';
+                    if (!is_dir($dirSubida)) {
+                        @mkdir($dirSubida, 0775, true);
+                    }
+                    $nombre = 'abono_' . uniqid() . '.' . $ext;
+                    $destino = 'uploads/abonos/' . $nombre;
+                    if (is_dir($dirSubida) && move_uploaded_file($_FILES['imagen_abono']['tmp_name'], $dirSubida . '/' . $nombre)) {
+                        $imagen = $destino;
+                    } else {
+                        $error = "Error al subir la imagen. Comprobá que la carpeta uploads/abonos tenga permisos de escritura.";
+                    }
                 }
             }
         }
@@ -374,7 +383,7 @@ function cargarPagos(idUsuario) {
                 <td>${a.descripcion ? escHtml(a.descripcion) : '-'}</td>
                 <td>${a.imagen ? '<a href="/evospace/' + a.imagen + '" target="_blank" class="btn btn-sm btn-outline-primary"><i class="bi bi-image"></i></a>' : '-'}</td>
                 <td><a href="recibo_profesor.php?id_abono=${a.id_abono}" target="_blank" class="btn btn-sm btn-outline-success"><i class="bi bi-file-pdf"></i></a></td>
-                <td><form method="POST" class="d-inline" onsubmit="return confirm('Eliminar este pago?')">
+                <td><form method="POST" class="d-inline" onsubmit="return confirmarEliminar(this, '¿Eliminar este pago?')">
                     <input type="hidden" name="csrf_token" value="${CSRF_TOKEN}">
                     <input type="hidden" name="accion" value="borrar_abono">
                     <input type="hidden" name="id_abono" value="${a.id_abono}">

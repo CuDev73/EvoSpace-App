@@ -241,14 +241,14 @@ if (isset($_GET['lote'])) {
                                     <td class="text-end">
                                         <a href="index.php?lote=<?= (int)$l['id_entrada_curso'] ?>" class="btn btn-sm btn-outline-primary" title="Distribuir a alumnos"><i class="bi bi-people-fill"></i></a>
                                         <?php if ($l['estado'] === 'activa'): ?>
-                                            <form method="POST" class="d-inline" onsubmit="return confirm('¿Cerrar este lote? Ya no se podrá distribuir.')">
+                                            <form method="POST" class="d-inline" onsubmit="return confirmarEliminar(this, '¿Cerrar este lote? Ya no se podrá distribuir.')">
                                                 <?= campoCSRF() ?>
                                                 <input type="hidden" name="accion" value="cerrar_lote">
                                                 <input type="hidden" name="id_entrada_curso" value="<?= (int)$l['id_entrada_curso'] ?>">
                                                 <button class="btn btn-sm btn-outline-warning" title="Cerrar lote"><i class="bi bi-lock-fill"></i></button>
                                             </form>
                                         <?php endif; ?>
-                                        <form method="POST" class="d-inline" onsubmit="return confirm('¿Eliminar este lote y su distribución?')">
+                                        <form method="POST" class="d-inline" onsubmit="return confirmarEliminar(this, '¿Eliminar este lote y su distribución?')">
                                             <?= campoCSRF() ?>
                                             <input type="hidden" name="accion" value="eliminar_lote">
                                             <input type="hidden" name="id_entrada_curso" value="<?= (int)$l['id_entrada_curso'] ?>">

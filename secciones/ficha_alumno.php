@@ -10,6 +10,13 @@ require_once '../helpers/functions.php';
 $mensaje = '';
 $tipoMensaje = 'info';
 
+// Mensaje flash: se muestra una sola vez tras una redirección (patrón PRG)
+if (isset($_SESSION['flash_msj']) && $_SESSION['flash_msj'] !== '') {
+    $mensaje = $_SESSION['flash_msj'];
+    $tipoMensaje = $_SESSION['flash_tipo'] ?? 'info';
+    unset($_SESSION['flash_msj'], $_SESSION['flash_tipo']);
+}
+
 $id_alumno = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 if (!$id_alumno) { echo '<div class="container mt-3"><div class="alert alert-danger">Alumno no especificado.</div></div>'; include '../includes/footer.php'; exit; }
 
@@ -46,12 +53,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $_POST['accion'] === 'enviar_record
     verificarTokenCSRF();
     $enviado = enviarRecordatorioDeudaAlumno($pdo, $id_alumno);
     if ($enviado) {
-        $mensaje = '<i class="bi bi-check-circle-fill"></i> Recordatorio de deudas enviado al tutor/a.';
-        $tipoMensaje = 'success';
+        $_SESSION['flash_msj'] = '<i class="bi bi-check-circle-fill"></i> Recordatorio de deudas enviado al tutor/a.';
+        $_SESSION['flash_tipo'] = 'success';
     } else {
-        $mensaje = '<i class="bi bi-info-circle-fill"></i> No se envió: el alumno no tiene deudas pendientes, no tiene tutor/a con email, o hubo un error de envío.';
-        $tipoMensaje = 'warning';
+        $_SESSION['flash_msj'] = '<i class="bi bi-info-circle-fill"></i> No se envió: el alumno no tiene deudas pendientes, no tiene tutor/a con email, o hubo un error de envío.';
+        $_SESSION['flash_tipo'] = 'warning';
     }
+    header('Location: ficha_alumno.php?id=' . $id_alumno);
+    exit;
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $_POST['accion'] === 'agregar_pago') {
@@ -89,20 +98,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $_POST['accion'] === 'agregar_pago'
     }
 
     $imagen = null;
-    if (!empty($_FILES['imagen']['name']) && $_FILES['imagen']['error'] === UPLOAD_ERR_OK) {
-        $ext = strtolower(pathinfo($_FILES['imagen']['name'], PATHINFO_EXTENSION));
-        if (in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp'])) {
-            $nombre = 'pago_' . $id_alumno . '_' . uniqid() . '.' . $ext;
-            $destino = __DIR__ . '/../uploads/pagos/' . $nombre;
-            if (move_uploaded_file($_FILES['imagen']['tmp_name'], $destino)) {
-                $imagen = 'uploads/pagos/' . $nombre;
+    if (!empty($_FILES['imagen']['name'])) {
+        if ($_FILES['imagen']['error'] !== UPLOAD_ERR_OK) {
+            $error = 'El comprobante no se pudo subir (código ' . $_FILES['imagen']['error'] . ').';
+        } else {
+            $ext = strtolower(pathinfo($_FILES['imagen']['name'], PATHINFO_EXTENSION));
+            if (in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp'])) {
+                $dirSubida = __DIR__ . '/../uploads/pagos';
+                if (!is_dir($dirSubida)) {
+                    @mkdir($dirSubida, 0775, true);
+                }
+                $nombre = 'pago_' . $id_alumno . '_' . uniqid() . '.' . $ext;
+                $destino = __DIR__ . '/../uploads/pagos/' . $nombre;
+                if (is_dir($dirSubida) && move_uploaded_file($_FILES['imagen']['tmp_name'], $destino)) {
+                    $imagen = 'uploads/pagos/' . $nombre;
+                } else {
+                    $error = 'El comprobante no se pudo subir. Verificá que la carpeta uploads/pagos tenga permisos de escritura.';
+                }
             }
         }
     }
 
     if ($error) {
-        $mensaje = '<i class="bi bi-exclamation-triangle-fill text-danger"></i> ' . $error;
-        $tipoMensaje = 'danger';
+        $_SESSION['flash_msj'] = '<i class="bi bi-exclamation-triangle-fill text-danger"></i> ' . $error;
+        $_SESSION['flash_tipo'] = 'danger';
     } else {
         $sql = "INSERT INTO pagos (id_alumno, id_evento, fecha, concepto, cantidad, monto, descuento, recargo, total, metodo_pago, descripcion, imagen)
                 VALUES (?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?)";
@@ -116,13 +135,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $_POST['accion'] === 'agregar_pago'
                 $stmtDes->execute([$cantidad, $id_lote, $id_alumno]);
             }
 
-            $mensaje = '<i class="bi bi-check-circle-fill text-success"></i> Pago registrado.';
-            $tipoMensaje = 'success';
+            $_SESSION['flash_msj'] = '<i class="bi bi-check-circle-fill text-success"></i> Pago registrado.';
+            $_SESSION['flash_tipo'] = 'success';
         } catch (PDOException $e) {
-            $mensaje = '<i class="bi bi-exclamation-triangle-fill text-danger"></i> Error: ' . $e->getMessage();
-            $tipoMensaje = 'danger';
+            $_SESSION['flash_msj'] = '<i class="bi bi-exclamation-triangle-fill text-danger"></i> Error: ' . $e->getMessage();
+            $_SESSION['flash_tipo'] = 'danger';
         }
     }
+    header('Location: ficha_alumno.php?id=' . $id_alumno);
+    exit;
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $_POST['accion'] === 'agregar_horas') {
@@ -135,12 +156,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $_POST['accion'] === 'agregar_horas
         $stmt->execute([$id_alumno, $horas, $descripcion ?: null, $fecha_horas]);
         $stmt = $pdo->prepare("UPDATE alumnos SET horas_profesionales = (SELECT COALESCE(SUM(horas), 0) FROM horas_profesionales_log WHERE id_alumno = ?) WHERE id_alumno = ?");
         $stmt->execute([$id_alumno, $id_alumno]);
-        $mensaje = '<i class="bi bi-check-circle-fill text-success"></i> ' . number_format($horas, 1) . ' horas profesionales registradas.';
-        $tipoMensaje = 'success';
+        $_SESSION['flash_msj'] = '<i class="bi bi-check-circle-fill text-success"></i> ' . number_format($horas, 1) . ' horas profesionales registradas.';
+        $_SESSION['flash_tipo'] = 'success';
     } else {
-        $mensaje = '<i class="bi bi-exclamation-triangle-fill text-danger"></i> Las horas deben ser mayores a 0.';
-        $tipoMensaje = 'danger';
+        $_SESSION['flash_msj'] = '<i class="bi bi-exclamation-triangle-fill text-danger"></i> Las horas deben ser mayores a 0.';
+        $_SESSION['flash_tipo'] = 'danger';
     }
+    header('Location: ficha_alumno.php?id=' . $id_alumno);
+    exit;
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $_POST['accion'] === 'guardar') {
@@ -162,8 +185,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $_POST['accion'] === 'guardar') {
     $stmt->execute([$ci, $id_alumno]);
     $dup = $stmt->fetch();
     if ($dup) {
-        $mensaje = '<i class="bi bi-exclamation-triangle-fill text-danger"></i> Ya existe un alumno con CI \'<strong>' . htmlspecialchars($ci) . '</strong>\' (' . htmlspecialchars($dup['nombre'] . ' ' . $dup['apellido']) . ').';
-        $tipoMensaje = 'danger';
+        $_SESSION['flash_msj'] = '<i class="bi bi-exclamation-triangle-fill text-danger"></i> Ya existe un alumno con CI \'<strong>' . htmlspecialchars($ci) . '</strong>\' (' . htmlspecialchars($dup['nombre'] . ' ' . $dup['apellido']) . ').';
+        $_SESSION['flash_tipo'] = 'danger';
+        header('Location: ficha_alumno.php?id=' . $id_alumno);
+        exit;
     } else {
         try {
             $sql = "UPDATE alumnos SET nombre=?, apellido=?, id_curso=?, anio_ingreso=?, horas_profesionales=?, ci=?, telefono=?, id_padre=?, becado=?, dia_vencimiento=?, activo=? WHERE id_alumno=?";
@@ -172,8 +197,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $_POST['accion'] === 'guardar') {
             header('Location: ficha_alumno.php?id=' . $id_alumno . '&ok=editado');
             exit;
         } catch (PDOException $e) {
-            $mensaje = '<i class="bi bi-exclamation-triangle-fill text-danger"></i> Error: ' . $e->getMessage();
-            $tipoMensaje = 'danger';
+            $_SESSION['flash_msj'] = '<i class="bi bi-exclamation-triangle-fill text-danger"></i> Error: ' . $e->getMessage();
+            $_SESSION['flash_tipo'] = 'danger';
+            header('Location: ficha_alumno.php?id=' . $id_alumno);
+            exit;
         }
     }
 }
@@ -185,8 +212,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $_POST['accion'] === 'eliminar') {
         header('Location: alumnos.php?eliminado=' . $id_alumno);
         exit;
     } else {
-        $mensaje = '<i class="bi bi-exclamation-triangle-fill text-danger"></i> Error al eliminar el alumno.';
-        $tipoMensaje = 'danger';
+        $_SESSION['flash_msj'] = '<i class="bi bi-exclamation-triangle-fill text-danger"></i> Error al eliminar el alumno.';
+        $_SESSION['flash_tipo'] = 'danger';
+        header('Location: ficha_alumno.php?id=' . $id_alumno);
+        exit;
     }
 }
 
@@ -304,45 +333,49 @@ $siguiente_curso = $siguiente_curso->fetch(PDO::FETCH_ASSOC);
         <div class="card-header bg-evo text-white d-flex justify-content-between align-items-center flex-wrap gap-2">
             <h5 class="mb-0"><i class="bi bi-person-fill me-2"></i><?= htmlspecialchars($alumno['nombre'] . ' ' . $alumno['apellido']) ?></h5>
             <div class="d-flex align-items-center gap-2">
+                <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#modalNuevoPago"><i class="bi bi-cash-coin me-1"></i>Registrar pago</button>
                 <button type="button" class="btn btn-light btn-sm" onclick="editarAlumnoFicha()"><i class="bi bi-pencil-square me-1"></i>Editar</button>
-                <button type="button" class="btn btn-warning btn-sm text-dark" data-bs-toggle="modal" data-bs-target="#modalRecordatorio"><i class="bi bi-bell-fill me-1"></i>Recordatorio</button>
+                <button type="button" class="btn btn-warning btn-sm text-dark fw-semibold btn-recordatorio" data-bs-toggle="modal" data-bs-target="#modalRecordatorio"><i class="bi bi-bell-fill me-1"></i>Recordatorio</button>
                 <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#modalEliminar"><i class="bi bi-trash-fill me-1"></i>Eliminar</button>
                 <?php if ($alumno['becado']): ?><span class="badge bg-warning text-dark me-1" title="Descuento sobre la cuota">Descuento</span><?php endif; ?>
             </div>
         </div>
         <div class="card-body">
             <div class="row g-3">
-                <div class="col-md-3">
-                    <small class="text-muted">Curso</small>
-                    <p class="fw-bold mb-0"><?= htmlspecialchars($alumno['curso_tipo'] . ' - ' . $alumno['curso_nombre']) ?></p>
-                    <div class="d-flex justify-content-between align-items-center gap-2 mt-1">
-                        <?php if ($siguiente_curso): ?>
-                            <form method="POST" class="mb-0" onsubmit="return confirm('¿Avanzar a <?= htmlspecialchars($siguiente_curso['nombre']) ?>?')">
-                                <?= campoCSRF() ?>
-                                <input type="hidden" name="accion" value="avanzar">
-                                <button class="btn btn-sm btn-outline-success py-0"><i class="bi bi-arrow-right-circle"></i> Avanzar a <?= htmlspecialchars($siguiente_curso['nombre']) ?></button>
-                            </form>
-                        <?php else: ?>
-                            <span class="badge bg-secondary">Último curso</span>
-                        <?php endif; ?>
-                        <button class="btn btn-sm btn-danger py-0" data-bs-toggle="modal" data-bs-target="#modalNuevoPago"><i class="bi bi-cash-coin me-1"></i> Registrar pago</button>
+                <div class="col-12">
+                    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
+                        <div class="flex-fill" style="min-width:0;">
+                            <small class="text-muted">Curso</small>
+                            <p class="fw-bold mb-0" style="overflow-wrap:anywhere;"><?= htmlspecialchars($alumno['curso_tipo'] . ' - ' . $alumno['curso_nombre']) ?></p>
+                        </div>
+                        <div class="d-flex flex-wrap align-items-center gap-2">
+                            <?php if ($siguiente_curso): ?>
+                                <form method="POST" class="mb-0" onsubmit="return confirm('¿Avanzar a <?= htmlspecialchars($siguiente_curso['nombre']) ?>?')">
+                                    <?= campoCSRF() ?>
+                                    <input type="hidden" name="accion" value="avanzar">
+                                    <button class="btn btn-sm btn-outline-success py-0"><i class="bi bi-arrow-right-circle"></i> Avanzar a <?= htmlspecialchars($siguiente_curso['nombre']) ?></button>
+                                </form>
+                            <?php else: ?>
+                                <span class="badge bg-secondary">Último curso</span>
+                            <?php endif; ?>
+                        </div>
                     </div>
                 </div>
-                <div class="col-md-2">
+                <div class="col-6 col-md-3">
                     <small class="text-muted">Cédula</small>
                     <p class="mb-0"><?= htmlspecialchars($alumno['ci']) ?></p>
                 </div>
-                <div class="col-md-2">
+                <div class="col-6 col-md-3">
                     <small class="text-muted">Teléfono</small>
                     <p class="mb-0"><?= htmlspecialchars($alumno['telefono'] ?: '—') ?></p>
                 </div>
-                <div class="col-md-2">
+                <div class="col-6 col-md-3">
                     <small class="text-muted">Año ingreso</small>
                     <p class="mb-0"><?= $alumno['anio_ingreso'] ?></p>
                 </div>
-                <div class="col-md-3">
+                <div class="col-6 col-md-3">
                     <small class="text-muted">Tutor/a</small>
-                    <p class="mb-0"><?= htmlspecialchars($alumno['padre_nombre'] ?: '—') ?>
+                    <p class="mb-0" style="overflow-wrap:anywhere;"><?= htmlspecialchars($alumno['padre_nombre'] ?: '—') ?>
                         <?php if ($alumno['padre_dia_cobro']): ?>
                             <span class="badge bg-light text-dark border ms-1" title="Día de cobro de la cuota">Cobra día <?= (int)$alumno['padre_dia_cobro'] ?></span>
                         <?php endif; ?>

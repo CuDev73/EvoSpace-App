@@ -138,7 +138,7 @@ $total_alumnos_por_curso = $pdo->query("SELECT id_curso, COUNT(*) AS total FROM 
                                                     <br><span class="text-muted"><?= htmlspecialchars($h['profe_nombre']) ?></span>
                                                 <?php endif; ?>
                                             </span>
-                                            <form method="POST" class="d-inline" onsubmit="return confirm('¿Eliminar este horario?')">
+                                            <form method="POST" class="d-inline" onsubmit="return confirmarEliminar(this, '¿Eliminar este horario?')">
                                                 <?= campoCSRF() ?>
                                                 <input type="hidden" name="accion" value="eliminar">
                                                 <input type="hidden" name="id_horario" value="<?= $h['id_horario'] ?>">

@@ -752,3 +752,19 @@ h1, h2, h3, h4, h5, h6 {
     min-height: 42px;
   }
 }
+
+/* Botón Recordatorio: amarillo que se oscurece al pasar el ratón */
+.btn-recordatorio {
+  background-color: #ffc107;
+  border-color: #ffc107;
+  color: #212529;
+}
+.btn-recordatorio:hover, .btn-recordatorio:focus {
+  background-color: #d39e00;
+  border-color: #d39e00;
+  color: #fff;
+}
+.btn-recordatorio:active {
+  background-color: #c69500;
+  border-color: #c69500;
+}

@@ -32,15 +32,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->execute([$valor, $campo]);
     }
 
-    if (!empty($_FILES['recibo_logo']['name']) && $_FILES['recibo_logo']['error'] === UPLOAD_ERR_OK) {
-        $ext = strtolower(pathinfo($_FILES['recibo_logo']['name'], PATHINFO_EXTENSION));
-        if (in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp'])) {
-            $nombre = 'logo_recibo.' . $ext;
-            $destino = $uploadDir . $nombre;
-            if (move_uploaded_file($_FILES['recibo_logo']['tmp_name'], $destino)) {
-                $stmt = $pdo->prepare("UPDATE configuracion SET valor = ? WHERE clave = 'recibo_logo'");
-                $stmt->execute(['uploads/recibo/' . $nombre]);
-                $config['recibo_logo'] = 'uploads/recibo/' . $nombre;
+    if (!empty($_FILES['recibo_logo']['name'])) {
+        if ($_FILES['recibo_logo']['error'] !== UPLOAD_ERR_OK) {
+            $mensaje = '<div class="alert alert-danger"><i class="bi bi-exclamation-triangle-fill"></i> El logo no se pudo subir (código ' . $_FILES['recibo_logo']['error'] . ').</div>';
+        } else {
+            $ext = strtolower(pathinfo($_FILES['recibo_logo']['name'], PATHINFO_EXTENSION));
+            if (in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp'])) {
+                $nombre = 'logo_recibo.' . $ext;
+                if (move_uploaded_file($_FILES['recibo_logo']['tmp_name'], $uploadDir . $nombre)) {
+                    $stmt = $pdo->prepare("UPDATE configuracion SET valor = ? WHERE clave = 'recibo_logo'");
+                    $stmt->execute(['uploads/recibo/' . $nombre]);
+                    $config['recibo_logo'] = 'uploads/recibo/' . $nombre;
+                    $mensaje = '<div class="alert alert-success"><i class="bi bi-check-circle-fill"></i> Configuración del recibo guardada y logo actualizado.</div>';
+                } else {
+                    $mensaje = '<div class="alert alert-danger"><i class="bi bi-exclamation-triangle-fill"></i> El logo no se pudo subir. Verificá que la carpeta uploads/recibo tenga permisos de escritura.</div>';
+                }
+            } else {
+                $mensaje = '<div class="alert alert-danger"><i class="bi bi-exclamation-triangle-fill"></i> Formato de imagen no válido.</div>';
             }
         }
     }
@@ -51,7 +59,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $config['recibo_logo'] = '';
     }
 
-    $mensaje = '<div class="alert alert-success"><i class="bi bi-check-circle-fill"></i> Configuración del recibo guardada.</div>';
+    if (empty($mensaje)) {
+        $mensaje = '<div class="alert alert-success"><i class="bi bi-check-circle-fill"></i> Configuración del recibo guardada.</div>';
+    }
 
     $stmt = $pdo->query("SELECT clave, valor FROM configuracion");
     while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
@@ -113,22 +123,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <i class="bi bi-image"></i> Logo
                 </div>
                 <div class="card-body text-center">
+                    <img id="logoPreview" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" class="img-fluid mb-3 d-none"
+                        style="max-height:120px;" alt="Vista previa">
                     <?php if (!empty($config['recibo_logo'])): ?>
-                        <img src="/evospace/<?= $config['recibo_logo'] ?>" class="img-fluid mb-3"
+                        <img id="logoActual" src="/evospace/<?= $config['recibo_logo'] ?>" class="img-fluid mb-3"
                             style="max-height:120px;" alt="Logo actual">
                         <div class="mb-2">
-                            <button type="submit" name="eliminar_logo" value="1"
+                            <input type="hidden" name="eliminar_logo" id="eliminarLogoHidden" value="0">
+                            <button type="button" onclick="document.getElementById('eliminarLogoHidden').value='1'; return confirmarEliminar(this.form, '¿Eliminar el logo del recibo? Esta acción no se puede deshacer.')"
                                 class="btn btn-outline-danger btn-sm">
                                 <i class="bi bi-trash"></i> Eliminar logo
                             </button>
                         </div>
                     <?php else: ?>
-                        <div class="text-muted mb-3 py-4">
+                        <div id="sinLogo" class="text-muted mb-3 py-4">
                             <i class="bi bi-image" style="font-size:3rem;"></i>
                             <p class="mt-2">Sin logo</p>
                         </div>
                     <?php endif; ?>
-                    <input type="file" name="recibo_logo" class="form-control form-control-sm" accept="image/*">
+                    <input type="file" name="recibo_logo" id="inputLogo" class="form-control form-control-sm" accept="image/*">
                     <small class="text-muted">JPG, PNG, GIF o WebP. Se redimensionará automáticamente.</small>
                 </div>
             </div>
@@ -145,3 +158,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </div>
 
 <?php include '../../includes/footer.php'; ?>
+
+<script>
+document.getElementById('inputLogo').addEventListener('change', function() {
+    const archivo = this.files[0];
+    const preview = document.getElementById('logoPreview');
+    const actual = document.getElementById('logoActual');
+    const sinLogo = document.getElementById('sinLogo');
+    if (!archivo) { preview.classList.add('d-none'); return; }
+    const lector = new FileReader();
+    lector.onload = function(e) {
+        preview.src = e.target.result;
+        preview.classList.remove('d-none');
+        if (actual) actual.classList.add('d-none');
+        if (sinLogo) sinLogo.style.display = 'none';
+    };
+    lector.readAsDataURL(archivo);
+});
+</script>

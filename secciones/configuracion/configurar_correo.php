@@ -11,7 +11,7 @@ require_once '../../config/db.php';
 require_once __DIR__ . '/../../helpers/functions.php';
 verificarPermiso('configuracion');
 
-$claves = ['correo_saludo', 'correo_mensaje', 'correo_firma', 'correo_remitente'];
+$claves = ['correo_firma', 'correo_pie', 'correo_pie2', 'correo_remitente'];
 $config = [];
 foreach ($claves as $c) {
     $config[$c] = $pdo->query("SELECT valor FROM configuracion WHERE clave = '" . $c . "'")->fetchColumn() ?: '';
@@ -49,23 +49,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
                 <div class="card-body">
                     <div class="mb-3">
-                        <label class="form-label">Saludo</label>
-                        <input type="text" name="correo_saludo" class="form-control"
-                            placeholder="Ej: Apreciado/a {tutor}:"
-                            value="<?= htmlspecialchars($config['correo_saludo']) ?>">
-                        <small class="text-muted">Usá <code>{tutor}</code> para el nombre del tutor/a.</small>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Mensaje de bienvenida</label>
-                        <textarea name="correo_mensaje" class="form-control" rows="2"
-                            placeholder="Ej: Queremos invitarte a nuestro próximo evento. ¡Te esperamos!"><?= htmlspecialchars($config['correo_mensaje']) ?></textarea>
-                        <small class="text-muted">Aparece al inicio, antes de los datos del evento.</small>
-                    </div>
-                    <div class="mb-3">
                         <label class="form-label">Firma</label>
                         <input type="text" name="correo_firma" class="form-control"
                             placeholder="Ej: Equipo Instituto EvolucionArte"
                             value="<?= htmlspecialchars($config['correo_firma']) ?>">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Pie del correo (línea 1)</label>
+                        <input type="text" name="correo_pie" class="form-control"
+                            placeholder="Ej: Este correo fue enviado automáticamente por EvoSpace."
+                            value="<?= htmlspecialchars($config['correo_pie']) ?>">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Pie del correo (línea 2)</label>
+                        <input type="text" name="correo_pie2" class="form-control"
+                            placeholder="Ej: Instituto EvolucionArte · Ingresá a tu panel de tutor/a para más detalles."
+                            value="<?= htmlspecialchars($config['correo_pie2']) ?>">
                     </div>
                 </div>
             </div>
@@ -90,8 +89,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="card shadow-sm mt-3 bg-light">
                 <div class="card-body small text-muted">
                     <i class="bi bi-info-circle-fill me-1"></i>
-                    La cabecera del correo y el botón del mapa ya se arman solos con los datos del evento
-                    (título, fecha, hora, lugar, flyer).
+                    La cabecera del correo, el mensaje de bienvenida y el botón del mapa se arman con los datos del evento
+                    (título, fecha, hora, lugar, flyer y mensaje de bienvenida).
                 </div>
             </div>
         </div>

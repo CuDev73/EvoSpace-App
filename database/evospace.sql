@@ -350,6 +350,7 @@ CREATE TABLE `eventos` (
   `id_evento` int(11) NOT NULL,
   `titulo` varchar(200) NOT NULL,
   `descripcion` text DEFAULT NULL,
+  `mensaje_bienvenida` text DEFAULT NULL,
   `fecha` date NOT NULL,
   `hora` time DEFAULT NULL,
   `lugar` varchar(200) DEFAULT NULL,
@@ -364,9 +365,9 @@ CREATE TABLE `eventos` (
 -- Dumping data for table `eventos`
 --
 
-INSERT INTO `eventos` (`id_evento`, `titulo`, `descripcion`, `fecha`, `hora`, `lugar`, `enlace_ubicacion`, `color`, `fecha_creacion`, `imagen`) VALUES
-(2, 'Festival para el dia de mañana', 'Llevar ropa adecuada', '2026-07-29', '12:40:00', 'Teatro', 'https://maps.app.goo.gl/h3cDEHZ6ZeE27swW6', '#c61010', '2026-07-29 02:41:12', NULL),
-(3, 'Festival para el dia de mañana', 'JASDF', '2026-07-30', '09:37:00', NULL, 'https://maps.app.goo.gl/h3cDEHZ6ZeE27swW6', '#ffffff', '2026-07-29 12:36:42', NULL);
+INSERT INTO `eventos` (`id_evento`, `titulo`, `descripcion`, `mensaje_bienvenida`, `fecha`, `hora`, `lugar`, `enlace_ubicacion`, `color`, `fecha_creacion`, `imagen`) VALUES
+(2, 'Festival para el dia de mañana', 'Llevar ropa adecuada', NULL, '2026-07-29', '12:40:00', 'Teatro', 'https://maps.app.goo.gl/h3cDEHZ6ZeE27swW6', '#c61010', '2026-07-29 02:41:12', NULL),
+(3, 'Festival para el dia de mañana', 'JASDF', NULL, '2026-07-30', '09:37:00', NULL, 'https://maps.app.goo.gl/h3cDEHZ6ZeE27swW6', '#ffffff', '2026-07-29 12:36:42', NULL);
 
 -- --------------------------------------------------------
 

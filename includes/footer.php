@@ -23,5 +23,48 @@
     actualizar();
 })();
 </script>
+
+<!-- Modal de confirmación de eliminar -->
+<div class="modal fade" id="modalConfirmarEliminar" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title"><i class="bi bi-exclamation-triangle-fill me-2"></i>¿Estás seguro?</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="modalConfirmarEliminarTexto">¿Deseas continuar?</div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
+                <button type="button" class="btn btn-danger" id="btnConfirmarEliminarSi">Sí, eliminar</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+(function() {
+    let formPendiente = null;
+    window.confirmarEliminar = function(form, mensaje) {
+        formPendiente = form;
+        const texto = document.getElementById('modalConfirmarEliminarTexto');
+        if (texto) texto.textContent = mensaje || '¿Deseas continuar?';
+        const modal = new bootstrap.Modal(document.getElementById('modalConfirmarEliminar'));
+        modal.show();
+        return false;
+    };
+    const btnSi = document.getElementById('btnConfirmarEliminarSi');
+    if (btnSi) {
+        btnSi.addEventListener('click', function() {
+            const f = formPendiente;
+            formPendiente = null;
+            const modal = bootstrap.Modal.getInstance(document.getElementById('modalConfirmarEliminar'));
+            if (modal) modal.hide();
+            if (f) f.submit();
+        });
+    }
+    document.querySelectorAll('.btn[data-bs-dismiss="modal"]').forEach(function(btn) {
+        if (btn.closest('#modalConfirmarEliminar')) btn.addEventListener('click', function() { formPendiente = null; });
+    });
+})();
+</script>
 </body>
 </html>

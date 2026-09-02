@@ -60,6 +60,17 @@ if ($logoPath) {
     }
 }
 
+$comprobanteHtml = '';
+if (!empty($pago['imagen'])) {
+    $compFullPath = __DIR__ . '/../' . $pago['imagen'];
+    if (file_exists($compFullPath)) {
+        $compData = base64_encode(file_get_contents($compFullPath));
+        $compExt = strtolower(pathinfo($compFullPath, PATHINFO_EXTENSION));
+        $compMime = ($compExt === 'png') ? 'image/png' : (($compExt === 'gif') ? 'image/gif' : (($compExt === 'webp') ? 'image/webp' : 'image/jpeg'));
+        $comprobanteHtml = '<div style="text-align:center;margin:8px 0 2px;"><p style="font-size:7pt;color:#555;margin:0 0 3px;">Comprobante</p><img src="data:' . $compMime . ';base64,' . $compData . '" style="max-width:100%;height:auto;" /></div>';
+    }
+}
+
 $mpdf = new \Mpdf\Mpdf([
     'mode' => 'utf-8',
     'format' => [80, 150],
@@ -115,7 +126,7 @@ $html .= '
 </p>
 <p style="font-size:7pt;text-align:left;margin:2px 0;">
     <b>Método de pago:</b> ' . $pago['metodo_pago'] . '
-
+' . $comprobanteHtml . '
 <p class="footer">' . htmlspecialchars($mensaje) . '<br>' . htmlspecialchars($pie) . '</p>
 </div>';
 

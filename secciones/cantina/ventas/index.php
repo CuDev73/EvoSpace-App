@@ -93,8 +93,7 @@ include '../../../includes/navbar.php';
 <select name="estado_pago" class="form-select form-select-sm">
                             <option value="">Todos</option>
                             <option value="pagado" <?= ($_GET['estado_pago'] ?? '') == 'pagado' ? 'selected' : '' ?>>Pagado</option>
-                            <option value="pendiente" <?= ($_GET['estado_pago'] ?? '') == 'pendiente' ? 'selected' : '' ?>>Pendiente</option>
-                            <option value="parcial" <?= ($_GET['estado_pago'] ?? '') == 'parcial' ? 'selected' : '' ?>>Parcial</option>
+                            <option value="pendiente" <?= ($_GET['estado_pago'] ?? '') == 'pendiente' ? 'selected' : '' ?>>Pendiente (deben)</option>
                         </select>
                 </div>
                 <div class="col-md-1">
@@ -146,11 +145,11 @@ include '../../../includes/navbar.php';
                                     <td>
                                         <?php if ($v->estado_pago == 'pagado'): ?>
                                             <span class="badge bg-success">Pagado</span>
-                                        <?php elseif ($v->estado_pago == 'parcial'): ?>
-                                            <span class="badge bg-warning">Parcial</span>
-                                            <small class="d-block text-muted">Pág. <?= number_format($v->monto_pagado, 0, ',', '.') ?> / <?= number_format($v->total, 0, ',', '.') ?></small>
                                         <?php else: ?>
                                             <span class="badge bg-danger">Pendiente</span>
+                                            <?php if ((float)$v->monto_pagado > 0): ?>
+                                                <small class="d-block text-muted">Pág. <?= number_format($v->monto_pagado, 0, ',', '.') ?> / <?= number_format($v->total, 0, ',', '.') ?></small>
+                                            <?php endif; ?>
                                         <?php endif; ?>
                                     </td>
                                     <td class="text-center"><?= $v->total_items ?></td>
@@ -160,7 +159,7 @@ include '../../../includes/navbar.php';
                                         <?php else: ?>
                                             <span class="text-success"><i class="bi bi-check-circle-fill"></i></span>
                                         <?php endif; ?>
-                                        <form method="POST" action="eliminar.php" class="d-inline" onsubmit="return confirm('¿Eliminar esta venta?')">
+                                        <form method="POST" action="eliminar.php" class="d-inline" onsubmit="return confirmarEliminar(this, '¿Eliminar esta venta?')">
                                             <?= campoCSRF() ?>
                                             <input type="hidden" name="id_venta" value="<?= $v->id_venta ?>">
                                             <button type="submit" class="btn btn-danger btn-sm"><i class="bi bi-trash"></i></button>

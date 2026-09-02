@@ -99,7 +99,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <label class="form-label">Contraseña</label>
                         <div class="input-group">
                             <span class="input-group-text bg-light"><i class="bi bi-lock-fill text-muted"></i></span>
-                            <input type="password" name="contrasena" class="form-control" placeholder="Ingresá tu contraseña" required>
+                            <input type="password" name="contrasena" id="contrasena" class="form-control" placeholder="Ingresá tu contraseña" required autocomplete="current-password">
+                            <button type="button" class="btn btn-outline-secondary" id="btnVerContrasena" tabindex="-1" title="Mostrar / ocultar contraseña">
+                                <i class="bi bi-eye-fill" id="iconoVerContrasena"></i>
+                            </button>
                         </div>
                     </div>
                     <button type="submit" class="btn btn-evo w-100">
@@ -110,5 +113,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.getElementById('btnVerContrasena').addEventListener('click', function() {
+            const input = document.getElementById('contrasena');
+            const mostrar = input.type === 'password';
+            input.type = mostrar ? 'text' : 'password';
+            document.getElementById('iconoVerContrasena').className = mostrar ? 'bi bi-eye-slash-fill' : 'bi bi-eye-fill';
+        });
+    </script>
 </body>
 </html>

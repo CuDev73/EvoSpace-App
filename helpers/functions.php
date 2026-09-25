@@ -54,8 +54,11 @@ function verificarPermiso($permiso) {
 function verificarAccesoAlumno($pdo, $id_alumno) {
     $usuario = (int)($_SESSION['id_usuario'] ?? 0);
     $rol = $_SESSION['rol'] ?? '';
-    if (in_array($rol, ['admin', 'auxiliar'], true)) {
+    if ($rol === 'admin') {
         return true;
+    }
+    if ($rol === 'auxiliar') {
+        return tienePermiso('alumnos');
     }
     if ($rol === 'padre') {
         $stmt = $pdo->prepare("SELECT COUNT(*) FROM alumnos WHERE id_alumno = ? AND id_padre = ?");
@@ -85,7 +88,7 @@ function redirigirSegunRol($rol) {
         'admin'    => '/evospace/roles/admin.php',
         'profesor' => '/evospace/roles/profesor.php',
         'padre'    => '/evospace/roles/padre.php',
-        'auxiliar' => '/evospace/roles/admin.php'
+        'auxiliar' => '/evospace/roles/auxiliar.php'
     ];
     // Si el rol no está en el array, redirige al login
     $url = isset($rutas[$rol]) ? $rutas[$rol] : '/evospace/index.php';

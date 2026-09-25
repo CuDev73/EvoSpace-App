@@ -16,6 +16,6 @@ require_once __DIR__ . '/../helpers/functions.php';
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@100..900&display=swap" rel="stylesheet">
     <link rel="icon" type="image/x-icon" href="/evospace/img/evo.ico">
-    <link rel="stylesheet" href="/evospace/assets/css/estilos.css">
+    <link rel="stylesheet" href="/evospace/assets/css/estilos.css?v=20260923">
 </head>
 <body>

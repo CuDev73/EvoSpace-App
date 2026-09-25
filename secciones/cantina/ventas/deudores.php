@@ -8,17 +8,7 @@ require_once '../../../config/db.php';
 require_once '../funciones.php';
 verificarPermiso('cantina');
 
-if (isset($_GET['detalle']) && (int) $_GET['detalle'] > 0) {
-    $v = obtenerVenta($pdo, (int) $_GET['detalle']);
-    $items = obtenerDetalleVenta($pdo, (int) $_GET['detalle']);
-    echo json_encode([
-        'venta' => $v,
-        'items' => $items
-    ], JSON_UNESCAPED_UNICODE);
-    exit;
-}
-
-$filtros = [];
+$filtros = ['estado_pago' => 'pendiente'];
 if (isset($_GET['fecha_inicio']) && $_GET['fecha_inicio']) {
     $filtros['fecha_inicio'] = $_GET['fecha_inicio'];
 }
@@ -28,89 +18,71 @@ if (isset($_GET['fecha_fin']) && $_GET['fecha_fin']) {
 if (isset($_GET['tipo_comprador']) && $_GET['tipo_comprador']) {
     $filtros['tipo_comprador'] = $_GET['tipo_comprador'];
 }
-if (isset($_GET['estado_pago']) && $_GET['estado_pago']) {
-    $filtros['estado_pago'] = $_GET['estado_pago'];
-}
 if (isset($_GET['nombre_comprador']) && $_GET['nombre_comprador']) {
     $filtros['nombre_comprador'] = $_GET['nombre_comprador'];
 }
 
-// Cobrar venta (total o parcial)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['marcar_pagado'])) {
-    header('Location: index.php');
+    verificarTokenCSRF();
+    $id = (int) $_POST['id_venta'];
+    $stmt = $pdo->prepare("SELECT total, monto_pagado FROM ventas WHERE id_venta = ?");
+    $stmt->execute([$id]);
+    $venta = $stmt->fetch(PDO::FETCH_OBJ);
+    if ($venta) {
+        $total = (float) $venta->total;
+        $pagado = (float) $venta->monto_pagado;
+        $restante = $total - $pagado;
+        $monto = (isset($_POST['monto']) && $_POST['monto'] !== '') ? (float) $_POST['monto'] : $restante;
+        $monto = max(0, min($monto, $restante));
+        $nuevoPagado = $pagado + $monto;
+        $nuevoEstado = $nuevoPagado >= $total ? 'pagado' : 'parcial';
+        $stmt = $pdo->prepare("UPDATE ventas SET monto_pagado = ?, estado_pago = ? WHERE id_venta = ?");
+        $stmt->execute([$nuevoPagado, $nuevoEstado, $id]);
+    }
+    header('Location: deudores.php');
     exit;
 }
 
-$historial = obtenerVentas($pdo, array_merge($filtros, ['estado_pago' => 'pagado']));
-$total_cobrado = array_sum(array_map(fn($v) => (float) $v->monto_pagado, $historial));
-$total_ventas = count($historial);
-
-$hoy = date('Y-m-d');
-$kpiHoy = $pdo->prepare("SELECT COALESCE(SUM(monto_pagado),0) total, COUNT(*) n FROM ventas WHERE estado_pago = 'pagado' AND DATE(fecha) = ?");
-$kpiHoy->execute([$hoy]);
-$kpiHoy = $kpiHoy->fetch(PDO::FETCH_OBJ);
-$mesInicio = date('Y-m-01');
-$kpiMes = $pdo->prepare("SELECT COALESCE(SUM(monto_pagado),0) total, COUNT(*) n FROM ventas WHERE estado_pago = 'pagado' AND DATE(fecha) BETWEEN ? AND ?");
-$kpiMes->execute([$mesInicio, date('Y-m-d')]);
-$kpiMes = $kpiMes->fetch(PDO::FETCH_OBJ);
+$deudores = obtenerVentas($pdo, $filtros);
+$total_deuda = array_sum(array_map(fn($v) => (float) $v->total - (float) $v->monto_pagado, $deudores));
 
 $mostrarVolver = true;
-$volverUrl = '../index.php';
+$volverUrl = '../../index.php';
 include '../../../includes/header.php';
 include '../../../includes/navbar.php';
 ?>
 
 <div class="container mt-3">
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <h4><i class="bi bi-clock-history"></i> Historial de Ventas</h4>
+        <h4><i class="bi bi-hourglass-split"></i> Deudores / Fiado</h4>
         <a href="nueva.php" class="btn btn-evo btn-sm"><i class="bi bi-plus-circle"></i> Nueva Venta</a>
     </div>
 
-    <!-- Resumen -->
-    <div class="card shadow mb-3">
-        <div class="card-header">
-            <i class="bi bi-graph-up-arrow"></i> Resumen
+    <div class="row g-3 mb-3">
+        <div class="col-md-4">
+            <div class="card shadow">
+                <div class="card-body d-flex align-items-center gap-2">
+                    <div class="stat-icon bg-danger bg-opacity-10 text-danger"><i class="bi bi-hourglass-split"></i></div>
+                    <div>
+                        <div class="small text-muted">Deuda total (fiado)</div>
+                        <strong>Gs <?= number_format($total_deuda, 0, ',', '.') ?></strong>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="card-body">
-            <div class="row g-3">
-                <div class="col-6 col-lg-3">
-                    <div class="d-flex align-items-center gap-2">
-                        <div class="stat-icon bg-evo-tint"><i class="bi bi-cash-stack"></i></div>
-                        <div>
-                            <div class="small text-muted">Cobrado hoy</div>
-                            <strong>Gs <?= number_format($kpiHoy->total, 0, ',', '.') ?></strong>
-                            <div class="small text-muted"><?= $kpiHoy->n ?> ventas</div>
-                        </div>
+        <div class="col-md-4">
+            <div class="card shadow">
+                <div class="card-body d-flex align-items-center gap-2">
+                    <div class="stat-icon bg-warning bg-opacity-10 text-warning"><i class="bi bi-people"></i></div>
+                    <div>
+                        <div class="small text-muted">Compras pendientes</div>
+                        <strong><?= count($deudores) ?></strong>
                     </div>
-                </div>
-                <div class="col-6 col-lg-3">
-                    <div class="d-flex align-items-center gap-2">
-                        <div class="stat-icon bg-evo-tint"><i class="bi bi-calendar-month"></i></div>
-                        <div>
-                            <div class="small text-muted">Cobrado <strong><?= date('M') ?></strong></div>
-                            <strong>Gs <?= number_format($kpiMes->total, 0, ',', '.') ?></strong>
-                            <div class="small text-muted"><?= $kpiMes->n ?> ventas</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-6 col-sm-4 col-lg-3">
-                    <div class="d-flex align-items-center gap-2">
-                        <div class="stat-icon bg-success bg-opacity-10 text-success"><i class="bi bi-wallet2"></i></div>
-                        <div>
-                            <div class="small text-muted">Total cobrado</div>
-                            <strong>Gs <?= number_format($total_cobrado, 0, ',', '.') ?></strong>
-                            <div class="small text-muted"><?= $total_ventas ?> ventas</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-6 col-sm-4 col-lg-3 d-flex align-items-center">
-                    <a href="deudores.php" class="btn btn-outline-danger btn-sm ms-2"><i class="bi bi-hourglass-split"></i> Ver Deudores</a>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Filtros -->
     <div class="card shadow mb-3">
         <div class="card-header">
             <i class="bi bi-funnel"></i> Filtros
@@ -143,17 +115,16 @@ include '../../../includes/navbar.php';
                     <button type="submit" class="btn btn-evo btn-sm w-100">Filtrar</button>
                 </div>
                 <div class="col-md-1">
-                    <a href="index.php" class="btn btn-sm btn-outline-secondary w-100">Limpiar</a>
+                    <a href="deudores.php" class="btn btn-sm btn-outline-secondary w-100">Limpiar</a>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Tabla: Historial de ventas (pagadas) -->
     <div class="card shadow">
         <div class="card-header d-flex justify-content-between align-items-center">
-            <span><i class="bi bi-clock-history"></i> Historial de ventas</span>
-            <span class="badge bg-success"><?= count($historial) ?> pagadas</span>
+            <span><i class="bi bi-hourglass-split"></i> Deudores / Fiado</span>
+            <span class="badge bg-danger"><?= count($deudores) ?> pendientes</span>
         </div>
         <div class="card-body p-0">
             <div class="table-responsive">
@@ -163,41 +134,36 @@ include '../../../includes/navbar.php';
                             <th>ID</th>
                             <th>Fecha</th>
                             <th>Comprador</th>
-                            <th>Tipo</th>
                             <th class="text-end">Total</th>
+                            <th class="text-end">Saldo</th>
                             <th>Método</th>
-                            <th>Items</th>
-                            <th>Comprobante</th>
+                            <th>Estado</th>
                             <th>Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <?php if (empty($historial)): ?>
-                            <tr><td colspan="9" class="text-center text-muted">No hay ventas pagadas.</td></tr>
+                        <?php if (empty($deudores)): ?>
+                            <tr><td colspan="8" class="text-center text-muted">No hay deudas pendientes, todo al día.</td></tr>
                         <?php else: ?>
-                            <?php foreach ($historial as $v): ?>
+                            <?php foreach ($deudores as $v): ?>
                                 <tr>
                                     <td><?= $v->id_venta ?></td>
                                     <td><?= date('d/m/Y', strtotime($v->fecha)) ?></td>
                                     <td><?= htmlspecialchars($v->nombre_comprador ?? 'Anónimo') ?></td>
-                                    <td><span class="badge bg-<?= $v->tipo_comprador == 'alumno' ? 'primary' : ($v->tipo_comprador == 'profesor' ? 'info' : 'secondary') ?>"><?= ucfirst($v->tipo_comprador ?? 'otro') ?></span></td>
                                     <td class="text-end"><?= number_format($v->total, 0, ',', '.') ?></td>
-                                    <td><span class="badge bg-success"><?= $v->metodo_pago ?></span></td>
-                                    <td class="text-center"><?= $v->total_items ?></td>
-                                    <td class="text-center">
-                                        <?php if (!empty($v->comprobante)): ?>
-                                            <a href="../../<?= htmlspecialchars($v->comprobante) ?>" target="_blank" class="btn btn-outline-evo btn-sm" title="Ver comprobante"><i class="bi bi-paperclip"></i></a>
+                                    <td class="text-end"><?= number_format($v->total - $v->monto_pagado, 0, ',', '.') ?></td>
+                                    <td><span class="badge bg-warning"><?= $v->metodo_pago ?></span></td>
+                                    <td>
+                                        <?php if ($v->estado_pago == 'parcial'): ?>
+                                            <span class="badge bg-warning text-dark">Parcial</span>
+                                            <small class="d-block text-muted">Pág. <?= number_format($v->monto_pagado, 0, ',', '.') ?></small>
                                         <?php else: ?>
-                                            <span class="text-muted small">—</span>
+                                            <span class="badge bg-danger">Pendiente</span>
                                         <?php endif; ?>
                                     </td>
                                     <td>
+                                        <button type="button" class="btn btn-success btn-sm" title="Cobrar" data-bs-toggle="modal" data-bs-target="#pagarModal" data-id="<?= $v->id_venta ?>" data-comprador="<?= htmlspecialchars($v->nombre_comprador ?? 'Anónimo', ENT_QUOTES) ?>" data-total="<?= (float) $v->total ?>" data-restante="<?= (float) $v->total - (float) $v->monto_pagado ?>"><i class="bi bi-cash-coin"></i> Cobrar</button>
                                         <button type="button" class="btn btn-outline-evo btn-sm" title="Ver items" data-bs-toggle="modal" data-bs-target="#detalleModal" data-id="<?= $v->id_venta ?>"><i class="bi bi-eye"></i></button>
-                                        <form method="POST" action="eliminar.php" class="d-inline" onsubmit="return confirmarEliminar(this, '¿Eliminar esta venta?')">
-                                            <?= campoCSRF() ?>
-                                            <input type="hidden" name="id_venta" value="<?= $v->id_venta ?>">
-                                            <button type="submit" class="btn btn-outline-danger btn-sm"><i class="bi bi-trash"></i></button>
-                                        </form>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
@@ -276,6 +242,74 @@ document.getElementById('detalleModal').addEventListener('show.bs.modal', functi
         .catch(() => {
             document.getElementById('detalleHeader').innerHTML = '<div class="col-12 text-danger small">No se pudo cargar el detalle.</div>';
         });
+});
+</script>
+
+<!-- Modal pagar -->
+<div class="modal fade" id="pagarModal" tabindex="-1">
+    <div class="modal-dialog modal-sm modal-dialog-centered">
+        <div class="modal-content">
+            <form method="POST">
+                <?= campoCSRF() ?>
+                <input type="hidden" name="id_venta" id="modalIdVenta">
+                <div class="modal-header">
+                    <h6 class="modal-title"><i class="bi bi-cash-coin"></i> Cobrar venta</h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-1">Venta <strong id="modalIdText">#</strong></p>
+                    <p class="mb-2"><strong id="modalComprador"></strong> · Total: <strong id="modalTotal"></strong></p>
+                    <div class="bg-light border rounded p-2 mb-2 d-flex justify-content-between">
+                        <span class="small text-muted">Saldo pendiente</span>
+                        <strong id="modalSaldo"></strong>
+                    </div>
+                    <label class="form-label small">Monto a cobrar</label>
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text">Gs</span>
+                        <input type="number" name="monto" id="montoPago" class="form-control" step="0.01" min="0">
+                    </div>
+                    <div class="small text-muted mt-2" id="modalVuelto"></div>
+                </div>
+                <div class="modal-footer justify-content-center">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" name="marcar_pagado" class="btn btn-evo btn-sm"><i class="bi bi-check-circle"></i> Registrar cobro</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('pagarModal').addEventListener('show.bs.modal', function (e) {
+    const btn = e.relatedTarget;
+    const restante = Number(btn.dataset.restante);
+    document.getElementById('modalIdVenta').value = btn.dataset.id;
+    document.getElementById('modalIdText').textContent = '#' + btn.dataset.id;
+    document.getElementById('modalComprador').textContent = btn.dataset.comprador;
+    document.getElementById('modalTotal').textContent = 'Gs ' + Number(btn.dataset.total).toLocaleString('es-PY').replace(/,/g, '.');
+    document.getElementById('modalSaldo').textContent = 'Gs ' + restante.toLocaleString('es-PY').replace(/,/g, '.');
+    const inp = document.getElementById('montoPago');
+    inp.value = restante;
+    inp.max = restante;
+    actualizarVuelto(restante, restante);
+});
+function actualizarVuelto(restante, monto) {
+    const v = document.getElementById('modalVuelto');
+    if (monto < restante) {
+        v.textContent = 'Queda saldo pendiente de Gs ' + (restante - monto).toLocaleString('es-PY').replace(/,/g, '.');
+        v.className = 'small text-warning mt-2';
+    } else if (monto > restante) {
+        v.textContent = 'Vuelto: Gs ' + (monto - restante).toLocaleString('es-PY').replace(/,/g, '.');
+        v.className = 'small text-success mt-2';
+    } else {
+        v.textContent = '';
+        v.className = 'small text-muted mt-2';
+    }
+}
+document.getElementById('montoPago').addEventListener('input', function () {
+    const restante = Number(this.max);
+    const monto = Number(this.value) || 0;
+    actualizarVuelto(restante, monto);
 });
 </script>
 

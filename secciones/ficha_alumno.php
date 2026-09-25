@@ -330,7 +330,7 @@ $siguiente_curso = $siguiente_curso->fetch(PDO::FETCH_ASSOC);
     <?php endif; ?>
 
     <div class="card shadow mb-4">
-        <div class="card-header bg-evo text-white d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div class="card-header bg-evo-accent text-white d-flex justify-content-between align-items-center flex-wrap gap-2">
             <h5 class="mb-0"><i class="bi bi-person-fill me-2"></i><?= htmlspecialchars($alumno['nombre'] . ' ' . $alumno['apellido']) ?></h5>
             <div class="d-flex align-items-center gap-2">
                 <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#modalNuevoPago"><i class="bi bi-cash-coin me-1"></i>Registrar pago</button>
@@ -438,7 +438,7 @@ $siguiente_curso = $siguiente_curso->fetch(PDO::FETCH_ASSOC);
                     <small class="text-muted">Cantina</small>
                     <h4 class="mb-0 text-<?= $deudaCantina > 0 ? 'warning' : 'secondary' ?>"><?= $deudaCantina > 0 ? number_format($deudaCantina, 0, ',', '.') : 'Al día' ?></h4>
                     <?php if ($deudaCantina > 0): ?>
-                        <button class="btn btn-sm btn-warning mt-1" data-bs-toggle="modal" data-bs-target="#modalPagoCantina"><i class="bi bi-cash-coin me-1"></i> Cobrar</button>
+                        <button class="btn btn-sm btn-evo mt-1" data-bs-toggle="modal" data-bs-target="#modalPagoCantina"><i class="bi bi-cash-coin me-1"></i> Cobrar</button>
                     <?php endif; ?>
                 </div>
             </div>
@@ -599,7 +599,7 @@ $siguiente_curso = $siguiente_curso->fetch(PDO::FETCH_ASSOC);
                         <div class="col-md-6">
                             <label class="form-label">Curso *</label>
                             <input type="hidden" name="id_curso" id="f_id_curso" value="">
-                            <button type="button" class="btn btn-outline-danger w-100 d-flex justify-content-between align-items-center py-2 border-2" onclick="cursoPickerAbrir('f_id_curso','f_lblCurso')">
+                            <button type="button" class="btn btn-outline-evo w-100 d-flex justify-content-between align-items-center py-2 border-2" onclick="cursoPickerAbrir('f_id_curso','f_lblCurso')">
                                 <span id="f_lblCurso"><i class="bi bi-book me-1"></i> Seleccionar curso...</span>
                                 <i class="bi bi-chevron-down"></i>
                             </button>
@@ -649,7 +649,7 @@ $siguiente_curso = $siguiente_curso->fetch(PDO::FETCH_ASSOC);
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-danger">Guardar cambios</button>
+                    <button type="submit" class="btn btn-evo">Guardar cambios</button>
                 </div>
             </form>
         </div>
@@ -684,7 +684,7 @@ $siguiente_curso = $siguiente_curso->fetch(PDO::FETCH_ASSOC);
 <div class="modal fade" id="modalEliminar" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header bg-danger text-white">
+            <div class="modal-header bg-danger text-white modal-header-delete">
                 <h5 class="modal-title"><i class="bi bi-trash-fill me-2"></i>Eliminar alumno</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
@@ -798,7 +798,7 @@ $siguiente_curso = $siguiente_curso->fetch(PDO::FETCH_ASSOC);
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-danger"><i class="bi bi-check-lg"></i> Registrar pago</button>
+                    <button type="submit" class="btn btn-evo"><i class="bi bi-check-lg"></i> Registrar pago</button>
                 </div>
             </form>
         </div>

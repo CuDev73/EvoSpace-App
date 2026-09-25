@@ -143,7 +143,7 @@ foreach ($horarios_por_curso as $h) {
     <div class="row g-4 mt-2">
         <div class="col-md-8 mx-auto">
             <div class="card shadow">
-                <div class="card-header bg-evo text-white"><i class="bi bi-person-fill"></i> Datos del alumno</div>
+                <div class="card-header py-2"><i class="bi bi-person-fill"></i> Datos del alumno</div>
                 <div class="card-body">
                     <form method="POST" id="formInscripcion">
                         <?= campoCSRF() ?>
@@ -151,7 +151,7 @@ foreach ($horarios_por_curso as $h) {
                         <input type="hidden" name="id_curso" id="id_curso_inscripcion" value="">
                         <div class="mb-3">
                             <label class="form-label small fw-bold">Curso *</label>
-                            <button type="button" class="btn btn-outline-danger w-100 d-flex justify-content-between align-items-center py-2 border-2" id="btnCursoInscripcion" onclick="cursoPickerAbrir('id_curso_inscripcion','lblCursoInscripcion')">
+                            <button type="button" class="btn btn-outline-evo w-100 d-flex justify-content-between align-items-center py-2 border-2" id="btnCursoInscripcion" onclick="cursoPickerAbrir('id_curso_inscripcion','lblCursoInscripcion')">
                                 <span id="lblCursoInscripcion"><i class="bi bi-book me-1"></i> Seleccionar curso...</span>
                                 <i class="bi bi-chevron-down"></i>
                             </button>
@@ -195,7 +195,7 @@ foreach ($horarios_por_curso as $h) {
                                 <label class="form-check-label small" for="becado">Descuento (beca)</label>
                             </div>
                         </div>
-                        <button type="submit" class="btn btn-danger w-100" id="btnInscribir">Inscribir alumno</button>
+                        <button type="submit" class="btn btn-evo w-100" id="btnInscribir">Inscribir alumno</button>
                     </form>
                 </div>
             </div>
@@ -244,7 +244,7 @@ foreach ($horarios_por_curso as $h) {
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-danger">Crear tutor/a</button>
+                    <button type="submit" class="btn btn-evo">Crear tutor/a</button>
                 </div>
             </form>
         </div>

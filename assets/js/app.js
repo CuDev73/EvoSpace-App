@@ -45,7 +45,10 @@ document.addEventListener('DOMContentLoaded', function () {
   // ----------------------------------------------------------
   // 4. Confirmación en formularios de eliminación
   // ----------------------------------------------------------
-  document.querySelectorAll('form[onsubmit*="confirm"]').forEach(function (form) {
+  document.querySelectorAll('form').forEach(function (form) {
+    var attr = form.getAttribute('onsubmit') || '';
+    if (attr.indexOf('confirm') === -1) return;
+    if (attr.indexOf('confirmarEliminar') !== -1) return;
     form.addEventListener('submit', function (e) {
       var msg = this.getAttribute('data-confirm') || '¿Estás seguro?';
       if (!confirm(msg)) e.preventDefault();

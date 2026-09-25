@@ -109,6 +109,22 @@ $stmt = $pdo->prepare($sql);
 $stmt->execute();
 $alumnos = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
+// Filtro morosos (?filtro=morosos): alumnos activos sin pago de cuota del mes en curso
+$filtroMorosos = isset($_GET['filtro']) && $_GET['filtro'] === 'morosos';
+$morososIds = [];
+if ($filtroMorosos) {
+    $mesActualMorosos = (int)date('m');
+    $anioActualMorosos = (int)date('Y');
+    $stmtActivosMorosos = $pdo->query("SELECT id_alumno FROM alumnos WHERE activo = 1");
+    foreach ($stmtActivosMorosos as $aMoroso) {
+        $stmt = $pdo->prepare("SELECT COUNT(*) FROM pagos WHERE id_alumno = ? AND concepto = 'cuota' AND MONTH(fecha) = ? AND YEAR(fecha) = ?");
+        $stmt->execute([(int)$aMoroso['id_alumno'], $mesActualMorosos, $anioActualMorosos]);
+        if ((int)$stmt->fetchColumn() === 0) {
+            $morososIds[] = (int)$aMoroso['id_alumno'];
+        }
+    }
+}
+
 // Obtener lista de cursos para el formulario
 $stmt = $pdo->query("SELECT id_curso, nombre, tipo, orden FROM cursos WHERE activo = 1 ORDER BY tipo, orden");
 $cursos = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -151,6 +167,13 @@ $alumnosJson = str_replace('</', '<\\/', json_encode($alumnosKeyed, JSON_UNESCAP
         </div>
     <?php endif; ?>
 
+    <?php if ($filtroMorosos): ?>
+        <div class="alert alert-warning d-flex justify-content-between align-items-center">
+            <div><i class="bi bi-credit-card-2-front me-1"></i> Vista filtrada: alumnos <strong>sin cuota pagada del mes en curso</strong> (<?= count($morososIds) ?> en total).</div>
+            <a href="alumnos.php" class="btn btn-sm btn-outline-secondary"><i class="bi bi-x-circle me-1"></i> Quitar filtro</a>
+        </div>
+    <?php endif; ?>
+
     <!-- Filtros: buscador + curso -->
     <div class="row g-2 mb-3">
         <div class="col-md-8">
@@ -172,7 +195,7 @@ $alumnosJson = str_replace('</', '<\\/', json_encode($alumnosKeyed, JSON_UNESCAP
 
     <!-- Tabla de alumnos -->
     <div class="card shadow">
-        <div class="card-header bg-evo text-white py-2">
+        <div class="card-header bg-evo-accent text-white py-2">
             <i class="bi bi-people-fill"></i> Alumnos Registrados
         </div>
         <div class="card-body p-0">
@@ -198,7 +221,7 @@ $alumnosJson = str_replace('</', '<\\/', json_encode($alumnosKeyed, JSON_UNESCAP
                             <tr><td colspan="11" class="text-center">No hay alumnos registrados.</td></tr>
                         <?php else: ?>
                             <?php foreach ($alumnos as $alumno): ?>
-                                <tr>
+<tr data-id="<?= (int)$alumno['id_alumno'] ?>" data-moroso="<?= $filtroMorosos && in_array((int)$alumno['id_alumno'], $morososIds) ? '1' : '0' ?>">
                                     <td class="text-center align-middle"><?= $alumno['id_alumno'] ?></td>
                                     <td class="nombre-alumno align-middle"><?= htmlspecialchars($alumno['nombre'] . ' ' . $alumno['apellido']) ?></td>
                                     <td class="text-center align-middle"><?= htmlspecialchars($alumno['curso_tipo'] . ' - ' . $alumno['curso_nombre']) ?></td>
@@ -264,7 +287,7 @@ $alumnosJson = str_replace('</', '<\\/', json_encode($alumnosKeyed, JSON_UNESCAP
                         <div class="col-md-6">
                             <label class="form-label">Curso *</label>
                             <input type="hidden" name="id_curso" id="id_curso" value="">
-                            <button type="button" class="btn btn-outline-danger w-100 d-flex justify-content-between align-items-center py-2 border-2" onclick="cursoPickerAbrir('id_curso','lblCursoEditar')">
+                            <button type="button" class="btn btn-outline-evo w-100 d-flex justify-content-between align-items-center py-2 border-2" onclick="cursoPickerAbrir('id_curso','lblCursoEditar')">
                                 <span id="lblCursoEditar"><i class="bi bi-book me-1"></i> Seleccionar curso...</span>
                                 <i class="bi bi-chevron-down"></i>
                             </button>
@@ -314,7 +337,7 @@ $alumnosJson = str_replace('</', '<\\/', json_encode($alumnosKeyed, JSON_UNESCAP
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-danger">Guardar cambios</button>
+                    <button type="submit" class="btn btn-evo">Guardar cambios</button>
                 </div>
             </form>
         </div>
@@ -393,6 +416,7 @@ $alumnosJson = str_replace('</', '<\\/', json_encode($alumnosKeyed, JSON_UNESCAP
             if (!tbody) return [];
             const texto = (buscador ? buscador.value.toLowerCase() : '');
             const curso = (filtroCurso ? filtroCurso.value : '');
+            const soloMorosos = <?= $filtroMorosos ? 'true' : 'false' ?>;
             const filas = [];
             tbody.querySelectorAll('tr').forEach(fila => {
                 const nombre = fila.cells[1]?.textContent.toLowerCase() || '';
@@ -401,7 +425,8 @@ $alumnosJson = str_replace('</', '<\\/', json_encode($alumnosKeyed, JSON_UNESCAP
                 const cursoId = cursosIdPorTexto.get(cursoCelda) ?? '';
                 const matchTexto = !texto || nombre.includes(texto) || ciCelda.includes(texto);
                 const matchCurso = !curso || String(cursoId) === curso;
-                if (matchTexto && matchCurso) filas.push(fila);
+                const matchMoroso = !soloMorosos || fila.dataset.moroso === '1';
+                if (matchTexto && matchCurso && matchMoroso) filas.push(fila);
             });
             return filas;
         }

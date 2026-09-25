@@ -10,11 +10,16 @@ require_once '../funciones.php';
 verificarPermiso('cantina');
 
 $error = '';
+$metodo_pago = $_POST['metodo_pago'] ?? 'Efectivo';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['accion'] === 'guardar_venta') {
     verificarTokenCSRF();
     $fecha = $_POST['fecha'];
     $metodo_pago = $_POST['metodo_pago'];
+    $metodosPermitidos = ['Efectivo', 'Fiado'];
+    if (!in_array($metodo_pago, $metodosPermitidos, true)) {
+        $metodo_pago = 'Efectivo';
+    }
     $estado_pago = ($metodo_pago === 'Fiado') ? 'pendiente' : 'pagado';
     $tipo_comprador = $_POST['tipo_comprador'] ?? 'otro';
     $nombre_comprador = trim($_POST['nombre_comprador']);
@@ -48,12 +53,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['
     } elseif (empty($nombre_comprador)) {
         $error = "El nombre del comprador es obligatorio.";
     } else {
+        $comprobante = null;
+        if (!empty($_FILES['comprobante']['name']) && $_FILES['comprobante']['error'] === UPLOAD_ERR_OK) {
+            $dirSubida = __DIR__ . '/../../../uploads/comprobantes';
+            if (!is_dir($dirSubida)) @mkdir($dirSubida, 0775, true);
+            $ext = strtolower(pathinfo($_FILES['comprobante']['name'], PATHINFO_EXTENSION));
+            $permitidas = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'pdf'];
+            if (!in_array($ext, $permitidas, true)) {
+                $error = "Formato de comprobante no válido. Usá JPG, PNG, GIF, WebP o PDF.";
+            } else {
+                $nombre = 'venta_' . date('Ymd_His') . '_' . bin2hex(random_bytes(4)) . '.' . $ext;
+                if (move_uploaded_file($_FILES['comprobante']['tmp_name'], $dirSubida . '/' . $nombre)) {
+                    $comprobante = 'uploads/comprobantes/' . $nombre;
+                } else {
+                    $error = "No se pudo subir el comprobante. Verificá que la carpeta uploads/comprobantes tenga permisos de escritura.";
+                }
+            }
+        }
+        if (!$error) {
         try {
-            $id_venta = registrarVenta($pdo, $fecha, $productos_venta, $total, $metodo_pago, $tipo_comprador, $nombre_comprador, $id_alumno, $id_usuario, $observaciones, $estado_pago);
+            $id_venta = registrarVenta($pdo, $fecha, $productos_venta, $total, $metodo_pago, $tipo_comprador, $nombre_comprador, $id_alumno, $id_usuario, $observaciones, $estado_pago, $comprobante);
             header("Location: index.php?exito=1");
             exit;
         } catch (Exception $e) {
             $error = "Error al registrar venta: " . $e->getMessage();
+        }
         }
     }
 }
@@ -91,7 +115,7 @@ $productosJson = json_encode(array_map(function ($p) {
         <div class="alert alert-danger"><?= htmlspecialchars($error) ?></div>
     <?php endif; ?>
 
-    <form method="POST" id="formVenta">
+    <form method="POST" id="formVenta" enctype="multipart/form-data">
         <?= campoCSRF() ?>
         <input type="hidden" name="accion" value="guardar_venta">
         <input type="hidden" name="id_alumno" id="id_alumno">
@@ -101,7 +125,7 @@ $productosJson = json_encode(array_map(function ($p) {
 
         <!-- 1. DATOS DE LA VENTA / COMPRADOR (arriba) -->
         <div class="card shadow mb-3" id="panelCompra">
-            <div class="card-header bg-danger text-white">
+            <div class="card-header">
                 <i class="bi bi-person-lines-fill"></i> Datos de la venta
             </div>
             <div class="card-body">
@@ -122,10 +146,8 @@ $productosJson = json_encode(array_map(function ($p) {
                     <div class="col-md-4">
                         <label class="form-label small">Método de pago</label>
                         <select name="metodo_pago" class="form-select form-select-sm">
-                            <option value="Efectivo">Efectivo</option>
-                            <option value="Transferencia">Transferencia</option>
-                            <option value="Tarjeta">Tarjeta</option>
-                            <option value="Fiado">Fiado</option>
+                            <option value="Efectivo" <?= ($metodo_pago ?? '') == 'Efectivo' ? 'selected' : '' ?>>Efectivo</option>
+                            <option value="Fiado" <?= ($metodo_pago ?? '') == 'Fiado' ? 'selected' : '' ?>>Fiado (debe)</option>
                         </select>
                     </div>
                     <div class="col-md-4 d-flex align-items-end">
@@ -134,9 +156,14 @@ $productosJson = json_encode(array_map(function ($p) {
                             <strong id="lblTotalDatos">Gs 0</strong>
                         </div>
                     </div>
-                    <div class="col-12">
+                    <div class="col-md-8">
                         <label class="form-label small">Observaciones</label>
                         <input type="text" name="observaciones" class="form-control form-control-sm" placeholder="Ej: Cliente regular, descuento, etc.">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small">Comprobante (opcional)</label>
+                        <input type="file" name="comprobante" id="comprobante" class="form-control form-control-sm" accept=".jpg,.jpeg,.png,.gif,.webp,.pdf">
+                        <div class="form-text small">Imagen o PDF adjunta a la venta.</div>
                     </div>
                 </div>
             </div>
@@ -151,9 +178,9 @@ $productosJson = json_encode(array_map(function ($p) {
                 </div>
             </div>
             <div class="d-flex gap-1 flex-wrap py-2" id="filtroCategorias">
-                <button type="button" class="btn btn-sm btn-danger categoria-filtro active" data-cat="">Todos</button>
+                <button type="button" class="btn btn-sm btn-evo categoria-filtro active" data-cat="">Todos</button>
                 <?php foreach ($categorias as $cat): ?>
-                    <button type="button" class="btn btn-sm btn-outline-danger categoria-filtro" data-cat="<?= htmlspecialchars($cat) ?>"><?= htmlspecialchars($cat) ?></button>
+                    <button type="button" class="btn btn-sm btn-outline-evo categoria-filtro" data-cat="<?= htmlspecialchars($cat) ?>"><?= htmlspecialchars($cat) ?></button>
                 <?php endforeach; ?>
             </div>
         </div>
@@ -163,9 +190,9 @@ $productosJson = json_encode(array_map(function ($p) {
 
         <!-- 3. CARRITO (abajo, con scroll propio) -->
         <div class="card shadow mt-3">
-            <div class="card-header bg-danger text-white d-flex justify-content-between align-items-center">
+            <div class="card-header bg-evo text-white d-flex justify-content-between align-items-center">
                 <span><i class="bi bi-cart"></i> Carrito</span>
-                <span id="badgeTotalItems" class="badge bg-light text-danger">0</span>
+                <span id="badgeTotalItems" class="badge bg-light text-evo">0</span>
             </div>
             <div class="card-body p-0">
                 <div id="listaCarrito" style="max-height:320px; overflow-y:auto; padding:.75rem .5rem;"></div>
@@ -174,8 +201,8 @@ $productosJson = json_encode(array_map(function ($p) {
                 </div>
             </div>
             <div class="card-footer d-flex flex-wrap justify-content-between align-items-center gap-2">
-                <div class="fw-bold fs-5">Total <span id="lblTotal" class="text-danger">Gs 0</span></div>
-                <button type="submit" class="btn btn-danger"><i class="bi bi-check-circle"></i> Registrar Venta</button>
+                <div class="fw-bold fs-5">Total <span id="lblTotal" class="text-evo">Gs 0</span></div>
+                <button type="submit" class="btn btn-evo"><i class="bi bi-check-circle"></i> Registrar Venta</button>
             </div>
         </div>
     </form>
@@ -186,8 +213,8 @@ $productosJson = json_encode(array_map(function ($p) {
         <small class="text-muted d-block">Total</small>
         <strong id="lblTotalMovil">Gs 0</strong>
     </div>
-    <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="offcanvas" data-bs-target="#offcanvasCarrito">
-        <i class="bi bi-cart"></i> Ver carrito <span class="badge bg-light text-danger" id="badgeTotalItemsMovil">0</span>
+    <button type="button" class="btn btn-evo btn-sm" data-bs-toggle="offcanvas" data-bs-target="#offcanvasCarrito">
+        <i class="bi bi-cart"></i> Ver carrito <span class="badge bg-light text-evo" id="badgeTotalItemsMovil">0</span>
     </button>
 </div>
 
@@ -202,7 +229,7 @@ $productosJson = json_encode(array_map(function ($p) {
             <span>Total</span>
             <span id="lblTotalMovil2">Gs 0</span>
         </div>
-        <button type="button" class="btn btn-danger w-100" id="btnIrDatos">Continuar con datos de la venta</button>
+        <button type="button" class="btn btn-evo w-100" id="btnIrDatos">Continuar con datos de la venta</button>
     </div>
 </div>
 
@@ -292,9 +319,9 @@ function renderGrid() {
                 <div class="card-body p-2">
                     <div class="card-title fw-bold mb-1">${esc(p.nombre)}</div>
                     <div class="categoria-producto">${p.categoria ? '<span class="badge bg-secondary">' + esc(p.categoria) + '</span>' : '&nbsp;'}</div>
-                    <div class="fw-bold text-danger mt-1 precio-producto">${fmtGs(p.precio)}</div>
+                    <div class="fw-bold text-primary mt-1 precio-producto">${fmtGs(p.precio)}</div>
                     <div class="stock-producto small text-muted">Stock: ${p.stock}</div>
-                    <button type="button" id="btnAgregar${p.id}" data-id="${p.id}" class="btn btn-sm w-100 btn-agregar mt-auto ${cant ? 'btn-success' : 'btn-danger'}">
+                    <button type="button" id="btnAgregar${p.id}" data-id="${p.id}" class="btn btn-sm w-100 btn-agregar mt-auto ${cant ? 'btn-success' : 'btn-outline-evo'}">
                         ${cant ? 'En carrito (' + cant + ')' : '<i class="bi bi-plus-lg"></i> Agregar'}
                     </button>
                 </div>
@@ -334,8 +361,8 @@ function actualizarBotones() {
             ? '<i class="bi bi-check-circle"></i> En carrito (' + cant + ')'
             : '<i class="bi bi-plus-lg"></i> Agregar';
         btn.classList.toggle('btn-success', !!cant);
-        btn.classList.toggle('btn-danger', !cant);
-        btn.closest('.producto-card').classList.toggle('border-danger', !!cant);
+        btn.classList.toggle('btn-outline-evo', !cant);
+        btn.closest('.producto-card').classList.toggle('border-evo', !!cant);
     });
 }
 

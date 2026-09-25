@@ -1,3 +1,16 @@
+<?php
+// Determinar URL de inicio según el rol
+$inicioUrl = '/evospace/roles/admin.php';
+if (isset($_SESSION['rol'])) {
+    if ($_SESSION['rol'] === 'profesor') {
+        $inicioUrl = '/evospace/roles/profesor.php';
+    } elseif ($_SESSION['rol'] === 'padre') {
+        $inicioUrl = '/evospace/roles/padre.php';
+    } elseif ($_SESSION['rol'] === 'auxiliar') {
+        $inicioUrl = '/evospace/roles/auxiliar.php';
+    }
+}
+?>
 <nav class="navbar navbar-dark bg-evo fixed-top">
     <div class="container-fluid position-relative">
         <div class="d-flex align-items-center gap-2">
@@ -6,19 +19,19 @@
                 <span class="navbar-toggler-icon"></span>
             </button>
             <?php if ($hayVolver): ?>
-            <a href="#" onclick="history.back(); return false;" class="btn btn-sm text-white d-flex align-items-center justify-content-center flex-shrink-0" style="width:36px;height:36px;padding:0;" title="Volver" aria-label="Volver">
+            <a href="#" onclick="history.back(); return false;" class="btn btn-sm btn-evo d-flex align-items-center justify-content-center flex-shrink-0" style="width:36px;height:36px;padding:0;" title="Volver" aria-label="Volver">
                 <i class="bi bi-arrow-left" style="font-size:1.4rem;"></i>
             </a>
             <?php endif; ?>
         </div>
 
         <!-- Título centrado -->
-        <a class="navbar-brand fw-bold position-absolute start-50 translate-middle-x" href="/evospace/roles/admin.php">
+        <a class="navbar-brand fw-bold position-absolute start-50 translate-middle-x" href="<?= $inicioUrl ?>">
             EvoSpace
         </a>
 
         <!-- Usuario a la derecha -->
-        <span class="navbar-text text-white d-none d-md-inline ms-auto">
+        <span class="navbar-text d-none d-md-inline ms-auto">
             <i class="bi bi-person-circle"></i> 
             <?= htmlspecialchars($_SESSION['nombre_completo'] ?? $_SESSION['usuario'] ?? 'EvoSpace') ?>
         </span>
@@ -26,22 +39,12 @@
         <!-- Offcanvas (menú lateral) -->
         <div class="offcanvas offcanvas-start" tabindex="-1" id="offcanvasNavbar">
             <div class="offcanvas-header d-flex align-items-center justify-content-center position-relative">
-                <span class="fw-bold text-white">Secciones</span>
-                <button type="button" class="btn-close btn-close-white position-absolute end-0 me-3" data-bs-dismiss="offcanvas"></button>
+                <span class="fw-bold">Secciones</span>
+                <button type="button" class="btn-close position-absolute end-0 me-3" data-bs-dismiss="offcanvas"></button>
             </div>
             <div class="offcanvas-body">
                 <ul class="navbar-nav flex-grow-1">
                     <?php
-                    // Determinar URL de inicio según el rol
-                    $inicioUrl = '/evospace/roles/admin.php';
-                    if (isset($_SESSION['rol'])) {
-                        if ($_SESSION['rol'] === 'profesor') {
-                            $inicioUrl = '/evospace/roles/profesor.php';
-                        } elseif ($_SESSION['rol'] === 'padre') {
-                            $inicioUrl = '/evospace/roles/padre.php';
-                        }
-                    }
-
                     // Secciones agrupadas por categoría con sus permisos requeridos
                     $grupoSecciones = [
                         'Académico' => 'bi-book-fill',

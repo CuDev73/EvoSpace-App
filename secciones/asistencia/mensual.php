@@ -173,7 +173,7 @@ $anios = range(date('Y')-2, date('Y')+1);
                             <button type="button" class="btn btn-outline-secondary btn-sm" onclick="marcarTodos(false)">Marcar todos ausentes</button>
                         </div>
                         <div class="d-flex gap-2">
-                            <button type="submit" name="guardar" class="btn btn-danger">
+                            <button type="submit" name="guardar" class="btn btn-evo">
                                 <i class="bi bi-save"></i> Guardar mes
                             </button>
                             <a href="exportar_excel_mensual.php?id_curso=<?= $id_curso ?>&mes=<?= $mes ?>&anio=<?= $anio ?>" class="btn btn-success">

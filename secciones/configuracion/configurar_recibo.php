@@ -84,7 +84,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <?= campoCSRF() ?>
         <div class="col-md-8">
             <div class="card shadow-sm">
-                <div class="card-header bg-evo text-white py-2">
+                <div class="card-header py-2">
                     <i class="bi bi-building"></i> Datos de la institución
                 </div>
                 <div class="card-body">
@@ -96,7 +96,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <div class="mb-3">
                         <label class="form-label">Título / Subtítulo</label>
                         <input type="text" name="recibo_titulo" class="form-control"
-                            value="<?= htmlspecialchars($config['recibo_titulo'] ?? 'Academia de Artes Escénicas') ?>">
+                            value="<?= htmlspecialchars($config['recibo_titulo'] ?? 'Instituto Evolución Arte') ?>">
                     </div>
                     <div class="mb-3">
                         <label class="form-label">RUC</label>
@@ -119,7 +119,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         <div class="col-md-4">
             <div class="card shadow-sm">
-                <div class="card-header bg-evo text-white py-2">
+                <div class="card-header py-2">
                     <i class="bi bi-image"></i> Logo
                 </div>
                 <div class="card-body text-center">
@@ -131,7 +131,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <div class="mb-2">
                             <input type="hidden" name="eliminar_logo" id="eliminarLogoHidden" value="0">
                             <button type="button" onclick="document.getElementById('eliminarLogoHidden').value='1'; return confirmarEliminar(this.form, '¿Eliminar el logo del recibo? Esta acción no se puede deshacer.')"
-                                class="btn btn-outline-danger btn-sm">
+                                class="btn btn-outline-evo btn-sm">
                                 <i class="bi bi-trash"></i> Eliminar logo
                             </button>
                         </div>

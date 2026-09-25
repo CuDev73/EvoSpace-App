@@ -91,7 +91,7 @@ function cursoPickerRender() {
     for (const t of tipos) {
         const items = CURSOS_PICKER.filter(c => c.tipo === t && (!q || (c.nombre + ' ' + c.tipo).toLowerCase().includes(q)));
         if (!items.length) continue;
-        html += '<div class="d-flex align-items-center gap-2 mt-3 mb-2"><i class="bi bi-tag-fill text-danger"></i>'
+        html += '<div class="d-flex align-items-center gap-2 mt-3 mb-2"><i class="bi bi-tag-fill text-primary"></i>'
             + '<strong class="text-danger text-uppercase small">' + cursorPickerEsc(t) + '</strong></div>';
         for (const c of items) {
             const lleno = c.cupo_maximo && c.inscriptos >= c.cupo_maximo;

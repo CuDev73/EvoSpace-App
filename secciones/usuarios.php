@@ -532,7 +532,7 @@ $alumnos_todos = $pdo->query("
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-danger">Guardar</button>
+                    <button type="submit" class="btn btn-evo">Guardar</button>
                 </div>
             </form>
         </div>

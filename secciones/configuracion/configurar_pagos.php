@@ -162,7 +162,7 @@ $iconos = [
 
     <!-- SECCIÓN: Porcentaje de descuento global -->
     <div class="card shadow-sm mb-4">
-        <div class="card-header bg-evo text-white py-2">
+        <div class="card-header py-2">
             <i class="bi bi-percent"></i> Descuento global para cuota
         </div>
         <div class="card-body py-2">
@@ -175,7 +175,7 @@ $iconos = [
                         <input type="number" step="0.01" name="porcentaje_beca"
                             class="form-control" value="<?= $porcentaje_beca ?>"
                             min="0" max="100" required>
-                        <button type="submit" class="btn btn-warning btn-sm">
+                        <button type="submit" class="btn btn-evo btn-sm">
                             <i class="bi bi-save"></i> Actualizar
                         </button>
                     </div>
@@ -193,7 +193,7 @@ $iconos = [
 
     <!-- SECCIÓN: Vencimiento y recargo -->
     <div class="card shadow-sm mb-4">
-        <div class="card-header bg-evo text-white py-2">
+        <div class="card-header py-2">
             <i class="bi bi-calendar-event"></i> Vencimiento y recargo
         </div>
         <div class="card-body py-2">
@@ -216,7 +216,7 @@ $iconos = [
                         value="<?= (int)$dia_limite ?>" min="1" max="31" required>
                 </div>
                 <div class="col-md-2">
-                    <button type="submit" class="btn btn-warning btn-sm w-100">
+                    <button type="submit" class="btn btn-evo btn-sm w-100">
                         <i class="bi bi-save"></i> Actualizar
                     </button>
                 </div>
@@ -250,7 +250,7 @@ $iconos = [
             <?php endif; ?>
 
             <div class="card shadow mb-4">
-                <div class="card-header bg-evo text-white py-2">
+                <div class="card-header py-2">
                     <i class="bi bi-tag"></i> <?= $tipo ?>
                     <span class="badge bg-light text-dark ms-2"><?= count($cursosTipo) ?> cursos</span>
                 </div>
@@ -294,7 +294,7 @@ $iconos = [
         <?php endforeach; ?>
 
         <div class="d-flex gap-2 mt-4 pb-3">
-            <button type="button" class="btn btn-danger flex-fill" data-bs-toggle="modal" data-bs-target="#modalConfirmar">
+            <button type="button" class="btn btn-evo flex-fill" data-bs-toggle="modal" data-bs-target="#modalConfirmar">
                 <i class="bi bi-save"></i> Guardar todos los precios
             </button>
         </div>
@@ -314,7 +314,7 @@ $iconos = [
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <button type="button" class="btn btn-danger" id="btnConfirmarGuardar">
+                <button type="button" class="btn btn-evo" id="btnConfirmarGuardar">
                     <i class="bi bi-check-circle"></i> Sí, guardar cambios
                 </button>
             </div>

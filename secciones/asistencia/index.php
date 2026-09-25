@@ -44,7 +44,7 @@ $statsHoy = $pdo->prepare("
         <div class="mb-4 p-3 bg-light rounded border">
             <strong><i class="bi bi-list-ul"></i> Ir a:</strong>
             <?php foreach ($tipos as $tipo): ?>
-                <a href="#tipo-<?= urlencode($tipo) ?>" class="btn btn-outline-danger btn-sm ms-2">
+                <a href="#tipo-<?= urlencode($tipo) ?>" class="btn btn-outline-evo btn-sm ms-2">
                     <?= htmlspecialchars($tipo) ?>
                 </a>
             <?php endforeach; ?>
@@ -62,6 +62,11 @@ $statsHoy = $pdo->prepare("
         <?php
         $grupo_actual = '';
         foreach ($cursos as $curso):
+            $statsHoy->execute([$hoy, $curso['id_curso']]);
+            $statsHoyData = $statsHoy->fetch(PDO::FETCH_ASSOC);
+            $statsTotal = (int)($statsHoyData['total'] ?? 0);
+            $statsPresentes = (int)($statsHoyData['presentes'] ?? 0);
+            $statsPct = $statsTotal > 0 ? round(($statsPresentes / $statsTotal) * 100) : 0;
             if ($curso['tipo'] != $grupo_actual):
                 if ($grupo_actual != ''): ?>
                     <hr class="my-4 border-2 border-danger">
@@ -78,14 +83,19 @@ $statsHoy = $pdo->prepare("
             <div class="col-md-4 col-lg-3" data-tipo="<?= htmlspecialchars($curso['tipo']) ?>" data-nombre="<?= htmlspecialchars($curso['nombre']) ?>">
                 <div class="card shadow h-100 text-center">
                     <div class="card-body d-flex flex-column align-items-center justify-content-center">
-                        <i class="bi bi-book fs-1 text-danger"></i>
+                        <i class="bi bi-book fs-1 text-primary"></i>
                         <h5 class="card-title mt-2"><?= htmlspecialchars($curso['nombre']) ?></h5>
                         <p class="card-text text-muted small"><?= $curso['total_alumnos'] ?> alumnos</p>
+                        <?php if ($statsTotal > 0): ?>
+                            <span class="badge bg-success mb-2"><i class="bi bi-check-circle"></i> Tomada hoy: <?= $statsPresentes ?>/<?= $statsTotal ?> (<?= $statsPct ?>%)</span>
+                        <?php else: ?>
+                            <span class="badge bg-secondary mb-2">Sin tomar hoy</span>
+                        <?php endif; ?>
                         <div class="d-flex gap-2 mt-2 flex-wrap justify-content-center">
                             <a href="registrar.php?id_curso=<?= $curso['id_curso'] ?>" class="btn btn-success btn-sm">
                                 <i class="bi bi-plus-circle"></i> Hoy
                             </a>
-                            <a href="mensual.php?id_curso=<?= $curso['id_curso'] ?>" class="btn btn-danger btn-sm">
+                            <a href="mensual.php?id_curso=<?= $curso['id_curso'] ?>" class="btn btn-evo btn-sm">
                                 <i class="bi bi-calendar-month"></i> Mensual
                             </a>
                         </div>

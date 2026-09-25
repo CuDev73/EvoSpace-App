@@ -1,6 +1,6 @@
 /* ============================================================
    EvoSpace - Design System
-   Academia Evolucionarte
+   Instituto Evolución Arte
    ============================================================ */
 
 /* ------------------------------------------------------------
@@ -11,7 +11,6 @@
   --evo-primary-dark:  #a30d11;
   --evo-primary-light: #e85a5e;
   --evo-secondary:     #6c757d;
-  --evo-accent:        #d4a017;
   --evo-bg:            #f5f0e8;
   --evo-bg-alt:        #ebe5d9;
   --evo-surface:       #ffffff;
@@ -21,7 +20,7 @@
   --evo-success:       #198754;
   --evo-warning:       #ffc107;
   --evo-info:          #0dcaf0;
-  --evo-danger:        #dc3545;
+  --evo-danger:        #b3541e;
 
   --evo-radius:        0.75rem;
   --evo-radius-sm:     0.5rem;
@@ -86,6 +85,32 @@ h1, h2, h3, h4, h5, h6 {
   background-color: var(--evo-primary-dark);
   color: #fff;
 }
+.btn-evo:focus,
+.btn-evo:active {
+  background-color: var(--evo-primary-dark);
+  color: #fff;
+}
+.btn-evo.btn-sm {
+  font-size: 0.87rem;
+  padding: 0.25rem 0.75rem;
+}
+.btn-outline-evo {
+  border: 1px solid var(--evo-primary);
+  color: var(--evo-primary);
+  background: transparent;
+  border-radius: var(--evo-radius);
+  font-size: 1.1rem;
+  transition: all var(--evo-transition);
+}
+.btn-outline-evo:hover,
+.btn-outline-evo.active {
+  background-color: var(--evo-primary);
+  color: #fff;
+}
+.btn-outline-evo.btn-sm {
+  font-size: 0.87rem;
+  padding: 0.25rem 0.75rem;
+}
 
 /* ------------------------------------------------------------
    Tarjetas (Cards)
@@ -100,7 +125,12 @@ h1, h2, h3, h4, h5, h6 {
 .card-header {
   font-weight: 600;
   padding: 0.75rem 1.25rem;
-  border-bottom: none;
+  border-bottom: 1px solid var(--evo-border);
+  background-color: var(--evo-surface);
+  color: var(--evo-text);
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
 }
 .card-body {
   padding: 1.25rem;
@@ -113,9 +143,30 @@ h1, h2, h3, h4, h5, h6 {
   transform: translateY(-4px);
   box-shadow: var(--evo-shadow-lg);
 }
-.card-header.bg-evo {
-  background: linear-gradient(135deg, var(--evo-primary), var(--evo-primary-dark));
-  color: #fff;
+.card-header.bg-evo,
+.card-header.bg-evo-accent {
+  background-color: var(--evo-surface);
+  color: var(--evo-text);
+}
+.card-header.bg-evo.text-white,
+.card-header.bg-evo-accent.text-white {
+  color: var(--evo-text) !important;
+}
+.card-header.bg-evo > i:first-child,
+.card-header.bg-evo-accent > i:first-child,
+.card-header.bg-evo > span:first-child > i:first-child,
+.card-header.bg-evo-accent > span:first-child > i:first-child {
+  width: 34px;
+  height: 34px;
+  min-width: 34px;
+  border-radius: 50%;
+  background: rgba(200, 16, 21, 0.1);
+  color: var(--evo-primary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.05rem;
+  margin-right: 0.3rem;
 }
 
 /* ------------------------------------------------------------
@@ -185,8 +236,9 @@ h1, h2, h3, h4, h5, h6 {
    Encabezados de sección (page headers)
    ------------------------------------------------------------ */
 .page-header {
-  background: linear-gradient(135deg, var(--evo-primary), var(--evo-primary-dark));
-  color: #fff;
+  background: var(--evo-surface);
+  color: var(--evo-text);
+  border: 1px solid var(--evo-border);
   padding: 1rem 1.5rem;
   border-radius: var(--evo-radius);
   margin-bottom: 1.25rem;
@@ -200,6 +252,19 @@ h1, h2, h3, h4, h5, h6 {
   margin: 0;
   font-weight: 700;
   font-size: 1.15rem;
+}
+.page-header h4 i:first-child {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  border-radius: 50%;
+  background: rgba(200, 16, 21, 0.1);
+  color: var(--evo-primary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  vertical-align: middle;
 }
 .page-header small {
   opacity: 0.85;
@@ -248,9 +313,99 @@ h1, h2, h3, h4, h5, h6 {
   padding: 1rem 1.25rem;
   border-bottom: none;
 }
-.modal-header.bg-evo {
-  background: linear-gradient(135deg, var(--evo-primary), var(--evo-primary-dark));
+.modal-header.modal-header-plano,
+.modal-header.bg-success,
+.modal-header.bg-danger,
+.modal-header.bg-evo,
+.modal-header.bg-warning {
+  background: var(--evo-surface);
+  color: var(--evo-text);
+}
+.modal-header.bg-success.text-white,
+.modal-header.bg-danger.text-white,
+.modal-header.bg-evo.text-white,
+.modal-header.bg-warning.text-dark {
+  color: var(--evo-text) !important;
+}
+.modal-header.bg-success .btn-close-white,
+.modal-header.bg-danger .btn-close-white,
+.modal-header.bg-evo .btn-close-white {
+  filter: none;
+  opacity: 0.5;
+}
+.modal-header.bg-success .modal-title,
+.modal-header.bg-danger .modal-title,
+.modal-header.bg-evo .modal-title,
+.modal-header.bg-warning .modal-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+.modal-header.bg-success .modal-title i {
+  width: 34px;
+  height: 34px;
+  min-width: 34px;
+  border-radius: 50%;
+  background: rgba(25, 135, 84, 0.1);
+  color: var(--evo-success);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.05rem;
+}
+.modal-header.bg-danger .modal-title i {
+  width: 34px;
+  height: 34px;
+  min-width: 34px;
+  border-radius: 50%;
+  background: rgba(200, 16, 21, 0.1);
+  color: var(--evo-primary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.05rem;
+}
+.modal-header.bg-warning .modal-title i {
+  width: 34px;
+  height: 34px;
+  min-width: 34px;
+  border-radius: 50%;
+  background: rgba(255, 193, 7, 0.15);
+  color: #b8860b;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.05rem;
+}
+
+/* Modal de confirmación de eliminación: sí es peligro real */
+.modal-header.bg-danger.modal-header-delete {
+  background: var(--evo-danger);
   color: #fff;
+}
+.modal-header.bg-evo.text-white {
+  color: var(--evo-text) !important;
+}
+.modal-header.bg-evo .btn-close-white {
+  filter: none;
+  opacity: 0.5;
+}
+.modal-header.bg-evo .modal-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+.modal-header.bg-evo .modal-title i {
+  width: 34px;
+  height: 34px;
+  min-width: 34px;
+  border-radius: 50%;
+  background: rgba(200, 16, 21, 0.1);
+  color: var(--evo-primary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.05rem;
 }
 .modal-body {
   padding: 1.5rem;
@@ -272,8 +427,28 @@ h1, h2, h3, h4, h5, h6 {
    ------------------------------------------------------------ */
 .navbar {
   min-height: 60px;
-  box-shadow: 0 2px 16px rgba(0,0,0,0.15);
-  background: linear-gradient(135deg, var(--evo-primary), var(--evo-primary-dark)) !important;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.08);
+  background: var(--evo-surface) !important;
+  border-bottom: 1px solid var(--evo-border);
+}
+.navbar-brand {
+  color: var(--evo-text) !important;
+}
+.navbar .navbar-brand:hover,
+.navbar .navbar-brand:focus {
+  color: var(--evo-primary) !important;
+}
+.navbar .navbar-text {
+  color: var(--evo-text) !important;
+}
+.navbar .text-white {
+  color: var(--evo-text) !important;
+}
+.navbar-toggler {
+  border: 1px solid rgba(0,0,0,0.1);
+}
+.navbar-toggler-icon {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%280,0,0,0.75%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e") !important;
 }
 .navbar-brand {
   font-size: 1.2rem;
@@ -293,7 +468,8 @@ h1, h2, h3, h4, h5, h6 {
   border-right: none;
 }
 .offcanvas-header {
-  background: linear-gradient(135deg, var(--evo-primary), var(--evo-primary-dark)) !important;
+  background: var(--evo-surface);
+  border-bottom: 1px solid var(--evo-border);
   min-height: 60px;
   padding: 0.75rem 1rem;
 }
@@ -366,8 +542,9 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Barra superior del dashboard (saludo) */
 .dashboard-greeting {
-  background: linear-gradient(135deg, var(--evo-primary), #8b0000);
-  color: #fff;
+  background: var(--evo-surface);
+  color: var(--evo-text);
+  border: 1px solid var(--evo-border);
   padding: 1.25rem 1.5rem;
   border-radius: var(--evo-radius);
   margin-bottom: 1.5rem;
@@ -376,6 +553,19 @@ h1, h2, h3, h4, h5, h6 {
   align-items: center;
   flex-wrap: wrap;
   gap: 0.75rem;
+}
+.dashboard-greeting h4 i:first-child {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  border-radius: 50%;
+  background: rgba(200, 16, 21, 0.1);
+  color: var(--evo-primary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  vertical-align: middle;
 }
 
 /* ------------------------------------------------------------
@@ -459,8 +649,9 @@ h1, h2, h3, h4, h5, h6 {
   animation: loginFadeIn 0.5s ease;
 }
 .login-card .login-header {
-  background: linear-gradient(135deg, var(--evo-primary), var(--evo-primary-dark));
-  color: #fff;
+  background: var(--evo-surface);
+  color: var(--evo-text);
+  border-bottom: 1px solid var(--evo-border);
   padding: 2rem 2rem 1.5rem;
   text-align: center;
 }
@@ -471,7 +662,6 @@ h1, h2, h3, h4, h5, h6 {
   width: 90px;
   height: auto;
   margin-bottom: 0.75rem;
-  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
 }
 .login-card .login-title {
   font-weight: 700;
@@ -718,9 +908,18 @@ h1, h2, h3, h4, h5, h6 {
    Clases utilitarias adicionales
    ------------------------------------------------------------ */
 .text-evo { color: var(--evo-primary); }
-.bg-evo { background: linear-gradient(135deg, var(--evo-primary), var(--evo-primary-dark)); }
-.bg-evo-gradient { background: linear-gradient(135deg, var(--evo-primary), var(--evo-primary-dark)); }
+.bg-evo { background-color: var(--evo-surface); }
+.bg-evo-gradient { background-color: var(--evo-surface); }
+.bg-evo-tint {
+  background: rgba(200, 16, 21, 0.1) !important;
+  color: var(--evo-primary) !important;
+}
 .border-evo { border-color: var(--evo-primary); }
+.btn-evo-gradient {
+  background: linear-gradient(135deg, var(--evo-primary), var(--evo-primary-dark));
+  color: #fff;
+  border: none;
+}
 
 .cursor-pointer { cursor: pointer; }
 .min-w-0 { min-width: 0; }
@@ -768,3 +967,28 @@ h1, h2, h3, h4, h5, h6 {
   background-color: #c69500;
   border-color: #c69500;
 }
+
+/* ------------------------------------------------------------
+   Danger (urgencia) en terracota, separado del rojo de marca
+   ------------------------------------------------------------ */
+.btn-danger {
+  background-color: var(--evo-danger);
+  border-color: var(--evo-danger);
+}
+.btn-danger:hover, .btn-danger:focus {
+  background-color: #9c4a1f;
+  border-color: #9c4a1f;
+}
+.btn-outline-danger {
+  color: var(--evo-danger);
+  border-color: var(--evo-danger);
+}
+.btn-outline-danger:hover, .btn-outline-danger:focus {
+  background-color: var(--evo-danger);
+  border-color: var(--evo-danger);
+  color: #fff;
+}
+.text-danger { color: var(--evo-danger) !important; }
+.bg-danger { background-color: var(--evo-danger) !important; }
+.border-danger { border-color: var(--evo-danger) !important; }
+.badge.bg-danger { background-color: var(--evo-danger) !important; }

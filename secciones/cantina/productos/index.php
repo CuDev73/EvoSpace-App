@@ -68,7 +68,7 @@ if (isset($_GET['exito']) || isset($_GET['eliminado'])) {
 <div class="container mt-3">
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h4><i class="bi bi-box-seam"></i> Productos</h4>
-        <button class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#modalProducto" onclick="limpiarFormulario()"><i class="bi bi-plus-circle"></i> Nuevo Producto</button>
+        <button class="btn btn-evo btn-sm" data-bs-toggle="modal" data-bs-target="#modalProducto" onclick="limpiarFormulario()"><i class="bi bi-plus-circle"></i> Nuevo Producto</button>
     </div>
 
     <?php if ($mensaje): ?>
@@ -173,7 +173,7 @@ if (isset($_GET['exito']) || isset($_GET['eliminado'])) {
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-danger">Guardar</button>
+                    <button type="submit" class="btn btn-evo">Guardar</button>
                 </div>
             </form>
         </div>

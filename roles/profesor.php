@@ -168,7 +168,7 @@ $totalAlumnos = array_sum(array_column($cursos, 'total_alumnos'));
         <div class="col-md-4">
             <div class="card stat-card h-100 border-0 shadow-hover">
                 <div class="card-body text-center">
-                    <div class="stat-icon bg-danger bg-opacity-10"><i class="bi bi-book-fill text-danger"></i></div>
+                    <div class="stat-icon bg-evo-tint"><i class="bi bi-book-fill"></i></div>
                     <div class="stat-number"><?= count($cursos) ?></div>
                     <div class="stat-label">Cursos a cargo</div>
                 </div>
@@ -287,7 +287,7 @@ $totalAlumnos = array_sum(array_column($cursos, 'total_alumnos'));
         <div class="mb-3 p-3 bg-light rounded border">
             <strong class="small"><i class="bi bi-list-ul"></i> Ir a:</strong>
             <?php foreach ($tipos as $tipo): ?>
-                <a href="#tipo-<?= urlencode($tipo) ?>" class="btn btn-outline-danger btn-sm ms-1"><?= htmlspecialchars($tipo) ?></a>
+                <a href="#tipo-<?= urlencode($tipo) ?>" class="btn btn-outline-evo btn-sm ms-1"><?= htmlspecialchars($tipo) ?></a>
             <?php endforeach; ?>
         </div>
     <?php endif; ?>
@@ -339,7 +339,7 @@ $totalAlumnos = array_sum(array_column($cursos, 'total_alumnos'));
                             <button class="btn btn-success btn-sm flex-fill" onclick="abrirAsistencia(<?= $curso['id_curso'] ?>, '<?= htmlspecialchars($curso['nombre'], ENT_QUOTES) ?>')">
                                 <i class="bi bi-clipboard-check"></i> Asistencia
                             </button>
-                            <button class="btn btn-danger btn-sm flex-fill" onclick="abrirMensual(<?= $curso['id_curso'] ?>, '<?= htmlspecialchars($curso['nombre'], ENT_QUOTES) ?>')">
+                            <button class="btn btn-evo btn-sm flex-fill" onclick="abrirMensual(<?= $curso['id_curso'] ?>, '<?= htmlspecialchars($curso['nombre'], ENT_QUOTES) ?>')">
                                 <i class="bi bi-calendar-month"></i> Mensual
                             </button>
                         </div>
@@ -401,7 +401,7 @@ $totalAlumnos = array_sum(array_column($cursos, 'total_alumnos'));
                     <div class="d-flex gap-2">
                         <button type="button" class="btn btn-outline-secondary btn-sm" onclick="marcarTodosMensual(true)">Todos presentes</button>
                         <button type="button" class="btn btn-outline-secondary btn-sm" onclick="marcarTodosMensual(false)">Todos ausentes</button>
-                        <button type="submit" class="btn btn-danger"><i class="bi bi-save"></i> Guardar mes</button>
+                        <button type="submit" class="btn btn-evo"><i class="bi bi-save"></i> Guardar mes</button>
                     </div>
                 </div>
             </form>
@@ -566,20 +566,20 @@ function guardarMensual(e) {
     data.set('mes', document.getElementById('mensualMes').value);
     data.set('anio', document.getElementById('mensualAnio').value);
 
-    document.querySelector('#modalMensual .modal-footer .btn-danger').disabled = true;
-    document.querySelector('#modalMensual .modal-footer .btn-danger').innerHTML = '<span class="spinner-border spinner-border-sm"></span> Guardando...';
+    document.querySelector('#modalMensual .modal-footer .btn-evo').disabled = true;
+    document.querySelector('#modalMensual .modal-footer .btn-evo').innerHTML = '<span class="spinner-border spinner-border-sm"></span> Guardando...';
 
     fetch('profesor.php', { method: 'POST', body: data })
         .then(r => r.json())
         .then(res => {
             if (res.ok) {
                 cargarMensual();
-                document.querySelector('#modalMensual .modal-footer .btn-danger').disabled = false;
-                document.querySelector('#modalMensual .modal-footer .btn-danger').innerHTML = '<i class="bi bi-save"></i> Guardar mes';
+                document.querySelector('#modalMensual .modal-footer .btn-evo').disabled = false;
+                document.querySelector('#modalMensual .modal-footer .btn-evo').innerHTML = '<i class="bi bi-save"></i> Guardar mes';
             } else {
                 alert('Error: ' + (res.error || 'desconocido'));
-                document.querySelector('#modalMensual .modal-footer .btn-danger').disabled = false;
-                document.querySelector('#modalMensual .modal-footer .btn-danger').innerHTML = '<i class="bi bi-save"></i> Guardar mes';
+                document.querySelector('#modalMensual .modal-footer .btn-evo').disabled = false;
+                document.querySelector('#modalMensual .modal-footer .btn-evo').innerHTML = '<i class="bi bi-save"></i> Guardar mes';
             }
         });
 }

@@ -46,15 +46,15 @@ function actualizarStock($pdo, $id_producto, $cantidad) {
 // VENTAS
 // ============================================================
 
-function registrarVenta($pdo, $fecha, $productos, $total, $metodo_pago, $tipo_comprador, $nombre_comprador, $id_alumno = null, $id_usuario = null, $observaciones = '', $estado_pago = 'pagado') {
+function registrarVenta($pdo, $fecha, $productos, $total, $metodo_pago, $tipo_comprador, $nombre_comprador, $id_alumno = null, $id_usuario = null, $observaciones = '', $estado_pago = 'pagado', $comprobante = null) {
     try {
         $pdo->beginTransaction();
         $monto_pagado = $estado_pago === 'pagado' ? $total : 0;
 
-        $sql = "INSERT INTO ventas (fecha, total, monto_pagado, metodo_pago, tipo_comprador, nombre_comprador, id_alumno, id_usuario, observaciones, estado_pago)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        $sql = "INSERT INTO ventas (fecha, total, monto_pagado, metodo_pago, tipo_comprador, nombre_comprador, id_alumno, id_usuario, observaciones, estado_pago, comprobante)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         $stmt = $pdo->prepare($sql);
-        $stmt->execute([$fecha, $total, $monto_pagado, $metodo_pago, $tipo_comprador, $nombre_comprador, $id_alumno, $id_usuario, $observaciones, $estado_pago]);
+        $stmt->execute([$fecha, $total, $monto_pagado, $metodo_pago, $tipo_comprador, $nombre_comprador, $id_alumno, $id_usuario, $observaciones, $estado_pago, $comprobante]);
         $id_venta = $pdo->lastInsertId();
 
         $sqlDetalle = "INSERT INTO detalle_ventas (id_venta, id_producto, cantidad, precio_unitario, subtotal) VALUES (?, ?, ?, ?, ?)";

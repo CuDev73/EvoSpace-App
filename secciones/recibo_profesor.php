@@ -37,7 +37,7 @@ while ($row = $stmtConfig->fetch(PDO::FETCH_ASSOC)) {
 }
 
 $nombreInstitucion = $config['recibo_nombre'] ?? 'EvoSpace';
-$titulo = $config['recibo_titulo'] ?? 'Academia de Artes Escenicas';
+$titulo = $config['recibo_titulo'] ?? 'Instituto Evolución Arte';
 $ruc = $config['recibo_ruc'] ?? '12345678-0';
 $mensaje = $config['recibo_mensaje'] ?? 'Gracias por confiar en EvoSpace';
 $pie = $config['recibo_pie'] ?? 'Este documento es un comprobante de pago valido';

@@ -37,7 +37,7 @@ verificarPermiso('configuracion');
         <div class="col-md-6 col-xl-3">
             <div class="card shadow-hover h-100 text-center">
                 <div class="card-body d-flex flex-column align-items-center justify-content-center">
-                    <i class="bi bi-coin fs-1 text-danger"></i>
+                    <i class="bi bi-coin fs-1 text-primary"></i>
                     <h5 class="card-title mt-3">Pagos</h5>
                     <p class="card-text text-muted small">Editar precios por curso y conceptos</p>
                     <a href="configurar_pagos.php" class="btn btn-evo mt-2">

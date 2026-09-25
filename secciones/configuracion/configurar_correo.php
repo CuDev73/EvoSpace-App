@@ -44,7 +44,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <?= campoCSRF() ?>
         <div class="col-md-8">
             <div class="card shadow-sm">
-                <div class="card-header bg-evo text-white py-2">
+                <div class="card-header py-2">
                     <i class="bi bi-chat-quote-fill"></i> Textos de la notificación
                 </div>
                 <div class="card-body">
@@ -72,7 +72,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         <div class="col-md-4">
             <div class="card shadow-sm">
-                <div class="card-header bg-evo text-white py-2">
+                <div class="card-header py-2">
                     <i class="bi bi-person-badge-fill"></i> Remitente
                 </div>
                 <div class="card-body">

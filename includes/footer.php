@@ -1,5 +1,5 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script src="/evospace/assets/js/app.js"></script>
+<script src="/evospace/assets/js/app.js?v=20260923"></script>
 
 <!-- Scroll to top -->
 <button id="scrollTopBtn" class="btn btn-evo rounded-circle shadow-sm scroll-top-btn" onclick="window.scrollTo({top:0,behavior:'smooth'})" title="Subir">
@@ -28,7 +28,7 @@
 <div class="modal fade" id="modalConfirmarEliminar" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header bg-danger text-white">
+            <div class="modal-header bg-danger text-white modal-header-delete">
                 <h5 class="modal-title"><i class="bi bi-exclamation-triangle-fill me-2"></i>¿Estás seguro?</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>

@@ -152,7 +152,7 @@ include '../../includes/navbar.php';
                     <input type="date" name="fecha_fin" class="form-control form-control-sm" value="<?= $fecha_fin ?>">
                 </div>
                 <div class="col-md-3">
-                    <button type="submit" class="btn btn-danger btn-sm w-100">Filtrar</button>
+                    <button type="submit" class="btn btn-evo btn-sm w-100">Filtrar</button>
                 </div>
                 <div class="col-md-3">
                     <a href="resumen.php" class="btn btn-secondary btn-sm w-100">Limpiar</a>

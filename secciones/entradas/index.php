@@ -174,7 +174,7 @@ if (isset($_GET['lote'])) {
     <?php if ($loteDistribuir): ?>
         <!-- Distribución -->
         <div class="card shadow mb-4">
-            <div class="card-header bg-evo text-white d-flex justify-content-between align-items-center">
+            <div class="card-header d-flex justify-content-between align-items-center">
                 <span><i class="bi bi-people-fill me-1"></i> Distribuir: <?= htmlspecialchars($loteDistribuir['curso_tipo'] . ' - ' . $loteDistribuir['curso_nombre']) ?> <?= $loteDistribuir['evento_titulo'] ? '(' . htmlspecialchars($loteDistribuir['evento_titulo']) . ')' : '' ?></span>
                 <span class="badge bg-light text-dark">Lote: <?= (int)$loteDistribuir['cantidad'] ?> ud</span>
             </div>
@@ -212,7 +212,7 @@ if (isset($_GET['lote'])) {
 
     <!-- Lista de lotes -->
     <div class="card shadow">
-        <div class="card-header bg-evo text-white d-flex justify-content-between align-items-center">
+        <div class="card-header bg-evo-accent text-white d-flex justify-content-between align-items-center">
             <span><i class="bi bi-grid-fill me-1"></i> Lotes de entradas / rifas</span>
             <button class="btn btn-sm btn-light" data-bs-toggle="modal" data-bs-target="#modalNuevoLote"><i class="bi bi-plus-circle"></i> Nuevo lote</button>
         </div>
@@ -252,7 +252,7 @@ if (isset($_GET['lote'])) {
                                             <?= campoCSRF() ?>
                                             <input type="hidden" name="accion" value="eliminar_lote">
                                             <input type="hidden" name="id_entrada_curso" value="<?= (int)$l['id_entrada_curso'] ?>">
-                                            <button class="btn btn-sm btn-outline-danger" title="Eliminar lote"><i class="bi bi-trash-fill"></i></button>
+                                            <button class="btn btn-sm btn-outline-evo" title="Eliminar lote"><i class="bi bi-trash-fill"></i></button>
                                         </form>
                                     </td>
                                 </tr>
@@ -280,7 +280,7 @@ if (isset($_GET['lote'])) {
                     <div class="mb-3">
                         <label class="form-label">Curso *</label>
                         <input type="hidden" name="id_curso" id="id_curso_lote" value="">
-                        <button type="button" class="btn btn-outline-danger w-100 d-flex justify-content-between align-items-center py-2 border-2" onclick="cursoPickerAbrir('id_curso_lote','lblCursoLote')">
+                        <button type="button" class="btn btn-outline-evo w-100 d-flex justify-content-between align-items-center py-2 border-2" onclick="cursoPickerAbrir('id_curso_lote','lblCursoLote')">
                             <span id="lblCursoLote"><i class="bi bi-book me-1"></i> Seleccionar curso...</span>
                             <i class="bi bi-chevron-down"></i>
                         </button>
@@ -311,7 +311,7 @@ if (isset($_GET['lote'])) {
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-danger"><i class="bi bi-check-lg"></i> Crear lote</button>
+                    <button type="submit" class="btn btn-evo"><i class="bi bi-check-lg"></i> Crear lote</button>
                 </div>
             </form>
         </div>

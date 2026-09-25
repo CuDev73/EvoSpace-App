@@ -160,7 +160,7 @@ if (isset($_GET['success_abono'])) $mensaje_abono = "Abono registrado correctame
     </div>
 
     <div class="card shadow mb-4">
-        <div class="card-header bg-evo text-white py-2">
+        <div class="card-header bg-evo-accent text-white py-2">
             <i class="bi bi-people-fill"></i> Profesores Registrados
             <span class="badge bg-light text-dark ms-2"><?= count($profesores) ?></span>
         </div>
@@ -290,7 +290,7 @@ if (isset($_GET['success_abono'])) $mensaje_abono = "Abono registrado correctame
 
                 <!-- Formulario nuevo pago -->
                 <div class="card border-success mb-3">
-                    <div class="card-header bg-success text-white py-1"><small><i class="bi bi-plus-circle"></i> Nuevo pago</small></div>
+                    <div class="card-header py-1"><small><i class="bi bi-plus-circle"></i> Nuevo pago</small></div>
                     <div class="card-body py-2">
                         <form method="POST" enctype="multipart/form-data">
                             <input type="hidden" name="id_usuario_abono" id="idUsuarioAbono">
@@ -301,7 +301,7 @@ if (isset($_GET['success_abono'])) $mensaje_abono = "Abono registrado correctame
                                 </div>
                                 <div class="col-md-3">
                                     <label class="form-label small">Monto (Gs) *</label>
-                                    <input type="number" name="monto_abono" class="form-control form-control-sm" required data-moneda>
+                                    <input type="number" name="monto_abono" id="monto_abono" class="form-control form-control-sm" required data-moneda>
                                 </div>
                                 <div class="col-md-3">
                                     <label class="form-label small">Descripción</label>
@@ -360,6 +360,11 @@ function cargarPagos(idUsuario) {
         document.getElementById('pagosSalarioBase').textContent = 'Gs ' + Number(prof.salario_base || 0).toLocaleString('es-PY');
         document.getElementById('pagosAbonado').textContent = 'Gs ' + Number(prof.abonos_mes || 0).toLocaleString('es-PY');
         document.getElementById('pagosPendiente').textContent = 'Gs ' + Number(prof.salario_pendiente || 0).toLocaleString('es-PY');
+
+        const montoAbono = document.getElementById('monto_abono');
+        if (montoAbono) {
+            montoAbono.value = Math.max(0, Math.round(Number(prof.salario_pendiente || 0))) || '';
+        }
     }
 
     const abonos = abonosData.filter(a => a.id_usuario == idUsuario);

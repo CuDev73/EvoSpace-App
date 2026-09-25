@@ -81,7 +81,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div class="row g-4">
         <div class="col-md-7">
             <div class="card shadow-sm">
-                <div class="card-header bg-evo text-white py-2">
+                <div class="card-header py-2">
                     <i class="bi bi-gear-fill"></i> Configuración automática
                 </div>
                 <div class="card-body">
@@ -123,7 +123,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         <div class="col-md-5">
             <div class="card shadow-sm">
-                <div class="card-header bg-evo text-white py-2">
+                <div class="card-header py-2">
                     <i class="bi bi-send-fill"></i> Envío manual
                 </div>
                 <div class="card-body">
@@ -134,7 +134,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <form method="POST" onsubmit="return confirm('¿Enviar el recordatorio de deudas a los tutores ahora?');">
                         <?= campoCSRF() ?>
                         <input type="hidden" name="accion" value="enviar">
-                        <button type="submit" class="btn btn-danger">
+                        <button type="submit" class="btn btn-evo">
                             <i class="bi bi-bell-fill"></i> Enviar recordatorio ahora
                         </button>
                     </form>

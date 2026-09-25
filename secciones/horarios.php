@@ -108,7 +108,7 @@ $total_alumnos_por_curso = $pdo->query("SELECT id_curso, COUNT(*) AS total FROM 
             ?>
                 <div class="col-md-6 col-lg-4">
                     <div class="card shadow h-100">
-                        <div class="card-header bg-evo text-white d-flex justify-content-between align-items-center">
+                        <div class="card-header bg-evo-accent text-white d-flex justify-content-between align-items-center">
                             <span class="fw-bold"><?= htmlspecialchars($curso['nombre']) ?></span>
                             <form method="POST" class="d-inline-flex align-items-center gap-1">
                                 <?= campoCSRF() ?>
@@ -142,7 +142,7 @@ $total_alumnos_por_curso = $pdo->query("SELECT id_curso, COUNT(*) AS total FROM 
                                                 <?= campoCSRF() ?>
                                                 <input type="hidden" name="accion" value="eliminar">
                                                 <input type="hidden" name="id_horario" value="<?= $h['id_horario'] ?>">
-                                                <button class="btn btn-sm btn-outline-danger py-0 px-1"><i class="bi bi-x"></i></button>
+                                                <button class="btn btn-sm btn-outline-evo py-0 px-1"><i class="bi bi-x"></i></button>
                                             </form>
                                         </div>
                                     <?php endforeach; ?>
@@ -210,7 +210,7 @@ $total_alumnos_por_curso = $pdo->query("SELECT id_curso, COUNT(*) AS total FROM 
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-danger">Guardar</button>
+                        <button type="submit" class="btn btn-evo">Guardar</button>
                     </div>
                 </form>
             </div>

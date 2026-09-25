@@ -93,9 +93,10 @@ function calcularDeuda($pdo, $id_alumno, $mes, $anio, $porcentajeBeca, $recargoP
     // 4. Recargo según vencimiento del alumno (por defecto usa config global)
     $diaVenc = $diaVenc ?? $diaLimite;
     $vencimiento = $diaVenc + $diasGracia;
-    $recargo = 0;
     $hoy = getdate();
-    if ($mes == $hoy['mon'] && $anio == $hoy['year'] && $hoy['mday'] > $vencimiento) {
+    $vencido = ($mes == $hoy['mon'] && $anio == $hoy['year'] && $hoy['mday'] > $vencimiento);
+    $recargo = 0;
+    if ($vencido) {
         $diasAtraso = $hoy['mday'] - $vencimiento;
         $recargo = $diasAtraso * $recargoPorDia;
     }
@@ -108,7 +109,8 @@ function calcularDeuda($pdo, $id_alumno, $mes, $anio, $porcentajeBeca, $recargoP
         'cuota' => $cuota,
         'recargo' => $recargo,
         'pagado' => $pagadoCuota,
-        'deuda' => $deuda
+        'deuda' => $deuda,
+        'vencido' => $vencido
     ];
 }
 
@@ -151,16 +153,22 @@ foreach ($hijos as $hijo) {
     $estado = 'al_dia';
     $estadoTexto = 'Al día';
     $estadoColor = 'success';
-    if ($deudaInfo['deuda'] > 0) {
+    if ($deudaInfo['deuda'] > 0 && $deudaInfo['vencido']) {
         $estado = 'moroso';
         $estadoTexto = 'En mora';
         $estadoColor = 'danger';
+    } elseif ($deudaInfo['deuda'] > 0) {
+        $estado = 'pendiente';
+        $estadoTexto = 'Cuota pendiente';
+        $estadoColor = 'secondary';
     } elseif ($deudaInfo['pagado'] > 0 && $deudaInfo['recargo'] == 0) {
         $estadoTexto = 'Pagado completo';
     } elseif ($deudaInfo['pagado'] == 0 && $deudaInfo['deuda'] == 0) {
         $estadoTexto = 'Sin cuota este mes';
         $estadoColor = 'secondary';
     }
+
+    $estadoIcono = $estado === 'moroso' ? 'exclamation-triangle-fill' : ($estado === 'pendiente' ? 'hourglass-split' : 'check-circle-fill');
 
     $hijosDatos[] = [
         'hijo' => $hijo,
@@ -175,6 +183,7 @@ foreach ($hijos as $hijo) {
         'estado' => $estado,
         'estado_texto' => $estadoTexto,
         'estado_color' => $estadoColor,
+        'estado_icono' => $estadoIcono,
     ];
 }
 $hijosAlDia = count(array_filter($hijosDatos, fn($h) => $h['estado'] === 'al_dia' && $h['deuda']['deuda'] == 0));
@@ -194,7 +203,7 @@ $hijosEnMora = count($hijosDatos) - $hijosAlDia;
 
     <!-- Eventos próximos (ahora sin duplicados) -->
     <div class="card shadow mb-4">
-        <div class="card-header bg-evo text-white">
+        <div class="card-header bg-evo-accent text-white">
             <i class="bi bi-calendar-event"></i> Próximos eventos para tus hijos
         </div>
         <div class="card-body">
@@ -283,7 +292,7 @@ $hijosEnMora = count($hijosDatos) - $hijosAlDia;
 
     <!-- Tabs por hijo -->
     <div class="card shadow">
-        <div class="card-header bg-evo text-white d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div class="card-header bg-evo-accent text-white d-flex justify-content-between align-items-center flex-wrap gap-2">
             <span><i class="bi bi-people-fill"></i> Mis hijos</span>
             <span class="badge bg-light text-dark"><?= date('F', mktime(0,0,0,$mesFiltro,1)) . ' ' . $anioFiltro ?></span>
         </div>
@@ -311,7 +320,7 @@ $hijosEnMora = count($hijosDatos) - $hijosAlDia;
                             <h5 class="mb-0"><?= htmlspecialchars($hijo['nombre'] . ' ' . $hijo['apellido']) ?>
                                 <span class="badge bg-<?= $hijo['becado'] ? 'warning text-dark' : 'secondary' ?> ms-1"><?= $hijo['becado'] ? 'Descuento 50%' : 'Precio completo' ?></span>
                             </h5>
-                            <span class="badge bg-<?= $hd['estado_color'] ?> fs-6 px-3"><i class="bi bi-<?= $hd['estado'] === 'moroso' ? 'exclamation-triangle-fill' : 'check-circle-fill' ?> me-1"></i><?= $hd['estado_texto'] ?></span>
+                            <span class="badge bg-<?= $hd['estado_color'] ?> fs-6 px-3"><i class="bi bi-<?= $hd['estado_icono'] ?> me-1"></i><?= $hd['estado_texto'] ?></span>
                         </div>
 
                         <div class="row g-3">
@@ -326,7 +335,7 @@ $hijosEnMora = count($hijosDatos) - $hijosAlDia;
                                         <?php endif; ?>
                                         <p class="mb-1 d-flex justify-content-between"><span class="text-muted">Pagado</span><span class="text-success"><?= number_format($d['pagado'], 0, ',', '.') ?> Gs</span></p>
                                         <hr class="my-2">
-                                        <p class="mb-0 d-flex justify-content-between fw-bold"><span>Deuda</span><span class="text-<?= $d['deuda'] > 0 ? 'danger' : 'success' ?>"><?= $d['deuda'] > 0 ? number_format($d['deuda'], 0, ',', '.') . ' Gs' : 'Al día' ?></span></p>
+                                        <p class="mb-0 d-flex justify-content-between fw-bold"><span>Deuda</span><span class="text-<?= $hd['estado'] === 'moroso' ? 'danger' : ($hd['estado'] === 'pendiente' ? 'secondary' : 'success') ?>"><?php if ($hd['estado'] === 'moroso' || $hd['estado'] === 'pendiente'): ?><?= number_format($d['deuda'], 0, ',', '.') ?> Gs · <?= $hd['estado_texto'] ?><?php else: ?><?= $hd['estado_texto'] ?><?php endif; ?></span></p>
                                         <p class="mt-2 mb-0 d-flex justify-content-between">
                                             <span class="text-muted">Matrícula <?= date('Y') ?></span>
                                             <?php if ($hd['matricula_anio'] > 0): ?>

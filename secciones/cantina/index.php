@@ -19,10 +19,10 @@ verificarPermiso('cantina');
             <a href="ventas/nueva.php" class="text-decoration-none text-reset">
                 <div class="card shadow h-100 text-center">
                     <div class="card-body d-flex flex-column align-items-center justify-content-center py-4">
-                        <i class="bi bi-cart-plus fs-1 text-danger"></i>
+                        <i class="bi bi-cart-plus fs-1 text-primary"></i>
                         <h5 class="card-title mt-3">Nueva Venta</h5>
                         <span class="small text-muted">Registrar una venta</span>
-                        <span class="btn btn-danger mt-3"><i class="bi bi-plus-circle"></i> Registrar</span>
+                        <span class="btn btn-evo mt-3"><i class="bi bi-plus-circle"></i> Registrar</span>
                     </div>
                 </div>
             </a>
@@ -42,7 +42,21 @@ verificarPermiso('cantina');
             </a>
         </div>
 
-        <!-- 4. Historial de Ventas -->
+        <!-- 4. Deudores / Fiado -->
+        <div class="col-sm-6 col-md-4 col-lg-3">
+            <a href="ventas/deudores.php" class="text-decoration-none text-reset">
+                <div class="card shadow h-100 text-center">
+                    <div class="card-body d-flex flex-column align-items-center justify-content-center py-4">
+                        <i class="bi bi-hourglass-split fs-1 text-danger"></i>
+                        <h5 class="card-title mt-3">Deudores / Fiado</h5>
+                        <span class="small text-muted">Ventas que están debiendo</span>
+                        <span class="btn btn-danger mt-3"><i class="bi bi-cash-coin"></i> Cobrar</span>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <!-- 5. Historial de Ventas -->
         <div class="col-sm-6 col-md-4 col-lg-3">
             <a href="ventas/index.php" class="text-decoration-none text-reset">
                 <div class="card shadow h-100 text-center">
@@ -56,15 +70,15 @@ verificarPermiso('cantina');
             </a>
         </div>
 
-        <!-- 5. Resumen -->
+        <!-- 6. Resumen -->
         <div class="col-sm-6 col-md-4 col-lg-3">
             <a href="resumen.php" class="text-decoration-none text-reset">
                 <div class="card shadow h-100 text-center">
                     <div class="card-body d-flex flex-column align-items-center justify-content-center py-4">
-                        <i class="bi bi-graph-up-arrow fs-1 text-danger"></i>
+                        <i class="bi bi-graph-up-arrow fs-1 text-success"></i>
                         <h5 class="card-title mt-3">Resumen y Ganancias</h5>
                         <span class="small text-muted">Reportes de la cantina</span>
-                        <span class="btn btn-danger mt-3"><i class="bi bi-bar-chart"></i> Ver</span>
+                        <span class="btn btn-evo mt-3"><i class="bi bi-bar-chart"></i> Ver</span>
                     </div>
                 </div>
             </a>

@@ -162,10 +162,10 @@ $tipoColores = [
 
     <!-- FILTROS -->
     <div class="card shadow mb-3">
-        <div class="card-header bg-evo text-white py-2 d-flex justify-content-between align-items-center">
+        <div class="card-header bg-evo-accent text-white py-2 d-flex justify-content-between align-items-center">
             <span><i class="bi bi-funnel"></i> Filtrar eventos por curso</span>
-            <button class="btn btn-sm btn-light fw-bold text-danger" data-bs-toggle="modal" data-bs-target="#modalNuevoEvento">
-                <i class="bi bi-plus-circle-fill text-danger"></i> Nuevo Evento
+            <button class="btn btn-sm btn-evo fw-bold" data-bs-toggle="modal" data-bs-target="#modalNuevoEvento">
+                <i class="bi bi-plus-circle-fill"></i> Nuevo Evento
             </button>
         </div>
         <div class="card-body py-2">
@@ -205,7 +205,7 @@ $tipoColores = [
 
     <!-- TABLA DE EVENTOS -->
     <div class="card shadow">
-        <div class="card-header bg-evo text-white py-2">
+        <div class="card-header bg-evo-accent text-white py-2">
             <i class="bi bi-calendar-event-fill"></i> Panel de Eventos
             <?php if ($cursoSeleccionado > 0): ?>
                 <span class="badge bg-light text-dark ms-2">
@@ -292,7 +292,7 @@ $tipoColores = [
                                     </td>
                                     <td class="text-center">
                                         <div class="d-flex gap-1 justify-content-center">
-                                            <button class="btn btn-warning btn-sm px-3" data-bs-toggle="modal" data-bs-target="#modalEditarEvento"
+                                            <button class="btn btn-evo btn-sm px-3" data-bs-toggle="modal" data-bs-target="#modalEditarEvento"
                                                     data-evento='<?= htmlspecialchars(json_encode($ev, JSON_HEX_APOS), ENT_QUOTES, 'UTF-8') ?>'>
                                                 <i class="bi bi-pencil-fill"></i>
                                                 <span class="d-none d-sm-inline">Editar</span>
@@ -386,7 +386,7 @@ $tipoColores = [
                             <input type="file" name="imagen" class="form-control form-control-sm" accept="image/*">
                         </div>
                         <div class="col-md-12">
-                            <label class="form-label fw-bold text-danger mb-1 small"><i class="bi bi-bell-fill"></i> Seleccionar Cursos a Notificar:</label>
+                            <label class="form-label fw-bold text-primary mb-1 small"><i class="bi bi-bell-fill"></i> Seleccionar Cursos a Notificar:</label>
                             <input type="text" id="buscarRamas" class="form-control form-control-sm mb-2" placeholder="Buscar curso...">
                             <div class="p-3 border rounded bg-light" style="max-height: 250px; overflow-y: auto;">
                                 <?php foreach ($cursosPorTipo as $tipo => $cursos): ?>
@@ -424,7 +424,7 @@ $tipoColores = [
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-danger btn-sm fw-bold"><i class="bi bi-save"></i> Guardar e Informar</button>
+                    <button type="submit" class="btn btn-evo btn-sm fw-bold"><i class="bi bi-save"></i> Guardar e Informar</button>
                 </div>
             </form>
         </div>
@@ -486,7 +486,7 @@ $tipoColores = [
                             <input type="file" name="imagen" class="form-control form-control-sm" accept="image/*">
                         </div>
                         <div class="col-md-12">
-                            <label class="form-label fw-bold text-danger mb-1 small"><i class="bi bi-bell-fill"></i> Seleccionar Cursos a Notificar:</label>
+                            <label class="form-label fw-bold text-primary mb-1 small"><i class="bi bi-bell-fill"></i> Seleccionar Cursos a Notificar:</label>
                             <div class="p-3 border rounded bg-light" style="max-height: 250px; overflow-y: auto;">
                                 <?php foreach ($cursosPorTipo as $tipo => $cursos): ?>
                                     <div class="mb-3">
@@ -523,7 +523,7 @@ $tipoColores = [
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-warning btn-sm fw-bold"><i class="bi bi-save"></i> Actualizar Evento</button>
+                    <button type="submit" class="btn btn-evo btn-sm fw-bold"><i class="bi bi-save"></i> Actualizar Evento</button>
                 </div>
             </form>
         </div>
@@ -675,7 +675,7 @@ document.addEventListener('DOMContentLoaded', function() {
                   ${descHtml}
                   <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 20px;">
                     <tr><td style="padding:4px 0;font-size:14px;color:#333333;">📅 <strong>Fecha:</strong> ${escHtml(formatFecha(d.fecha))}</td></tr>
-                    <tr><td style="padding:4px 0;font-size:14px;color:#333333;">🕒 <strong>Hora:</strong> ${escHtml(d.hora || 'Sin horario')}</td></tr>
+                    <tr><td style="padding:4px 0;font-size:14px;color:#333333;">🕒 <strong>Hora:</strong> ${escHtml(d.hora ? d.hora.slice(0, 5) : 'Sin horario')}</td></tr>
                     <tr><td style="padding:4px 0;font-size:14px;color:#333333;">📍 <strong>Lugar:</strong> ${escHtml(d.lugar || 'No especificado')}</td></tr>
                   </table>
                   ${mapa}

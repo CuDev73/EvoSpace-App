@@ -159,10 +159,10 @@ if (isset($_GET['guardado']) && $_GET['guardado'] == 1) {
                     </table>
                 </div>
                 <div class="mt-3 d-flex gap-2 flex-wrap">
-                    <button type="submit" class="btn btn-danger">
+                    <button type="submit" class="btn btn-evo">
                         <i class="bi bi-save"></i> Guardar asistencia
                     </button>
-                    <a href="mensual.php?id_curso=<?= $id_curso ?>" class="btn btn-outline-danger">
+                    <a href="mensual.php?id_curso=<?= $id_curso ?>" class="btn btn-outline-evo">
                         <i class="bi bi-calendar-month"></i> Vista mensual
                     </a>
                 </div>

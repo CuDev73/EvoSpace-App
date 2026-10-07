@@ -1,7 +1,7 @@
 <?php
 session_start();
 if (!isset($_SESSION['id_usuario']) || $_SESSION['rol'] !== 'admin') {
-    header('Location: /evospace/index.php');
+    header('Location: /index.php');
     exit;
 }
 
@@ -21,12 +21,10 @@ $hora = (int)date('H');
 $saludo = $hora < 12 ? 'Buenos días' : ($hora < 18 ? 'Buenas tardes' : 'Buenas noches');
 $nombreUsuario = $_SESSION['nombre_completo'] ?? $_SESSION['usuario'] ?? 'EvoSpace';
 
-$diasES = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
 $mesesES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
-$diaSemana = (int)date('N');
 $diaNum = (int)date('j');
 $mesNum = (int)date('n') - 1;
-$fechaFormateada = $diasES[$diaSemana] . ', ' . $diaNum . ' de ' . $mesesES[$mesNum] . ' de ' . date('Y');
+$fechaFormateada = $diaNum . ' de ' . $mesesES[$mesNum] . ' de ' . date('Y');
 
 // ============================================================
 // INDICADORES PRINCIPALES
@@ -178,7 +176,7 @@ $proximosEventos = $pdo->query("
         </div>
         <div class="text-end">
             <span class="badge bg-light text-dark fs-6 px-3 py-2">
-                <i class="bi bi-building me-1"></i> Instituto Evolución Arte
+                <i class="bi bi-building me-1"></i> EvolucionArte
             </span>
         </div>
     </div>
@@ -245,21 +243,21 @@ $proximosEventos = $pdo->query("
         <div class="card-body">
             <div class="row g-3 text-center">
                 <div class="col-md-4 col-6">
-                    <a href="/evospace/secciones/alumnos.php?filtro=morosos" class="text-decoration-none">
+                    <a href="/secciones/alumnos.php?filtro=morosos" class="text-decoration-none">
                         <div class="fs-3 fw-bold text-danger"><?= $totalMorososCuota ?></div>
                         <div class="small text-muted">Morosos de cuota (<?= number_format($deudaCuotaTotal, 0, ',', '.') ?> Gs)</div>
                         <span class="btn btn-sm btn-outline-evo mt-2">Ver y cobrar</span>
                     </a>
                 </div>
                 <div class="col-md-4 col-6">
-                    <a href="/evospace/secciones/cantina/ventas/index.php?estado_pago=pendiente" class="text-decoration-none">
+                    <a href="/secciones/cantina/ventas/index.php?estado_pago=pendiente" class="text-decoration-none">
                         <div class="fs-3 fw-bold text-danger"><?= $deudores ?></div>
                         <div class="small text-muted">Deuda de cantina (<?= number_format($deudaTotal, 0, ',', '.') ?> Gs)</div>
                         <span class="btn btn-sm btn-outline-evo mt-2">Gestionar</span>
                     </a>
                 </div>
                 <div class="col-md-4 col-6">
-                    <a href="/evospace/secciones/profesores.php" class="text-decoration-none">
+                    <a href="/secciones/profesores.php" class="text-decoration-none">
                         <div class="fs-3 fw-bold text-danger"><?= $profesoresPendientes ?></div>
                         <div class="small text-muted">Profesores con salario pendiente</div>
                         <span class="btn btn-sm btn-outline-evo mt-2">Gestionar</span>
@@ -299,19 +297,19 @@ $proximosEventos = $pdo->query("
     <!-- 5. ACCIONES RÁPIDAS -->
     <!-- ========================================================== -->
     <div class="d-flex flex-wrap gap-2 mb-4">
-        <a href="/evospace/secciones/inscripciones.php" class="btn btn-success shadow-sm flex-fill">
+        <a href="/secciones/inscripciones.php" class="btn btn-success shadow-sm flex-fill">
             <i class="bi bi-person-plus-fill"></i> Inscribir alumno
         </a>
-        <a href="/evospace/secciones/asistencia/index.php" class="btn btn-evo shadow-sm flex-fill">
+        <a href="/secciones/asistencia/index.php" class="btn btn-evo shadow-sm flex-fill">
             <i class="bi bi-clipboard-check"></i> Tomar asistencia
         </a>
-<a href="/evospace/secciones/cantina/ventas/nueva.php" class="btn btn-evo shadow-sm flex-fill">
+<a href="/secciones/cantina/ventas/nueva.php" class="btn btn-evo shadow-sm flex-fill">
             <i class="bi bi-cart-plus"></i> Venta rápida
         </a>
-        <a href="/evospace/secciones/eventos/eventos.php" class="btn btn-info shadow-sm flex-fill text-white">
+        <a href="/secciones/eventos/eventos.php" class="btn btn-info shadow-sm flex-fill text-white">
             <i class="bi bi-calendar-event"></i> Crear evento
         </a>
-        <a href="/evospace/secciones/profesores.php" class="btn btn-secondary shadow-sm flex-fill text-white">
+        <a href="/secciones/profesores.php" class="btn btn-secondary shadow-sm flex-fill text-white">
             <i class="bi bi-person-badge"></i> Profesores
         </a>
     </div>
@@ -354,7 +352,7 @@ $proximosEventos = $pdo->query("
     <div class="card shadow mb-4">
         <div class="card-header bg-evo-accent text-white d-flex justify-content-between align-items-center">
             <span><i class="bi bi-calendar-event-fill me-1"></i> Próximos eventos (7 días)</span>
-            <a href="/evospace/secciones/eventos/eventos.php" class="btn btn-sm btn-evo fw-bold"><i class="bi bi-plus-circle"></i> Gestionar</a>
+            <a href="/secciones/eventos/eventos.php" class="btn btn-sm btn-evo fw-bold"><i class="bi bi-plus-circle"></i> Gestionar</a>
         </div>
         <div class="card-body p-0">
             <?php if (empty($proximosEventos)): ?>
@@ -382,7 +380,7 @@ $proximosEventos = $pdo->query("
                                         </span>
                                     </td>
                                     <td class="text-center">
-                                        <form method="POST" action="/evospace/secciones/eventos/eventos.php" class="d-inline" onsubmit="return confirm('¿Enviar recordatorio a los tutores?')">
+                                        <form method="POST" action="/secciones/eventos/eventos.php" class="d-inline" onsubmit="return confirm('¿Enviar recordatorio a los tutores?')">
                                             <?= campoCSRF() ?>
                                             <input type="hidden" name="accion" value="recordatorio_evento">
                                             <input type="hidden" name="id_evento" value="<?= (int) $ev->id_evento ?>">

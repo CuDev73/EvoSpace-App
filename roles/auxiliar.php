@@ -1,7 +1,7 @@
 <?php
 session_start();
 if (!isset($_SESSION['id_usuario']) || $_SESSION['rol'] !== 'auxiliar') {
-    header('Location: /evospace/index.php');
+    header('Location: /index.php');
     exit;
 }
 
@@ -14,20 +14,18 @@ $hora = (int)date('H');
 $saludo = $hora < 12 ? 'Buenos días' : ($hora < 18 ? 'Buenas tardes' : 'Buenas noches');
 $nombreUsuario = $_SESSION['nombre_completo'] ?? $_SESSION['usuario'] ?? 'EvoSpace';
 
-$diasES = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
 $mesesES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
-$diaSemana = (int)date('N');
 $diaNum = (int)date('j');
 $mesNum = (int)date('n') - 1;
-$fechaFormateada = $diasES[$diaSemana] . ', ' . $diaNum . ' de ' . $mesesES[$mesNum] . ' de ' . date('Y');
+$fechaFormateada = $diaNum . ' de ' . $mesesES[$mesNum] . ' de ' . date('Y');
 
 $misSecciones = [
-    'asistencia'    => ['titulo' => 'Asistencia',        'url' => '/evospace/secciones/asistencia/index.php', 'icono' => 'bi-clipboard-check', 'color' => 'danger'],
-    'alumnos'       => ['titulo' => 'Alumnos / Inscripciones', 'url' => '/evospace/secciones/alumnos.php', 'icono' => 'bi-people-fill', 'color' => 'primary'],
-    'cantina'       => ['titulo' => 'Cantina',           'url' => '/evospace/secciones/cantina/index.php', 'icono' => 'bi-cup-straw', 'color' => 'warning'],
-    'horarios'      => ['titulo' => 'Horarios',          'url' => '/evospace/secciones/horarios.php', 'icono' => 'bi-calendar-week-fill', 'color' => 'primary'],
-    'eventos'       => ['titulo' => 'Eventos',           'url' => '/evospace/secciones/eventos/eventos.php', 'icono' => 'bi-calendar-event-fill', 'color' => 'info'],
-    'profesores'    => ['titulo' => 'Profesores',        'url' => '/evospace/secciones/profesores.php', 'icono' => 'bi-person-badge-fill', 'color' => 'dark'],
+    'asistencia'    => ['titulo' => 'Asistencia',        'url' => '/secciones/asistencia/index.php', 'icono' => 'bi-clipboard-check', 'color' => 'danger'],
+    'alumnos'       => ['titulo' => 'Alumnos / Inscripciones', 'url' => '/secciones/alumnos.php', 'icono' => 'bi-people-fill', 'color' => 'primary'],
+    'cantina'       => ['titulo' => 'Cantina',           'url' => '/secciones/cantina/index.php', 'icono' => 'bi-cup-straw', 'color' => 'warning'],
+    'horarios'      => ['titulo' => 'Horarios',          'url' => '/secciones/horarios.php', 'icono' => 'bi-calendar-week-fill', 'color' => 'primary'],
+    'eventos'       => ['titulo' => 'Eventos',           'url' => '/secciones/eventos/eventos.php', 'icono' => 'bi-calendar-event-fill', 'color' => 'info'],
+    'profesores'    => ['titulo' => 'Profesores',        'url' => '/secciones/profesores.php', 'icono' => 'bi-person-badge-fill', 'color' => 'dark'],
 ];
 
 $cardsPermitidas = [];
@@ -45,7 +43,7 @@ foreach ($misSecciones as $perm => $datos) {
             <small><?= $fechaFormateada ?></small>
         </div>
         <div class="text-end">
-            <span class="badge bg-light text-dark fs-6 px-3 py-2"><i class="bi bi-building me-1"></i> Instituto Evolución Arte</span>
+            <span class="badge bg-light text-dark fs-6 px-3 py-2"><i class="bi bi-building me-1"></i> EvolucionArte</span>
         </div>
     </div>
 

@@ -1,7 +1,7 @@
 <?php
 session_start();
 if (!isset($_SESSION['id_usuario'])) {
-    header('Location: /evospace/index.php');
+    header('Location: /index.php');
     exit;
 }
 require_once __DIR__ . '/../../helpers/functions.php';
@@ -258,8 +258,8 @@ $tipoColores = [
                                     </td>
                                     <td class="text-center">
                                         <?php if (!empty($ev['imagen'])): ?>
-                                            <a href="/evospace/<?= $ev['imagen'] ?>" target="_blank">
-                                                <img src="/evospace/<?= $ev['imagen'] ?>" alt="flyer" style="width:50px;height:50px;object-fit:cover;border-radius:6px;">
+                                            <a href="/<?= $ev['imagen'] ?>" target="_blank">
+                                                <img src="/<?= $ev['imagen'] ?>" alt="flyer" style="width:50px;height:50px;object-fit:cover;border-radius:6px;">
                                             </a>
                                         <?php else: ?>
                                             <span class="text-muted small">-</span>
@@ -707,7 +707,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (fileInput && fileInput.files && fileInput.files[0]) {
             d.imagenSrc = URL.createObjectURL(fileInput.files[0]);
         } else if (ev && ev.imagen) {
-            d.imagenSrc = '/evospace/' + ev.imagen;
+            d.imagenSrc = '/' + ev.imagen;
         } else {
             d.imagenSrc = '';
         }

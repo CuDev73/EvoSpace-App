@@ -11,7 +11,7 @@ if (isset($_SESSION['id_usuario'])) {
     if ($rol) {
         redirigirSegunRol($rol);
     } else {
-        header('Location: /evospace/index.php');
+        header('Location: /index.php');
     }
     exit;
 }
@@ -52,7 +52,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         redirigirSegunRol($usuario['rol_nombre']);
         exit;
     } else {
-        header('Location: /evospace/index.php?error=1');
+        header('Location: /index.php?error=1');
         exit;
     }
 }
@@ -68,15 +68,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@100..900&display=swap" rel="stylesheet">
-    <link rel="icon" type="image/x-icon" href="/evospace/img/evolucionarte-removebg-preview.ico">
-    <link rel="stylesheet" href="/evospace/assets/css/estilos.css?v=20260923">
+    <link rel="icon" type="image/x-icon" href="/img/evolucionarte-removebg-preview.ico">
+    <link rel="stylesheet" href="/assets/css/estilos.css?v=20260923">
     <style>body{padding-top:0!important}</style>
 </head>
 <body>
     <div class="login-page">
         <div class="login-card">
             <div class="login-header">
-                <img src="/evospace/img/evolucionarte-removebg-preview.ico" alt="Logo" class="login-logo">
+                <img src="/img/evolucionarte-removebg-preview.ico" alt="Logo" class="login-logo">
                 <h2 class="login-title">EvoSpace</h2>
                 <p class="login-subtitle">Sistema de Gestión</p>
             </div>

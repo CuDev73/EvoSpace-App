@@ -1,5 +1,5 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script src="/evospace/assets/js/app.js?v=20260923"></script>
+<script src="/assets/js/app.js?v=20260923"></script>
 
 <!-- Scroll to top -->
 <button id="scrollTopBtn" class="btn btn-evo rounded-circle shadow-sm scroll-top-btn" onclick="window.scrollTo({top:0,behavior:'smooth'})" title="Subir">

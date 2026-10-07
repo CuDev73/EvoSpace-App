@@ -1,7 +1,7 @@
 <?php
 session_start();
 if (!isset($_SESSION['id_usuario']) || $_SESSION['rol'] !== 'padre') {
-    header('Location: /evospace/index.php');
+    header('Location: /index.php');
     exit;
 }
 

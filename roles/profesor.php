@@ -2,7 +2,7 @@
 session_start();
 
 if (!isset($_SESSION['id_usuario']) || ($_SESSION['rol'] !== 'profesor' && $_SESSION['rol'] !== 'admin')) {
-    header('Location: /evospace/index.php');
+    header('Location: /index.php');
     exit;
 }
 
@@ -264,7 +264,7 @@ $totalAlumnos = array_sum(array_column($cursos, 'total_alumnos'));
                                         <td class="text-end">Gs <?= number_format($a['monto_abono'], 0, ',', '.') ?></td>
                                         <td><?= htmlspecialchars($a['descripcion'] ?? '-') ?></td>
                                         <td>
-                                            <a href="/evospace/secciones/recibo_profesor.php?id_abono=<?= $a['id_abono'] ?>" target="_blank" class="btn btn-sm btn-outline-success">
+                                            <a href="/secciones/recibo_profesor.php?id_abono=<?= $a['id_abono'] ?>" target="_blank" class="btn btn-sm btn-outline-success">
                                                 <i class="bi bi-file-pdf"></i> Recibo
                                             </a>
                                         </td>
@@ -510,7 +510,7 @@ function abrirMensual(idCurso, nombreCurso) {
         selAnio.appendChild(op);
     }
 
-    document.getElementById('mensualExcel').href = '/evospace/secciones/asistencia/exportar_excel_mensual.php?id_curso=' + idCurso + '&mes=' + m + '&anio=' + a;
+    document.getElementById('mensualExcel').href = '/secciones/asistencia/exportar_excel_mensual.php?id_curso=' + idCurso + '&mes=' + m + '&anio=' + a;
 
     var modal = new bootstrap.Modal(document.getElementById('modalMensual'));
     modal.show();
@@ -520,7 +520,7 @@ function abrirMensual(idCurso, nombreCurso) {
 function cargarMensual() {
     var mes = document.getElementById('mensualMes').value;
     var anio = document.getElementById('mensualAnio').value;
-    document.getElementById('mensualExcel').href = '/evospace/secciones/asistencia/exportar_excel_mensual.php?id_curso=' + mensualCursoId + '&mes=' + mes + '&anio=' + anio;
+    document.getElementById('mensualExcel').href = '/secciones/asistencia/exportar_excel_mensual.php?id_curso=' + mensualCursoId + '&mes=' + mes + '&anio=' + anio;
 
     document.getElementById('mensualBody').innerHTML = '<div class="text-center py-4"><div class="spinner-border text-danger"></div></div>';
 

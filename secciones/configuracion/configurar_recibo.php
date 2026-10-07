@@ -1,7 +1,7 @@
 <?php
 session_start();
 if (!isset($_SESSION['id_usuario'])) {
-    header('Location: /evospace/index.php');
+    header('Location: /index.php');
     exit;
 }
 include '../../includes/header.php';
@@ -96,7 +96,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <div class="mb-3">
                         <label class="form-label">Título / Subtítulo</label>
                         <input type="text" name="recibo_titulo" class="form-control"
-                            value="<?= htmlspecialchars($config['recibo_titulo'] ?? 'Instituto Evolución Arte') ?>">
+                            value="<?= htmlspecialchars($config['recibo_titulo'] ?? 'EvolucionArte') ?>">
                     </div>
                     <div class="mb-3">
                         <label class="form-label">RUC</label>
@@ -126,7 +126,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <img id="logoPreview" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" class="img-fluid mb-3 d-none"
                         style="max-height:120px;" alt="Vista previa">
                     <?php if (!empty($config['recibo_logo'])): ?>
-                        <img id="logoActual" src="/evospace/<?= $config['recibo_logo'] ?>" class="img-fluid mb-3"
+                        <img id="logoActual" src="/<?= $config['recibo_logo'] ?>" class="img-fluid mb-3"
                             style="max-height:120px;" alt="Logo actual">
                         <div class="mb-2">
                             <input type="hidden" name="eliminar_logo" id="eliminarLogoHidden" value="0">

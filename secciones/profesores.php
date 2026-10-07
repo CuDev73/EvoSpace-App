@@ -2,7 +2,7 @@
 ob_start();
 session_start();
 if (!isset($_SESSION['id_usuario'])) {
-    header('Location: /evospace/index.php');
+    header('Location: /index.php');
     exit;
 }
 
@@ -153,7 +153,7 @@ if (isset($_GET['success_abono'])) $mensaje_abono = "Abono registrado correctame
             <input type="text" id="buscador" class="form-control form-control-sm" placeholder="Buscar profesor por nombre o usuario...">
         </div>
         <div class="col-md-4 text-end">
-            <a href="/evospace/secciones/usuarios.php" class="btn btn-success btn-sm">
+            <a href="/secciones/usuarios.php" class="btn btn-success btn-sm">
                 <i class="bi bi-person-plus-fill"></i> Crear nuevo profesor
             </a>
         </div>
@@ -386,7 +386,7 @@ function cargarPagos(idUsuario) {
                 <td>${a.fecha_abono}</td>
                 <td class="text-end">Gs ${Number(a.monto_abono).toLocaleString('es-PY')}</td>
                 <td>${a.descripcion ? escHtml(a.descripcion) : '-'}</td>
-                <td>${a.imagen ? '<a href="/evospace/' + a.imagen + '" target="_blank" class="btn btn-sm btn-outline-primary"><i class="bi bi-image"></i></a>' : '-'}</td>
+                <td>${a.imagen ? '<a href="/' + a.imagen + '" target="_blank" class="btn btn-sm btn-outline-primary"><i class="bi bi-image"></i></a>' : '-'}</td>
                 <td><a href="recibo_profesor.php?id_abono=${a.id_abono}" target="_blank" class="btn btn-sm btn-outline-success"><i class="bi bi-file-pdf"></i></a></td>
                 <td><form method="POST" class="d-inline" onsubmit="return confirmarEliminar(this, '¿Eliminar este pago?')">
                     <input type="hidden" name="csrf_token" value="${CSRF_TOKEN}">

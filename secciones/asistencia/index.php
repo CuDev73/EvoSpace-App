@@ -1,7 +1,7 @@
 <?php
 session_start();
 if (!isset($_SESSION['id_usuario'])) {
-    header('Location: /evospace/index.php');
+    header('Location: /index.php');
     exit;
 }
 require_once '../../config/db.php';
@@ -9,7 +9,7 @@ require_once '../../helpers/functions.php';
 verificarPermiso('asistencia');
 
 $mostrarVolver = true;
-$volverUrl = '/evospace/roles/' . ($_SESSION['rol'] ?? 'admin') . '.php';
+$volverUrl = '/roles/' . ($_SESSION['rol'] ?? 'admin') . '.php';
 include '../../includes/header.php';
 include '../../includes/navbar.php';
 

@@ -1,7 +1,7 @@
 <?php
 session_start();
 if (!isset($_SESSION['id_usuario'])) {
-    header('Location: /evospace/index.php');
+    header('Location: /index.php');
     exit;
 }
 require_once '../../../config/db.php';
@@ -266,7 +266,7 @@ document.getElementById('detalleModal').addEventListener('show.bs.modal', functi
                     <label class="form-label small">Monto a cobrar</label>
                     <div class="input-group input-group-sm">
                         <span class="input-group-text">Gs</span>
-                        <input type="number" name="monto" id="montoPago" class="form-control" step="0.01" min="0">
+                        <input type="number" name="monto" id="montoPago" class="form-control" step="500" min="0">
                     </div>
                     <div class="small text-muted mt-2" id="modalVuelto"></div>
                 </div>
@@ -297,7 +297,7 @@ function actualizarVuelto(restante, monto) {
     const v = document.getElementById('modalVuelto');
     if (monto < restante) {
         v.textContent = 'Queda saldo pendiente de Gs ' + (restante - monto).toLocaleString('es-PY').replace(/,/g, '.');
-        v.className = 'small text-warning mt-2';
+        v.className = 'small text-black mt-2';
     } else if (monto > restante) {
         v.textContent = 'Vuelto: Gs ' + (monto - restante).toLocaleString('es-PY').replace(/,/g, '.');
         v.className = 'small text-success mt-2';

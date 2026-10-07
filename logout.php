@@ -2,5 +2,5 @@
 // logout.php (raíz)
 session_start();
 session_destroy();
-header('Location: /evospace/index.php');
+header('Location: /index.php');
 exit;

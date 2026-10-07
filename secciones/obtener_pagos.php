@@ -146,7 +146,7 @@ $sumaOtros = array_sum(array_column($otros, 'total'));
                                                 </span>
                                             <?php endif; ?>
                                             <?php if (!empty($pago['imagen'])): ?>
-                                                <a href="/evospace/<?= $pago['imagen'] ?>" target="_blank" class="text-decoration-none ms-1" title="Ver comprobante"><i class="bi bi-paperclip"></i></a>
+                                                <a href="/<?= $pago['imagen'] ?>" target="_blank" class="text-decoration-none ms-1" title="Ver comprobante"><i class="bi bi-paperclip"></i></a>
                                             <?php endif; ?>
                                         </td>
                                         <td><a href="recibo.php?id_pago=<?= $pago['id_pago'] ?>" target="_blank" class="btn btn-sm btn-outline-primary" title="Recibo"><i class="bi bi-file-pdf"></i></a></td>

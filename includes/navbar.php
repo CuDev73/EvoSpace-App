@@ -1,13 +1,13 @@
 <?php
 // Determinar URL de inicio según el rol
-$inicioUrl = '/evospace/roles/admin.php';
+$inicioUrl = '/roles/admin.php';
 if (isset($_SESSION['rol'])) {
     if ($_SESSION['rol'] === 'profesor') {
-        $inicioUrl = '/evospace/roles/profesor.php';
+        $inicioUrl = '/roles/profesor.php';
     } elseif ($_SESSION['rol'] === 'padre') {
-        $inicioUrl = '/evospace/roles/padre.php';
+        $inicioUrl = '/roles/padre.php';
     } elseif ($_SESSION['rol'] === 'auxiliar') {
-        $inicioUrl = '/evospace/roles/auxiliar.php';
+        $inicioUrl = '/roles/auxiliar.php';
     }
 }
 ?>
@@ -55,22 +55,22 @@ if (isset($_SESSION['rol'])) {
 
                     $secciones = [
                         'Académico' => [
-                            'Registro Asistencia' => ['url' => '/evospace/secciones/asistencia/index.php', 'icon' => 'bi-calendar-check-fill', 'permiso' => 'asistencia'],
-                            'Alumnos' => ['url' => '/evospace/secciones/alumnos.php', 'icon' => 'bi-person-fill', 'permiso' => 'alumnos'],
-                            'Inscripciones' => ['url' => '/evospace/secciones/inscripciones.php', 'icon' => 'bi-person-plus-fill', 'permiso' => 'alumnos'],
-                            'Horarios' => ['url' => '/evospace/secciones/horarios.php', 'icon' => 'bi-calendar-week-fill', 'permiso' => 'horarios'],
-                            'Profesores' => ['url' => '/evospace/secciones/profesores.php', 'icon' => 'bi-person-badge-fill', 'permiso' => 'profesores'],
+                            'Registro Asistencia' => ['url' => '/secciones/asistencia/index.php', 'icon' => 'bi-calendar-check-fill', 'permiso' => 'asistencia'],
+                            'Alumnos' => ['url' => '/secciones/alumnos.php', 'icon' => 'bi-person-fill', 'permiso' => 'alumnos'],
+                            'Inscripciones' => ['url' => '/secciones/inscripciones.php', 'icon' => 'bi-person-plus-fill', 'permiso' => 'alumnos'],
+                            'Horarios' => ['url' => '/secciones/horarios.php', 'icon' => 'bi-calendar-week-fill', 'permiso' => 'horarios'],
+                            'Profesores' => ['url' => '/secciones/profesores.php', 'icon' => 'bi-person-badge-fill', 'permiso' => 'profesores'],
                         ],
                         'Económico' => [
-                            'Cantina' => ['url' => '/evospace/secciones/cantina/index.php', 'icon' => 'bi-cup-straw', 'permiso' => 'cantina'],
-                            'Entradas / Rifas' => ['url' => '/evospace/secciones/entradas/index.php', 'icon' => 'bi-ticket-perforated-fill', 'permiso' => 'eventos'],
+                            'Cantina' => ['url' => '/secciones/cantina/index.php', 'icon' => 'bi-cup-straw', 'permiso' => 'cantina'],
+                            'Entradas / Rifas' => ['url' => '/secciones/entradas/index.php', 'icon' => 'bi-ticket-perforated-fill', 'permiso' => 'eventos'],
                         ],
                         'Comunicación' => [
-                            'Eventos' => ['url' => '/evospace/secciones/eventos/eventos.php', 'icon' => 'bi-calendar-event-fill', 'permiso' => 'eventos'],
+                            'Eventos' => ['url' => '/secciones/eventos/eventos.php', 'icon' => 'bi-calendar-event-fill', 'permiso' => 'eventos'],
                         ],
                         'Sistema' => [
-                            'Usuarios' => ['url' => '/evospace/secciones/usuarios.php', 'icon' => 'bi-people-fill', 'permiso' => 'usuarios'],
-                            'Configuración' => ['url' => '/evospace/secciones/configuracion/configuracion.php', 'icon' => 'bi-gear-fill', 'permiso' => 'configuracion'],
+                            'Usuarios' => ['url' => '/secciones/usuarios.php', 'icon' => 'bi-people-fill', 'permiso' => 'usuarios'],
+                            'Configuración' => ['url' => '/secciones/configuracion/configuracion.php', 'icon' => 'bi-gear-fill', 'permiso' => 'configuracion'],
                         ],
                     ];
 
@@ -122,7 +122,7 @@ if (isset($_SESSION['rol'])) {
                     <?php endif; ?>
                 </ul>
                 <hr>
-                <a href="/evospace/logout.php" class="btn btn-evo w-100">
+                <a href="/logout.php" class="btn btn-evo w-100">
                     <i class="bi bi-box-arrow-right"></i> Cerrar sesión
                 </a>
             </div>

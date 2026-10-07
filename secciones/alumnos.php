@@ -4,7 +4,7 @@
 
 session_start();
 if (!isset($_SESSION['id_usuario'])) {
-    header('Location: /evospace/index.php');
+    header('Location: /index.php');
     exit;
 }
 include '../includes/header.php';   // ← primero carga functions.php
@@ -110,20 +110,21 @@ $stmt->execute();
 $alumnos = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 // Filtro morosos (?filtro=morosos): alumnos activos sin pago de cuota del mes en curso
+// Se calcula siempre para poder filtrar por estado (debe / al día) en el listado.
 $filtroMorosos = isset($_GET['filtro']) && $_GET['filtro'] === 'morosos';
-$morososIds = [];
-if ($filtroMorosos) {
-    $mesActualMorosos = (int)date('m');
-    $anioActualMorosos = (int)date('Y');
-    $stmtActivosMorosos = $pdo->query("SELECT id_alumno FROM alumnos WHERE activo = 1");
-    foreach ($stmtActivosMorosos as $aMoroso) {
-        $stmt = $pdo->prepare("SELECT COUNT(*) FROM pagos WHERE id_alumno = ? AND concepto = 'cuota' AND MONTH(fecha) = ? AND YEAR(fecha) = ?");
-        $stmt->execute([(int)$aMoroso['id_alumno'], $mesActualMorosos, $anioActualMorosos]);
-        if ((int)$stmt->fetchColumn() === 0) {
-            $morososIds[] = (int)$aMoroso['id_alumno'];
-        }
+$mesActualMorosos = (int)date('m');
+$anioActualMorosos = (int)date('Y');
+$debenCuota = [];
+$stmtActivosTodos = $pdo->query("SELECT id_alumno, activo FROM alumnos");
+foreach ($stmtActivosTodos as $aMoroso) {
+    if ((int)$aMoroso['activo'] !== 1) continue;
+    $stmt = $pdo->prepare("SELECT COUNT(*) FROM pagos WHERE id_alumno = ? AND concepto = 'cuota' AND MONTH(fecha) = ? AND YEAR(fecha) = ?");
+    $stmt->execute([(int)$aMoroso['id_alumno'], $mesActualMorosos, $anioActualMorosos]);
+    if ((int)$stmt->fetchColumn() === 0) {
+        $debenCuota[] = (int)$aMoroso['id_alumno'];
     }
 }
+$morososIds = $debenCuota;
 
 // Obtener lista de cursos para el formulario
 $stmt = $pdo->query("SELECT id_curso, nombre, tipo, orden FROM cursos WHERE activo = 1 ORDER BY tipo, orden");
@@ -176,7 +177,7 @@ $alumnosJson = str_replace('</', '<\\/', json_encode($alumnosKeyed, JSON_UNESCAP
 
     <!-- Filtros: buscador + curso -->
     <div class="row g-2 mb-3">
-        <div class="col-md-8">
+        <div class="col-md-4">
             <input type="text" id="buscador" class="form-control form-control-sm" placeholder="Buscar alumno por nombre, apellido o CI...">
         </div>
         <div class="col-md-4">
@@ -189,6 +190,13 @@ $alumnosJson = str_replace('</', '<\\/', json_encode($alumnosKeyed, JSON_UNESCAP
                         <?php endforeach; ?>
                     </optgroup>
                 <?php endforeach; ?>
+            </select>
+        </div>
+        <div class="col-md-4">
+            <select id="filtroEstado" class="form-select form-select-sm">
+                <option value="">Todos los estados</option>
+                <option value="debe">Con cuota pendiente (debe)</option>
+                <option value="aldia">Al día (sin deuda)</option>
             </select>
         </div>
     </div>
@@ -221,7 +229,7 @@ $alumnosJson = str_replace('</', '<\\/', json_encode($alumnosKeyed, JSON_UNESCAP
                             <tr><td colspan="11" class="text-center">No hay alumnos registrados.</td></tr>
                         <?php else: ?>
                             <?php foreach ($alumnos as $alumno): ?>
-<tr data-id="<?= (int)$alumno['id_alumno'] ?>" data-moroso="<?= $filtroMorosos && in_array((int)$alumno['id_alumno'], $morososIds) ? '1' : '0' ?>">
+<tr data-id="<?= (int)$alumno['id_alumno'] ?>" data-estado="<?= in_array((int)$alumno['id_alumno'], $debenCuota) ? 'debe' : 'aldia' ?>" data-moroso="<?= $filtroMorosos && in_array((int)$alumno['id_alumno'], $morososIds) ? '1' : '0' ?>">
                                     <td class="text-center align-middle"><?= $alumno['id_alumno'] ?></td>
                                     <td class="nombre-alumno align-middle"><?= htmlspecialchars($alumno['nombre'] . ' ' . $alumno['apellido']) ?></td>
                                     <td class="text-center align-middle"><?= htmlspecialchars($alumno['curso_tipo'] . ' - ' . $alumno['curso_nombre']) ?></td>
@@ -400,6 +408,7 @@ $alumnosJson = str_replace('</', '<\\/', json_encode($alumnosKeyed, JSON_UNESCAP
     document.addEventListener('DOMContentLoaded', function() {
         const buscador = document.getElementById('buscador');
         const filtroCurso = document.getElementById('filtroCurso');
+        const filtroEstado = document.getElementById('filtroEstado');
         const tabla = document.getElementById('tablaAlumnos');
 
         const POR_PAGINA = 15;
@@ -416,6 +425,7 @@ $alumnosJson = str_replace('</', '<\\/', json_encode($alumnosKeyed, JSON_UNESCAP
             if (!tbody) return [];
             const texto = (buscador ? buscador.value.toLowerCase() : '');
             const curso = (filtroCurso ? filtroCurso.value : '');
+            const estado = (filtroEstado ? filtroEstado.value : '');
             const soloMorosos = <?= $filtroMorosos ? 'true' : 'false' ?>;
             const filas = [];
             tbody.querySelectorAll('tr').forEach(fila => {
@@ -425,8 +435,9 @@ $alumnosJson = str_replace('</', '<\\/', json_encode($alumnosKeyed, JSON_UNESCAP
                 const cursoId = cursosIdPorTexto.get(cursoCelda) ?? '';
                 const matchTexto = !texto || nombre.includes(texto) || ciCelda.includes(texto);
                 const matchCurso = !curso || String(cursoId) === curso;
+                const matchEstado = !estado || fila.dataset.estado === estado;
                 const matchMoroso = !soloMorosos || fila.dataset.moroso === '1';
-                if (matchTexto && matchCurso && matchMoroso) filas.push(fila);
+                if (matchTexto && matchCurso && matchEstado && matchMoroso) filas.push(fila);
             });
             return filas;
         }
@@ -477,6 +488,7 @@ $alumnosJson = str_replace('</', '<\\/', json_encode($alumnosKeyed, JSON_UNESCAP
 
         if (buscador) buscador.addEventListener('keyup', () => { pagina = 1; filtrar(); });
         if (filtroCurso) filtroCurso.addEventListener('change', () => { pagina = 1; filtrar(); });
+        if (filtroEstado) filtroEstado.addEventListener('change', () => { pagina = 1; filtrar(); });
         filtrar();
 
         const inputPadre = document.getElementById('buscarPadre');

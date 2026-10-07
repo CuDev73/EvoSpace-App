@@ -42,7 +42,7 @@ function tienePermiso($permiso) {
 
 function verificarPermiso($permiso) {
     if (!tienePermiso($permiso)) {
-        header('Location: /evospace/index.php');
+        header('Location: /index.php');
         exit;
     }
 }
@@ -85,13 +85,13 @@ function denegarAcceso() {
 
 function redirigirSegunRol($rol) {
     $rutas = [
-        'admin'    => '/evospace/roles/admin.php',
-        'profesor' => '/evospace/roles/profesor.php',
-        'padre'    => '/evospace/roles/padre.php',
-        'auxiliar' => '/evospace/roles/auxiliar.php'
+        'admin'    => '/roles/admin.php',
+        'profesor' => '/roles/profesor.php',
+        'padre'    => '/roles/padre.php',
+        'auxiliar' => '/roles/auxiliar.php'
     ];
     // Si el rol no está en el array, redirige al login
-    $url = isset($rutas[$rol]) ? $rutas[$rol] : '/evospace/index.php';
+    $url = isset($rutas[$rol]) ? $rutas[$rol] : '/index.php';
     header('Location: ' . $url);
     exit;
 }

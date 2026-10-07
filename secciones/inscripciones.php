@@ -1,7 +1,7 @@
 <?php
 session_start();
 if (!isset($_SESSION['id_usuario'])) {
-    header('Location: /evospace/index.php');
+    header('Location: /index.php');
     exit;
 }
 if (!empty($_POST['ajax'])) {
@@ -12,7 +12,7 @@ include '../includes/navbar.php';
 require_once '../config/db.php';
 
 if (!tienePermiso('alumnos') && $_SESSION['rol'] !== 'admin') {
-    header('Location: /evospace/index.php');
+    header('Location: /index.php');
     exit;
 }
 

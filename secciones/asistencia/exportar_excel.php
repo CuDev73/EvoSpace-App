@@ -3,7 +3,7 @@ session_start();
 
 // Permitir acceso a profesores y administradores
 if (!isset($_SESSION['id_usuario'])) {
-    header('Location: /evospace/index.php');
+    header('Location: /index.php');
     exit;
 }
 

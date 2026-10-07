@@ -1,7 +1,7 @@
 <?php
 session_start();
 if (!isset($_SESSION['id_usuario'])) {
-    header('Location: /evospace/index.php');
+    header('Location: /index.php');
     exit;
 }
 require_once '../config/db.php';
@@ -561,7 +561,7 @@ $siguiente_curso = $siguiente_curso->fetch(PDO::FETCH_ASSOC);
                                             </span>
                                         <?php endif; ?>
                                         <?php if (!empty($p['imagen'])): ?>
-                                            <a href="/evospace/<?= $p['imagen'] ?>" target="_blank" class="text-decoration-none ms-1" title="Ver comprobante"><i class="bi bi-paperclip"></i></a>
+                                            <a href="/<?= $p['imagen'] ?>" target="_blank" class="text-decoration-none ms-1" title="Ver comprobante"><i class="bi bi-paperclip"></i></a>
                                         <?php endif; ?>
                                     </td>
                                     <td><a href="recibo.php?id_pago=<?= $p['id_pago'] ?>" target="_blank" class="btn btn-sm btn-outline-primary" title="Descargar recibo"><i class="bi bi-file-pdf"></i></a></td>

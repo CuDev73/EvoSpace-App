@@ -1,7 +1,7 @@
 <?php
 session_start();
 if (!isset($_SESSION['id_usuario'])) {
-    header('Location: /evospace/index.php');
+    header('Location: /index.php');
     exit;
 }
 
@@ -37,7 +37,7 @@ while ($row = $stmtConfig->fetch(PDO::FETCH_ASSOC)) {
 }
 
 $nombreInstitucion = $config['recibo_nombre'] ?? 'EvoSpace';
-$titulo = $config['recibo_titulo'] ?? 'Instituto Evolución Arte';
+$titulo = $config['recibo_titulo'] ?? 'EvolucionArte';
 $ruc = $config['recibo_ruc'] ?? '12345678-0';
 $mensaje = $config['recibo_mensaje'] ?? 'Gracias por confiar en EvoSpace';
 $pie = $config['recibo_pie'] ?? 'Este documento es un comprobante de pago valido';

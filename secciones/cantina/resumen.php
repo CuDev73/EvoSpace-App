@@ -4,7 +4,7 @@ require_once '../../config/db.php';
 require_once 'funciones.php';
 require_once '../../vendor/autoload.php';
 if (!isset($_SESSION['id_usuario'])) {
-    header('Location: /evospace/index.php');
+    header('Location: /index.php');
     exit;
 }
 verificarPermiso('cantina');

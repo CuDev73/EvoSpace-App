@@ -1,7 +1,7 @@
 <?php
 session_start();
 if (!isset($_SESSION['id_usuario'])) {
-    header('Location: /evospace/index.php');
+    header('Location: /index.php');
     exit;
 }
 
@@ -73,7 +73,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['
         if (!$error) {
         try {
             $id_venta = registrarVenta($pdo, $fecha, $productos_venta, $total, $metodo_pago, $tipo_comprador, $nombre_comprador, $id_alumno, $id_usuario, $observaciones, $estado_pago, $comprobante);
-            header("Location: index.php?exito=1");
+            header("Location: nueva.php?exito=1");
             exit;
         } catch (Exception $e) {
             $error = "Error al registrar venta: " . $e->getMessage();
@@ -113,6 +113,10 @@ $productosJson = json_encode(array_map(function ($p) {
 
     <?php if ($error): ?>
         <div class="alert alert-danger"><?= htmlspecialchars($error) ?></div>
+    <?php endif; ?>
+
+    <?php if (isset($_GET['exito'])): ?>
+        <div class="alert alert-success"><i class="bi bi-check-circle-fill me-1"></i> Venta registrada correctamente.</div>
     <?php endif; ?>
 
     <form method="POST" id="formVenta" enctype="multipart/form-data">
